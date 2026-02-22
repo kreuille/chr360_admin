@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHR 360° — Setup Wizard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   RESET & ROOT
+═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #08070c;
+  --surface:   #0f0e17;
+  --card:      #151422;
+  --border:    #1e1d2e;
+  --border2:   #2a2840;
+  --amber:     #f5a623;
+  --amber-dim: rgba(245,166,35,0.12);
+  --amber-glow:rgba(245,166,35,0.06);
+  --green:     #3dffa0;
+  --red:       #ff4f6a;
+  --blue:      #5b8cff;
+  --muted:     #5a5870;
+  --dim:       #2e2c44;
+  --text:      #e8e6f0;
+  --text2:     #a09db8;
+  --mono:      'IBM Plex Mono', monospace;
+  --sans:      'Syne', sans-serif;
+  --r:         8px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── GRAIN TEXTURE ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.045'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: 0.8;
+}
+
+/* ── AMBIENT GLOW ── */
+.glow-amber {
+  position: fixed; top: -150px; left: 50%;
+  transform: translateX(-50%);
+  width: 700px; height: 350px;
+  background: radial-gradient(ellipse, rgba(245,166,35,0.07) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ═══════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════ */
+.wrapper {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 20px 80px;
+}
+
+.wizard {
+  width: 100%;
+  max-width: 680px;
+}
+
+/* ═══════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════ */
+.header {
+  text-align: center;
+  margin-bottom: 52px;
+  animation: fadeDown 0.6s ease both;
+}
+
+.header-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,166,35,0.25);
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 10px; letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+
+.header h1 span { color: var(--amber); }
+
+.header p {
+  color: var(--text2);
+  font-size: 15px;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* ═══════════════════════════════════════════
+   STEP TRACKER
+═══════════════════════════════════════════ */
+.tracker {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40px;
+  animation: fadeDown 0.7s ease both;
+}
+
+.tracker-step {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; flex: 1; position: relative;
+}
+
+.tracker-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 16px; left: calc(50% + 16px);
+  right: calc(-50% + 16px);
+  height: 1px;
+  background: var(--border2);
+  transition: background 0.4s;
+}
+
+.tracker-step.done::after  { background: var(--amber); }
+
+.tracker-dot {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted);
+  transition: all 0.3s;
+  position: relative; z-index: 1;
+}
+
+.tracker-step.active .tracker-dot {
+  border-color: var(--amber);
+  background: var(--amber-dim);
+  color: var(--amber);
+  box-shadow: 0 0 0 4px rgba(245,166,35,0.12);
+}
+
+.tracker-step.done .tracker-dot {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: #000;
+  font-size: 13px;
+}
+
+.tracker-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-align: center;
+  transition: color 0.3s;
+}
+.tracker-step.active .tracker-label { color: var(--amber); }
+.tracker-step.done   .tracker-label { color: var(--text2); }
+
+/* ═══════════════════════════════════════════
+   CARDS / PANELS
+═══════════════════════════════════════════ */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  display: none;
+  animation: fadeUp 0.4s ease both;
+}
+.panel.active { display: block; }
+
+.panel-head {
+  padding: 20px 28px 0;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 18px;
+  display: flex; align-items: flex-start; gap: 16px;
+}
+
+.panel-icon {
+  width: 44px; height: 44px;
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,166,35,0.2);
+  border-radius: var(--r);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+
+.panel-head-text {}
+.panel-title  { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.panel-sub    { font-size: 12px; color: var(--text2); }
+
+.panel-body { padding: 28px; }
+
+/* ═══════════════════════════════════════════
+   FORM ELEMENTS
+═══════════════════════════════════════════ */
+.field { margin-bottom: 22px; }
+.field:last-child { margin-bottom: 0; }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 540px) { .field-row { grid-template-columns: 1fr; } }
+
+label {
+  display: block;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+label .req { color: var(--amber); margin-left: 3px; }
+label .opt { color: var(--muted); font-weight: 400; margin-left: 4px; font-size: 11px; }
+
+.input-wrap { position: relative; }
+
+input[type="text"],
+input[type="password"],
+input[type="url"],
+input[type="email"] {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(245,166,35,0.1);
+}
+input::placeholder { color: var(--dim); }
+
+input.prefilled { color: var(--text2); }
+input.detected  { border-color: rgba(61,255,160,0.35); }
+
+.input-status {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.hint {
+  margin-top: 7px; font-size: 11px;
+  color: var(--muted); line-height: 1.5;
+}
+.hint a { color: var(--amber); text-decoration: none; }
+.hint a:hover { text-decoration: underline; }
+.hint.detected { color: var(--green); }
+
+/* ── DETECTED BADGE ── */
+.detected-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 9px;
+  color: var(--green);
+  background: rgba(61,255,160,0.08);
+  border: 1px solid rgba(61,255,160,0.2);
+  padding: 2px 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* ═══════════════════════════════════════════
+   RESOURCE STATUS LIST (Étape 2)
+═══════════════════════════════════════════ */
+.check-list { display: flex; flex-direction: column; gap: 8px; }
+
+.check-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  transition: border-color 0.2s;
+}
+.check-item.ok     { border-color: rgba(61,255,160,0.2); }
+.check-item.warn   { border-color: rgba(245,166,35,0.2); }
+.check-item.fail   { border-color: rgba(255,79,106,0.2); }
+.check-item.loading{ border-color: var(--border); }
+
+.check-icon { font-size: 16px; flex-shrink: 0; width: 24px; text-align: center; }
+.check-label { flex: 1; font-size: 12px; }
+.check-detail { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+/* ═══════════════════════════════════════════
+   TERMINAL (Étape 4)
+═══════════════════════════════════════════ */
+.terminal {
+  background: #020208;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.terminal-bar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.terminal-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.terminal-title {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: 1px; margin-left: 6px;
+}
+.terminal-body {
+  padding: 16px 18px;
+  min-height: 200px; max-height: 340px;
+  overflow-y: auto;
+  font-family: var(--mono); font-size: 11px;
+  line-height: 1.9;
+}
+.terminal-body::-webkit-scrollbar { width: 4px; }
+.terminal-body::-webkit-scrollbar-track { background: transparent; }
+.terminal-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.log-ok   { color: var(--green);  }
+.log-warn { color: var(--amber);  }
+.log-err  { color: var(--red);    }
+.log-run  { color: var(--blue);   }
+.log-done { color: var(--amber); font-weight: 600; }
+.log-ts   { color: var(--dim); margin-right: 8px; }
+.log-type { width: 50px; display: inline-block; }
+
+.cursor {
+  display: inline-block;
+  width: 7px; height: 13px;
+  background: var(--amber);
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── PROGRESS ── */
+.progress-bar {
+  height: 3px;
+  background: var(--border);
+  overflow: hidden;
+  border-radius: 2px;
+  margin-bottom: 12px;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--amber), var(--green));
+  width: 0%;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── PROGRESS LABEL ── */
+.progress-label {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); margin-bottom: 8px;
+}
+
+/* ═══════════════════════════════════════════
+   RESULT (Étape 5)
+═══════════════════════════════════════════ */
+.result-hero {
+  text-align: center;
+  padding: 32px 0 16px;
+}
+.result-emoji { font-size: 52px; margin-bottom: 12px; }
+.result-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.result-sub   { color: var(--text2); font-size: 13px; }
+
+.id-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.id-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.id-card-label {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--amber); letter-spacing: 1px;
+}
+.id-card-body {
+  padding: 12px 14px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.id-value {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--text); word-break: break-all; flex: 1;
+}
+.btn-copy {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--amber); background: var(--amber-dim);
+  border: 1px solid rgba(245,166,35,0.2);
+  padding: 5px 12px; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+}
+.btn-copy:hover { background: rgba(245,166,35,0.2); }
+.btn-copy.copied { color: var(--green); border-color: rgba(61,255,160,0.3); background: rgba(61,255,160,0.08); }
+
+.next-steps { margin-top: 20px; }
+.next-step {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.next-step:last-child { border-bottom: none; }
+.next-step-num {
+  width: 28px; height: 28px;
+  border: 1.5px solid var(--amber);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--amber); flex-shrink: 0; margin-top: 1px;
+}
+.next-step-text { font-size: 13px; }
+.next-step-text strong { color: var(--text); }
+.next-step-text p { color: var(--text2); font-size: 12px; margin-top: 3px; }
+
+/* warning section */
+.warn-box {
+  background: rgba(245,166,35,0.06);
+  border: 1px solid rgba(245,166,35,0.2);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-top: 16px;
+}
+.warn-box-title {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--amber); letter-spacing: 1px; margin-bottom: 8px;
+}
+.warn-box ul { padding-left: 18px; }
+.warn-box li { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+
+/* ═══════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════ */
+.btn-row {
+  display: flex; gap: 12px; justify-content: flex-end;
+  margin-top: 28px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.btn {
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  padding: 11px 24px; border-radius: var(--r);
+  border: none; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary {
+  background: var(--amber); color: #000;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #ffbb44;
+  box-shadow: 0 0 20px rgba(245,166,35,0.3);
+  transform: translateY(-1px);
+}
+.btn-back {
+  background: transparent; color: var(--text2);
+  border: 1px solid var(--border2);
+}
+.btn-back:hover:not(:disabled) { border-color: var(--border); color: var(--text); }
+
+/* ═══════════════════════════════════════════
+   DIVIDER
+═══════════════════════════════════════════ */
+.divider {
+  height: 1px; background: var(--border);
+  margin: 24px 0;
+}
+.divider-label {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted); letter-spacing: 2px;
+  text-transform: uppercase; margin: 24px 0;
+}
+.divider-label::before, .divider-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── SPINNER ── */
+.spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  z-index: 9998;
+  font-family: var(--mono); font-size: 11px;
+  padding: 11px 18px; letter-spacing: 0.5px;
+  border-radius: var(--r);
+  transform: translateY(60px); opacity: 0;
+  transition: all 0.3s; pointer-events: none;
+}
+.toast.show { transform: none; opacity: 1; }
+.toast-ok   { background: var(--green);  color: #000; }
+.toast-err  { background: var(--red);    color: #fff; }
+.toast-info { background: var(--amber);  color: #000; }
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════ */
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
+@keyframes fadeUp   { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="glow-amber"></div>
+
+<div class="wrapper">
+  <div class="wizard">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-badge">⚙ Setup Wizard</div>
+      <h1>Installer <span>CHR 360°</span> V2</h1>
+      <p>Configurez l'infrastructure de déploiement automatique en 5 étapes guidées.</p>
+    </div>
+
+    <!-- STEP TRACKER -->
+    <div class="tracker" id="tracker">
+      <div class="tracker-step active" data-step="1">
+        <div class="tracker-dot">01</div>
+        <div class="tracker-label">Connexion</div>
+      </div>
+      <div class="tracker-step" data-step="2">
+        <div class="tracker-dot">02</div>
+        <div class="tracker-label">Diagnostic</div>
+      </div>
+      <div class="tracker-step" data-step="3">
+        <div class="tracker-dot">03</div>
+        <div class="tracker-label">Configuration</div>
+      </div>
+      <div class="tracker-step" data-step="4">
+        <div class="tracker-dot">04</div>
+        <div class="tracker-label">Lancement</div>
+      </div>
+      <div class="tracker-step" data-step="5">
+        <div class="tracker-dot">05</div>
+        <div class="tracker-label">Résultat</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         ÉTAPE 1 — Connexion Apps Script
+    ═══════════════════════════════════ -->
+    <div class="panel active" id="step1">
+      <div class="panel-head">
+        <div class="panel-icon">🔗</div>
+        <div class="panel-head-text">
+          <div class="panel-title">Connexion Apps Script</div>
+          <div class="panel-sub">Renseignez l'URL de votre Apps Script déployé (Code_V3.gs)</div>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <div class="field">
+          <label>URL de déploiement Apps Script <span class="req">*</span></label>
+          <div class="input-wrap">
+            <input type="url" id="appsScriptUrl"
+              placeholder="https://script.google.com/macros/s/.../exec"
+              value="https://script.google.com/macros/s/AKfycbw0nJSh3hqtYpMhplQCWALS4DOqPC4wm1cIkplukfmy0y8N16Sq-wGprnlNzz7TSxPJ/exec">
+          </div>
+          <div class="hint">
+            Dans Apps Script → Déployer → Gérer les déploiements → copier l'URL Web App.
+          </div>
+        </div>
+
+        <div class="divider-label">identifiants optionnels pour la suite</div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Email admin <span class="opt">(optionnel)</span></label>
+            <input type="email" id="adminEmail" placeholder="arnaudguedou@gmail.com">
+            <div class="hint">Pré-rempli depuis votre CONFIG si déjà configuré</div>
+          </div>
+          <div class="field">
+            <label>Token admin <span class="opt">(optionnel)</span></label>
+            <div class="input-wrap">
+              <input type="password" id="adminToken" placeholder="chr360_admin_2025"
+                     value="chr360_admin_2025">
+            </div>
+            <div class="hint">Mot de passe pour l'interface Admin Panel</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="doConnect()" id="btnConnect">
+            Tester la connexion →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         ÉTAPE 2 — Diagnostic
+    ═══════════════════════════════════ -->
+    <div class="panel" id="step2">
+      <div class="panel-head">
+        <div class="panel-icon">🔍</div>
+        <div class="panel-head-text">
+          <div class="panel-title">Diagnostic des ressources</div>
+          <div class="panel-sub">Vérification de votre infrastructure existante</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="check-list" id="checkList">
+          <div class="check-item loading">
+            <div class="check-icon">⏳</div>
+            <div class="check-label">Analyse en cours...</div>
+          </div>
+        </div>
+
+        <div id="diagSummary" style="margin-top:20px; display:none;">
+          <div class="divider-label">résumé détecté</div>
+          <div id="diagDetails" class="check-list"></div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-back" onclick="goStep(1)">← Retour</button>
+          <button class="btn btn-primary" onclick="goStep(3)" id="btnDiagNext" disabled>
+            Continuer →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         ÉTAPE 3 — Configuration
+    ═══════════════════════════════════ -->
+    <div class="panel" id="step3">
+      <div class="panel-head">
+        <div class="panel-icon">⚙️</div>
+        <div class="panel-head-text">
+          <div class="panel-title">Paramètres de déploiement</div>
+          <div class="panel-sub">Les valeurs détectées sont pré-remplies — vérifiez et complétez</div>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <div class="divider-label">templates existants (Code_V3.gs)</div>
+
+        <div class="field">
+          <label>ID Template Google Sheet <span class="req">*</span></label>
+          <div class="input-wrap">
+            <input type="text" id="templateSheetId" placeholder="1dGB3VMYaxHLFs2vopz...">
+            <span class="input-status" id="st_sheet"></span>
+          </div>
+          <div class="hint" id="h_sheet">ID du Google Sheet template (copié pour chaque client)</div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>ID Workflow Extraction <span class="req">*</span></label>
+            <div class="input-wrap">
+              <input type="text" id="templateExtractionId" placeholder="18cbgKehjADtgUrNq...">
+              <span class="input-status" id="st_extract"></span>
+            </div>
+            <div class="hint" id="h_extract">Fichier JSON workflow n8n extraction GPT-4o</div>
+          </div>
+          <div class="field">
+            <label>ID Workflow Alertes <span class="req">*</span></label>
+            <div class="input-wrap">
+              <input type="text" id="templateAlerteId" placeholder="1enGe4kuIRJmas65...">
+              <span class="input-status" id="st_alerte"></span>
+            </div>
+            <div class="hint" id="h_alerte">Fichier JSON workflow n8n alertes</div>
+          </div>
+        </div>
+
+        <div class="divider-label">nouveau système V2</div>
+
+        <div class="field">
+          <label>URL Admin Panel GitHub Pages <span class="req">*</span></label>
+          <div class="input-wrap">
+            <input type="url" id="adminGithubUrl"
+              placeholder="https://votre-username.github.io/chr360_admin/">
+          </div>
+          <div class="hint">
+            URL où vous déploierez <code>ADMIN.HTML</code> sur GitHub Pages.
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Token Admin Panel <span class="req">*</span></label>
+            <div class="input-wrap">
+              <input type="password" id="adminTokenConf" placeholder="chr360_admin_2025">
+            </div>
+            <div class="hint">Mot de passe de l'interface Admin. Changez-le !</div>
+          </div>
+          <div class="field">
+            <label>Email admin</label>
+            <input type="email" id="adminEmailConf" placeholder="arnaudguedou@gmail.com">
+            <div class="hint">Reçoit les emails de déploiement</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-back" onclick="goStep(2)">← Retour</button>
+          <button class="btn btn-primary" onclick="goStep(4)">
+            Lancer le setup →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         ÉTAPE 4 — Lancement
+    ═══════════════════════════════════ -->
+    <div class="panel" id="step4">
+      <div class="panel-head">
+        <div class="panel-icon">🚀</div>
+        <div class="panel-head-text">
+          <div class="panel-title">Création de l'infrastructure</div>
+          <div class="panel-sub">Le setup s'exécute sur Apps Script — ne fermez pas cette page</div>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <div class="progress-label">
+          <span id="progressText">Initialisation...</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="terminal-dot" style="background:#ff5f57"></div>
+            <div class="terminal-dot" style="background:#febc2e"></div>
+            <div class="terminal-dot" style="background:#28c840"></div>
+            <div class="terminal-title">chr360 — setup.log</div>
+          </div>
+          <div class="terminal-body" id="termBody">
+            <span class="cursor"></span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-back" id="btnSetupBack" onclick="goStep(3)">← Modifier</button>
+          <button class="btn btn-primary" onclick="runSetup()" id="btnRunSetup">
+            ▶ Exécuter le setup
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         ÉTAPE 5 — Résultat
+    ═══════════════════════════════════ -->
+    <div class="panel" id="step5">
+      <div class="panel-head">
+        <div class="panel-icon">✅</div>
+        <div class="panel-head-text">
+          <div class="panel-title">Infrastructure prête</div>
+          <div class="panel-sub">Copiez les IDs générés dans <code>Code_DEPLOY.gs</code></div>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <div class="result-hero">
+          <div class="result-emoji">🎉</div>
+          <div class="result-title">Setup terminé !</div>
+          <div class="result-sub">Un email récapitulatif a été envoyé à votre adresse admin.</div>
+        </div>
+
+        <div class="divider-label">ids à copier dans Code_DEPLOY.gs</div>
+
+        <div id="idCards"></div>
+
+        <div id="warningsBox"></div>
+
+        <div class="divider-label">prochaines étapes</div>
+
+        <div class="next-steps">
+          <div class="next-step">
+            <div class="next-step-num">1</div>
+            <div class="next-step-text">
+              <strong>Copier les IDs dans <code>Code_DEPLOY.gs</code></strong>
+              <p>Collez ADMIN_SHEET_ID et TEMPLATES_FOLDER_ID dans DEPLOY_CONFIG.</p>
+            </div>
+          </div>
+          <div class="next-step">
+            <div class="next-step-num">2</div>
+            <div class="next-step-text">
+              <strong>Modifier Code_V3.gs</strong>
+              <p>Ajouter les 4 lignes dans doPost() et doGet() (voir commentaires Code_DEPLOY.gs).</p>
+            </div>
+          </div>
+          <div class="next-step">
+            <div class="next-step-num">3</div>
+            <div class="next-step-text">
+              <strong>Déployer ADMIN.HTML sur GitHub Pages</strong>
+              <p>Remplacer VOTRE_DEPLOYMENT_ID par votre URL Apps Script dans le fichier.</p>
+            </div>
+          </div>
+          <div class="next-step">
+            <div class="next-step-num">4</div>
+            <div class="next-step-text">
+              <strong>Exécuter <code>runVerifySetup()</code></strong>
+              <p>Dans l'éditeur Apps Script — tout doit afficher ✓.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-back" onclick="runVerify()" id="btnVerify">
+            🔍 Vérifier la config
+          </button>
+          <button class="btn btn-primary"
+            onclick="window.open(document.getElementById('adminGithubUrl').value || '#', '_blank')">
+            Ouvrir Admin Panel →
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /wizard -->
+</div><!-- /wrapper -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let APPS_SCRIPT_URL = '';
+let configData      = null;
+let setupResult     = null;
+let currentStep     = 1;
+
+// ══════════════════════════════════════════════
+// ÉTAPE 1 — CONNEXION
+// ══════════════════════════════════════════════
+async function doConnect() {
+  const url = v('appsScriptUrl').trim();
+  if (!url || !url.startsWith('http')) {
+    toast('Entrez une URL valide', 'err'); return;
+  }
+
+  APPS_SCRIPT_URL = url;
+  setBtnLoading('btnConnect', true, 'Connexion...');
+
+  try {
+    const res = await callAPI('getConfig', { token: v('adminToken') });
+    configData = res;
+    prefillStep3(res);
+    goStep(2);
+    await runDiagnostic(res);
+  } catch(e) {
+    toast('Connexion échouée : ' + e.message, 'err');
+    log('Vérifiez que l\'URL est correcte et que le script est bien déployé comme Web App publique.');
+  } finally {
+    setBtnLoading('btnConnect', false, 'Tester la connexion →');
+  }
+}
+
+// ══════════════════════════════════════════════
+// ÉTAPE 2 — DIAGNOSTIC
+// ══════════════════════════════════════════════
+async function runDiagnostic(data) {
+  const list    = document.getElementById('checkList');
+  const summary = document.getElementById('diagSummary');
+  const details = document.getElementById('diagDetails');
+
+  list.innerHTML = '';
+
+  const existing = data.existing || {};
+  const deploy   = data.deploy   || {};
+  const status   = data.status   || {};
+
+  // Checks principaux
+  const checks = [
+    ['Apps Script connecté',              true,                         'API opérationnelle'],
+    ['Template Sheet',                    !!existing.templateSheetId,    existing.templateSheetId  ? status.templateSheet?.name  || '✓' : 'ID manquant'],
+    ['Workflow Extraction',               !!existing.templateExtractionId, existing.templateExtractionId ? status.templateExtraction?.name || '✓' : 'ID manquant'],
+    ['Workflow Alertes',                  !!existing.templateAlerteId,   existing.templateAlerteId ? status.templateAlerte?.name   || '✓' : 'ID manquant'],
+    ['n8n accessible',                    !!status.n8n,                  existing.n8nUrl || ''],
+    ['Code_DEPLOY.gs configuré',          !!deploy.configured,           deploy.configured ? 'Déjà configuré' : 'À configurer (étape suivante)'],
+    ['Dossier CHR360_TEMPLATES/ existant',status.templatesFolder !== 'not_configured' && status.templatesFolder?.ok, ''],
+    ['Sheet Admin existant',              status.adminSheet !== 'not_configured' && status.adminSheet?.ok, '']
+  ];
+
+  const allGood = checks.slice(0, 4).every(c => c[1]);
+
+  checks.forEach(([label, ok, detail]) => {
+    const type  = ok === true ? 'ok' : ok === false ? 'fail' : 'warn';
+    const icon  = ok === true ? '✅' : ok === false ? '❌' : '⚠️';
+    const item  = document.createElement('div');
+    item.className = 'check-item ' + type;
+    item.innerHTML = `
+      <div class="check-icon">${icon}</div>
+      <div class="check-label">${label}</div>
+      ${detail ? `<div class="check-detail">${detail}</div>` : ''}`;
+    list.appendChild(item);
+  });
+
+  // Détails supplémentaires
+  if (existing.adminEmail) {
+    summary.style.display = 'block';
+    details.innerHTML = `
+      <div class="check-item ok">
+        <div class="check-icon">📧</div>
+        <div class="check-label">Email admin détecté</div>
+        <div class="check-detail">${existing.adminEmail}</div>
+      </div>
+      <div class="check-item ok">
+        <div class="check-icon">🤖</div>
+        <div class="check-label">n8n URL détectée</div>
+        <div class="check-detail">${existing.n8nUrl || '—'}</div>
+      </div>`;
+
+    // Pré-remplir l'email
+    if (!document.getElementById('adminEmail').value) {
+      document.getElementById('adminEmail').value = existing.adminEmail;
+    }
+    if (!document.getElementById('adminEmailConf').value) {
+      document.getElementById('adminEmailConf').value = existing.adminEmail;
+    }
+  }
+
+  document.getElementById('btnDiagNext').disabled = false;
+
+  if (!allGood) {
+    toast('Certaines ressources sont inaccessibles — vérifiez les IDs', 'info');
+  } else {
+    toast('Connexion réussie ✓', 'ok');
+  }
+}
+
+// ══════════════════════════════════════════════
+// ÉTAPE 3 — PRÉ-REMPLISSAGE
+// ══════════════════════════════════════════════
+function prefillStep3(data) {
+  const ex = data.existing || {};
+  const dp = data.deploy   || {};
+
+  setVal('templateSheetId',      ex.templateSheetId);
+  setVal('templateExtractionId', ex.templateExtractionId);
+  setVal('templateAlerteId',     ex.templateAlerteId);
+  setVal('adminEmailConf',       ex.adminEmail);
+
+  if (dp.adminGithubUrl) setVal('adminGithubUrl', dp.adminGithubUrl);
+  if (dp.adminToken && dp.adminToken !== '••••••••') setVal('adminTokenConf', dp.adminToken);
+  else if (v('adminToken')) setVal('adminTokenConf', v('adminToken'));
+
+  // Marquer les champs auto-détectés
+  ['templateSheetId', 'templateExtractionId', 'templateAlerteId', 'adminEmailConf'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.value) {
+      el.classList.add('detected');
+      const hint = el.closest('.field')?.querySelector('.hint');
+      if (hint) hint.classList.add('detected');
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// ÉTAPE 4 — SETUP
+// ══════════════════════════════════════════════
+async function runSetup() {
+  const term = document.getElementById('termBody');
+  term.innerHTML = '';
+
+  setBtnLoading('btnRunSetup', true, 'Exécution...');
+  document.getElementById('btnSetupBack').disabled = true;
+  setProgress(5, 'Envoi des paramètres...');
+
+  const params = {
+    templateSheetId:      v('templateSheetId'),
+    templateExtractionId: v('templateExtractionId'),
+    templateAlerteId:     v('templateAlerteId'),
+    adminToken:           v('adminTokenConf')   || v('adminToken'),
+    adminGithubUrl:       v('adminGithubUrl'),
+    adminEmail:           v('adminEmailConf')   || v('adminEmail')
+  };
+
+  // Validation
+  if (!params.templateSheetId || !params.templateExtractionId || !params.templateAlerteId) {
+    addLog(term, 'WARN', 'Certains IDs sont manquants — le setup continuera mais des fichiers seront absents');
+  }
+
+  addLog(term, 'RUN',  'Connexion à Apps Script...');
+  setProgress(10, 'Connexion...');
+
+  try {
+    // Simuler la progression pendant l'appel (peut durer 30–60s)
+    const progressInterval = simulateProgress(10, 85, 50000);
+
+    addLog(term, 'RUN', 'Exécution du setup (peut prendre 30–60s)...');
+    const res = await callAPI('runSetup', params);
+
+    clearInterval(progressInterval);
+    setupResult = res;
+
+    if (res.log) {
+      res.log.forEach(entry => {
+        addLog(term, entry.type, entry.msg);
+      });
+    }
+
+    setProgress(100, 'Terminé !');
+
+    if (res.success) {
+      addLog(term, 'DONE', '🎉 Setup terminé avec succès !');
+      setTimeout(() => { goStep(5); buildResultStep(res); }, 1200);
+    } else {
+      addLog(term, 'ERR', 'Erreur : ' + (res.error || 'inconnue'));
+      toast('Erreur setup : ' + (res.error || ''), 'err');
+    }
+
+  } catch(e) {
+    clearInterval(simulateProgress);
+    addLog(term, 'ERR', 'Erreur de communication : ' + e.message);
+    addLog(term, 'WARN', 'Vérifiez les logs Apps Script (View → Logs)');
+    setProgress(0, 'Échec');
+    toast('Erreur : ' + e.message, 'err');
+  } finally {
+    setBtnLoading('btnRunSetup', false, '▶ Relancer le setup');
+    document.getElementById('btnSetupBack').disabled = false;
+  }
+}
+
+function simulateProgress(from, to, duration) {
+  const steps = 60;
+  const stepTime = duration / steps;
+  const stepSize = (to - from) / steps;
+  let current = from;
+
+  const msgs = [
+    'Vérification des templates existants...',
+    'Création du dossier CHR360_TEMPLATES/...',
+    'Création du sous-dossier v1.0/...',
+    'Copie des workflows...',
+    'Création de CURRENT.txt...',
+    'Création du Google Sheet Admin...',
+    'Initialisation des onglets...',
+    'Envoi de l\'email récap...'
+  ];
+  let msgIdx = 0;
+
+  return setInterval(() => {
+    current = Math.min(current + stepSize, to);
+    const msgStep = Math.floor((current - from) / (to - from) * msgs.length);
+    if (msgStep < msgs.length && msgStep !== msgIdx) {
+      msgIdx = msgStep;
+      document.getElementById('progressText').textContent = msgs[msgIdx];
+    }
+    setProgress(current, document.getElementById('progressText').textContent);
+  }, stepTime);
+}
+
+// ══════════════════════════════════════════════
+// ÉTAPE 5 — RÉSULTAT
+// ══════════════════════════════════════════════
+function buildResultStep(res) {
+  const ids = res.ids || {};
+  const container = document.getElementById('idCards');
+  container.innerHTML = '';
+
+  const idDefs = [
+    ['ADMIN_SHEET_ID',      ids.ADMIN_SHEET_ID,      'À coller dans DEPLOY_CONFIG'],
+    ['TEMPLATES_FOLDER_ID', ids.TEMPLATES_FOLDER_ID, 'À coller dans DEPLOY_CONFIG']
+  ];
+
+  idDefs.forEach(([label, value, hint]) => {
+    if (!value) return;
+    container.innerHTML += `
+      <div class="id-card">
+        <div class="id-card-head">
+          <span class="id-card-label">${label}</span>
+          <span style="font-size:11px;color:var(--muted)">${hint}</span>
+        </div>
+        <div class="id-card-body">
+          <div class="id-value">${value}</div>
+          <button class="btn-copy" onclick="copyId(this, '${value}')">Copier</button>
+        </div>
+      </div>`;
+  });
+
+  // Warnings
+  if (res.warnings && res.warnings.length > 0) {
+    document.getElementById('warningsBox').innerHTML = `
+      <div class="warn-box">
+        <div class="warn-box-title">⚠ ACTIONS MANUELLES REQUISES</div>
+        <ul>${res.warnings.map(w => `<li>${w}</li>`).join('')}</ul>
+      </div>`;
+  }
+}
+
+async function runVerify() {
+  setBtnLoading('btnVerify', true, 'Vérification...');
+  try {
+    const res = await callAPI('verifySetup', {});
+    const ok  = res.checks.filter(c => c.ok).length;
+    const tot = res.checks.length;
+    toast(`Vérification : ${ok}/${tot} checks passés`, res.allOk ? 'ok' : 'info');
+  } catch(e) {
+    toast('Erreur vérification : ' + e.message, 'err');
+  } finally {
+    setBtnLoading('btnVerify', false, '🔍 Vérifier la config');
+  }
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function goStep(n) {
+  // Validation avant de passer à l'étape 4
+  if (n === 4) {
+    if (!v('templateSheetId')) {
+      toast('Renseignez l\'ID Template Sheet', 'err'); return;
+    }
+  }
+
+  // Cacher tous les panels
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+
+  // Mettre à jour le tracker
+  document.querySelectorAll('.tracker-step').forEach(s => {
+    const sn = parseInt(s.dataset.step);
+    s.classList.remove('active', 'done');
+    if (sn < n)      s.classList.add('done'),   s.querySelector('.tracker-dot').textContent = '✓';
+    else if (sn === n) s.classList.add('active'), s.querySelector('.tracker-dot').textContent = '0' + n;
+    else               s.querySelector('.tracker-dot').textContent = '0' + sn;
+  });
+
+  currentStep = n;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ══════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════
+async function callAPI(action, params) {
+  const payload = { action, ...params };
+
+  // Essai POST d'abord, puis GET si CORS
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:   'POST',
+      mode:     'cors',
+      headers:  { 'Content-Type': 'text/plain' },
+      body:     JSON.stringify(payload),
+      redirect: 'follow'
+    });
+    const text = await res.text();
+    try { return JSON.parse(text); }
+    catch(e) { throw new Error('Réponse invalide: ' + text.slice(0, 300)); }
+  } catch(corsErr) {
+    // Fallback GET (contournement CORS Apps Script)
+    const qs  = new URLSearchParams(payload).toString();
+    const res = await fetch(APPS_SCRIPT_URL + '?' + qs, { redirect: 'follow' });
+    const text = await res.text();
+    try { return JSON.parse(text); }
+    catch(e) { throw new Error('Réponse invalide: ' + text.slice(0, 300)); }
+  }
+}
+
+// ══════════════════════════════════════════════
+// TERMINAL HELPERS
+// ══════════════════════════════════════════════
+function addLog(term, type, msg) {
+  const typeClass = {
+    'OK': 'log-ok', 'WARN': 'log-warn', 'ERR': 'log-err',
+    'RUN': 'log-run', 'DONE': 'log-done', 'CHECK': 'log-run'
+  }[type] || 'log-run';
+
+  const now  = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  const line = document.createElement('div');
+  line.innerHTML = `<span class="log-ts">${now}</span>` +
+    `<span class="log-type ${typeClass}">[${type}]&nbsp;</span>` +
+    `<span>${esc(msg)}</span>`;
+  term.appendChild(line);
+  term.scrollTop = term.scrollHeight;
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function v(id) { return (document.getElementById(id)?.value || '').trim(); }
+function setVal(id, val) { const el = document.getElementById(id); if (el && val) el.value = val; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function setProgress(pct, label) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent  = Math.round(pct) + '%';
+  if (label) document.getElementById('progressText').textContent = label;
+}
+
+function setBtnLoading(id, loading, label) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = loading;
+  if (label) btn.innerHTML = loading
+    ? `<span class="spinner"></span>&nbsp;${label}`
+    : label;
+}
+
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent  = msg;
+  el.className    = `toast toast-${type} show`;
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+function copyId(btn, val) {
+  navigator.clipboard.writeText(val).then(() => {
+    btn.textContent = 'Copié ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copier'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Récupérer l'URL depuis les query params (usage : setup.html?url=https://...)
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  const preUrl = params.get('url');
+  if (preUrl) document.getElementById('appsScriptUrl').value = preUrl;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHR 360° — Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #040810;
+    --surface:  #080d18;
+    --card:     #0c1220;
+    --border:   #1a2540;
+    --border2:  #243050;
+    --cyan:     #00e5ff;
+    --cyan-dim: rgba(0,229,255,0.15);
+    --cyan-glow:rgba(0,229,255,0.08);
+    --green:    #00ff88;
+    --red:      #ff3b5c;
+    --orange:   #ff9500;
+    --yellow:   #ffe066;
+    --text:     #e0eaff;
+    --muted:    #5a7090;
+    --dim:      #2a3a55;
+    --mono:     'Space Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCAN LINES OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,229,255,0.012) 2px,
+      rgba(0,229,255,0.012) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── TOP GRID GLOW ── */
+  .glow-top {
+    position: fixed; top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 800px; height: 400px;
+    background: radial-gradient(ellipse, rgba(0,229,255,0.06) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── AUTH SCREEN ── */
+  #authScreen {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 32px;
+  }
+  .auth-logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    border: 1px solid var(--border2);
+    padding: 12px 24px;
+    position: relative;
+  }
+  .auth-logo::before, .auth-logo::after {
+    content: '';
+    position: absolute;
+    width: 8px; height: 8px;
+    border-color: var(--cyan);
+    border-style: solid;
+  }
+  .auth-logo::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+  .auth-logo::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+  .auth-box {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    padding: 36px 40px;
+    width: 360px;
+  }
+  .auth-box h2 {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .auth-box input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    color: var(--cyan);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 12px 14px;
+    letter-spacing: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .auth-box input:focus { border-color: var(--cyan); }
+  .auth-box input::placeholder { color: var(--dim); letter-spacing: 1px; }
+  .auth-error {
+    color: var(--red);
+    font-family: var(--mono);
+    font-size: 11px;
+    margin-top: 10px;
+    display: none;
+  }
+  .auth-btn {
+    margin-top: 20px;
+    width: 100%;
+    background: var(--cyan);
+    color: #000;
+    border: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 13px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .auth-btn:hover { opacity: 0.85; }
+
+  /* ── MAIN APP ── */
+  #app { display: none; position: relative; z-index: 1; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(4,8,16,0.9);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 20px; }
+  .logo-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--cyan);
+    letter-spacing: 2px;
+  }
+  .logo-sep { color: var(--dim); }
+  .logo-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .status-pill {
+    display: flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--green); letter-spacing: 1px;
+    border: 1px solid rgba(0,255,136,0.2);
+    padding: 5px 12px;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    animation: blink 2s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .btn-logout {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--muted); background: none;
+    border: 1px solid var(--border); padding: 5px 12px;
+    cursor: pointer; letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .btn-logout:hover { color: var(--text); border-color: var(--border2); }
+
+  /* ── CONTENT ── */
+  .content { padding: 28px 28px 60px; max-width: 1300px; margin: 0 auto; }
+
+  /* ── SECTION TITLE ── */
+  .sec-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sec-title::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--border2); }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--cyan), transparent);
+    opacity: 0.3;
+  }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 9px; color: var(--muted);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 28px; font-weight: 700;
+    color: var(--cyan); line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-sub { font-size: 11px; color: var(--muted); }
+
+  /* ── DEPLOY PANEL ── */
+  .deploy-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .deploy-row {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .deploy-label {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--muted); letter-spacing: 2px;
+    text-transform: uppercase; white-space: nowrap;
+  }
+  select {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--mono); font-size: 12px;
+    padding: 9px 14px; min-width: 150px;
+    outline: none; cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  select:focus { border-color: var(--cyan); }
+  select option { background: var(--card); }
+
+  .btn {
+    font-family: var(--mono); font-size: 10px;
+    font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; padding: 10px 20px;
+    border: none; cursor: pointer;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-primary   { background: var(--cyan); color: #000; }
+  .btn-primary:hover:not(:disabled) { opacity: 0.85; }
+  .btn-secondary { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
+  .btn-secondary:hover:not(:disabled) { background: var(--cyan-dim); }
+  .btn-danger    { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  .btn-danger:hover:not(:disabled) { background: rgba(255,59,92,0.1); }
+  .btn-sm        { padding: 6px 14px; font-size: 9px; }
+  .btn-ghost     { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--border2); }
+
+  /* ── CLIENTS TABLE ── */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-title {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--cyan); letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .table-search {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono); font-size: 11px;
+    padding: 6px 12px; width: 200px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .table-search:focus { border-color: var(--cyan); }
+  .table-search::placeholder { color: var(--dim); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 10px 16px;
+    font-family: var(--mono); font-size: 9px;
+    color: var(--muted); letter-spacing: 2px;
+    text-transform: uppercase; text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(26,37,64,0.6);
+    vertical-align: middle;
+    font-size: 12px;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--cyan-glow); }
+  tbody tr.updating td { background: rgba(255,229,0,0.04); }
+
+  .mono { font-family: var(--mono); font-size: 11px; }
+
+  /* badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--mono); font-size: 9px;
+    font-weight: 700; letter-spacing: 1px;
+    padding: 3px 9px; text-transform: uppercase;
+  }
+  .badge-active   { color: var(--green);  background: rgba(0,255,136,0.1);  border: 1px solid rgba(0,255,136,0.2); }
+  .badge-updating { color: var(--yellow); background: rgba(255,230,102,0.1);border: 1px solid rgba(255,230,102,0.2); }
+  .badge-error    { color: var(--red);    background: rgba(255,59,92,0.1);   border: 1px solid rgba(255,59,92,0.2); }
+  .badge-new {
+    color: #000; background: var(--cyan);
+    font-size: 8px; padding: 2px 6px; margin-left: 4px;
+  }
+
+  /* version pill */
+  .ver-pill {
+    font-family: var(--mono); font-size: 10px;
+    padding: 2px 8px;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+  }
+  .ver-pill.current { color: var(--cyan); border-color: rgba(0,229,255,0.3); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    margin: 16px 0 0;
+    display: none;
+  }
+  .progress-wrap.active { display: block; }
+  .progress-label {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--muted); letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: flex; justify-content: space-between;
+  }
+  .progress-track {
+    height: 3px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--green));
+    width: 0%;
+    transition: width 0.4s;
+  }
+
+  /* ── LOGS PANEL ── */
+  .logs-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .logs-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logs-title {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--cyan); letter-spacing: 2px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logs-live {
+    font-size: 8px; color: var(--green);
+    border: 1px solid rgba(0,255,136,0.3);
+    padding: 2px 7px; letter-spacing: 1px;
+  }
+  .logs-body {
+    font-family: var(--mono); font-size: 11px;
+    line-height: 1.8;
+    padding: 14px 18px;
+    max-height: 280px;
+    overflow-y: auto;
+    display: flex; flex-direction: column;
+  }
+  .logs-body::-webkit-scrollbar { width: 4px; }
+  .logs-body::-webkit-scrollbar-track { background: var(--bg); }
+  .logs-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  .log-line { display: flex; gap: 14px; }
+  .log-ts   { color: var(--dim); flex-shrink: 0; }
+  .log-action { width: 90px; flex-shrink: 0; }
+  .log-client { color: var(--text); flex: 1; }
+  .log-status { flex-shrink: 0; }
+  .log-SUCCESS { color: var(--green); }
+  .log-ERROR   { color: var(--red); }
+  .log-IN_PROGRESS { color: var(--yellow); }
+  .log-PENDING { color: var(--muted); }
+  .log-PREPARE { color: var(--cyan); }
+  .log-REGISTER { color: var(--green); }
+
+  /* ── CONFIRM MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(4,8,16,0.85);
+    backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    padding: 36px 40px; max-width: 420px; width: 90%;
+  }
+  .modal-title {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--cyan); letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  .modal-body { color: var(--text); line-height: 1.7; margin-bottom: 24px; }
+  .modal-body strong { color: var(--cyan); font-family: var(--mono); }
+  .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 300;
+    font-family: var(--mono); font-size: 11px;
+    padding: 12px 20px; letter-spacing: 1px;
+    transform: translateY(100px); opacity: 0;
+    transition: all 0.3s; pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-ok  { background: var(--green); color: #000; }
+  .toast-err { background: var(--red);   color: #fff; }
+  .toast-info{ background: var(--cyan);  color: #000; }
+
+  /* ── LOADING SPINNER ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--cyan);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    padding: 40px; text-align: center;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--muted); letter-spacing: 1px;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .anim { animation: fadeIn 0.4s ease both; }
+
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .deploy-row { flex-direction: column; align-items: flex-start; }
+  }
+  @media (max-width: 600px) {
+    .content { padding: 16px 14px 40px; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .topbar { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-top"></div>
+
+<!-- ══════════════════════════════ AUTH ══════════════════════════════ -->
+<div id="authScreen">
+  <div class="auth-logo">CHR 360° — ADMIN</div>
+  <div class="auth-box">
+    <h2>// Accès sécurisé</h2>
+    <input type="password" id="tokenInput" placeholder="Token admin..." autocomplete="off"
+           onkeydown="if(event.key==='Enter') doAuth()">
+    <div class="auth-error" id="authError">⛔ Token invalide</div>
+    <button class="auth-btn" onclick="doAuth()">ACCÉDER → MISSION CONTROL</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ APP ══════════════════════════════ -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <nav class="topbar">
+    <div class="topbar-left">
+      <span class="logo-text">CHR360°</span>
+      <span class="logo-sep">│</span>
+      <span class="logo-sub">Mission Control</span>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill"><div class="status-dot"></div><span>SYSTÈME ACTIF</span></div>
+      <button class="btn-logout" onclick="logout()">DÉCONNEXION</button>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="sec-title">Vue d'ensemble</div>
+    <div class="stats-row anim" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-label">Clients actifs</div>
+        <div class="stat-value" id="statClients">—</div>
+        <div class="stat-sub">restaurants</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Version courante</div>
+        <div class="stat-value" id="statVersion" style="font-size:20px">—</div>
+        <div class="stat-sub">déployée</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">À mettre à jour</div>
+        <div class="stat-value" id="statPending" style="color:var(--orange)">—</div>
+        <div class="stat-sub">clients</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Versions dispo</div>
+        <div class="stat-value" id="statVersions">—</div>
+        <div class="stat-sub">templates Drive</div>
+      </div>
+    </div>
+
+    <!-- DEPLOY PANEL -->
+    <div class="sec-title">Déploiement</div>
+    <div class="deploy-panel anim">
+      <div class="deploy-row">
+        <span class="deploy-label">Version cible :</span>
+        <select id="versionSelect" onchange="onVersionChange()">
+          <option value="">— Choisir —</option>
+        </select>
+        <button class="btn btn-secondary" id="btnPrepare" onclick="prepareDeployment()" disabled>
+          📋 Analyser
+        </button>
+        <button class="btn btn-primary" id="btnDeployAll" onclick="confirmDeployAll()" disabled>
+          🚀 Déployer sur tous les clients
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="loadAll()" title="Rafraîchir">↺ Actualiser</button>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-label">
+          <span id="progressText">Déploiement en cours...</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS TABLE -->
+    <div class="sec-title">Registre clients</div>
+    <div class="table-wrap anim">
+      <div class="table-header">
+        <span class="table-title">// clients.json</span>
+        <input type="text" class="table-search" id="clientSearch"
+               placeholder="Filtrer..." oninput="filterClients()">
+      </div>
+      <div id="clientsTable">
+        <div class="empty"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="sec-title">Journal de déploiement</div>
+    <div class="logs-panel anim">
+      <div class="logs-header">
+        <span class="logs-title">// deploy.log <span class="logs-live">LIVE</span></span>
+        <button class="btn btn-ghost btn-sm" onclick="loadLogs()">↺</button>
+      </div>
+      <div class="logs-body" id="logsBody">
+        <div class="log-line"><span class="log-ts">—</span><span class="log-client" style="color:var(--muted)">Aucun log disponible</span></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-title">// Confirmer le déploiement</div>
+    <div class="modal-body" id="confirmBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" id="confirmBtn">Déployer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONFIGURATION — MODIFIER CES DEUX VALEURS
+// ══════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/VOTRE_DEPLOYMENT_ID/exec';
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let TOKEN = '';
+let allClients   = [];
+let allVersions  = [];
+let currentVersion = '';
+let logsInterval = null;
+let deployTarget = null; // { version, clientId? }
+
+// ══════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════
+async function doAuth() {
+  const t = document.getElementById('tokenInput').value.trim();
+  if (!t) return;
+  try {
+    const res = await api({ action: 'authCheck', token: t }, 'GET', { token: t });
+    if (res.ok) {
+      TOKEN = t;
+      sessionStorage.setItem('chr360_admin_token', t);
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      init();
+    } else { showAuthError(); }
+  } catch(e) { showAuthError(); }
+}
+
+function showAuthError() {
+  const el = document.getElementById('authError');
+  el.style.display = 'block';
+  document.getElementById('tokenInput').style.borderColor = 'var(--red)';
+  setTimeout(() => {
+    el.style.display = 'none';
+    document.getElementById('tokenInput').style.borderColor = '';
+  }, 3000);
+}
+
+function logout() {
+  sessionStorage.removeItem('chr360_admin_token');
+  TOKEN = '';
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('tokenInput').value = '';
+  clearInterval(logsInterval);
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+async function init() {
+  await loadAll();
+  logsInterval = setInterval(loadLogs, 5000);
+}
+
+async function loadAll() {
+  await Promise.all([loadClientsAndVersions(), loadLogs()]);
+}
+
+async function loadClientsAndVersions() {
+  try {
+    // Clients
+    const cr = await api({ action: 'getClients', token: TOKEN }, 'GET',
+                          { action: 'getClients', token: TOKEN });
+    allClients     = cr.clients || [];
+    currentVersion = cr.current || '';
+
+    // Versions
+    const vr = await api({}, 'GET', { action: 'getVersions', token: TOKEN });
+    allVersions = vr.versions || [];
+
+    updateStats();
+    renderVersionSelect();
+    renderClientsTable(allClients);
+  } catch(e) {
+    console.error('loadClientsAndVersions:', e);
+    toast('Erreur chargement: ' + e.message, 'err');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════════════
+function updateStats() {
+  const active  = allClients.filter(c => c.status !== 'deleted').length;
+  const pending = allClients.filter(c => c.version !== currentVersion && c.status === 'active').length;
+
+  setText('statClients',  active);
+  setText('statVersion',  currentVersion || '—');
+  setText('statPending',  pending);
+  setText('statVersions', allVersions.length);
+
+  document.getElementById('statPending').style.color =
+    pending > 0 ? 'var(--orange)' : 'var(--green)';
+}
+
+// ══════════════════════════════════════════════════════
+// VERSION SELECT
+// ══════════════════════════════════════════════════════
+function renderVersionSelect() {
+  const sel = document.getElementById('versionSelect');
+  sel.innerHTML = '<option value="">— Choisir une version —</option>' +
+    allVersions.map(v =>
+      `<option value="${v}"${v === currentVersion ? ' selected' : ''}>
+        ${v}${v === currentVersion ? ' (courante)' : ''}
+      </option>`
+    ).join('');
+}
+
+function onVersionChange() {
+  const v = document.getElementById('versionSelect').value;
+  document.getElementById('btnPrepare').disabled  = !v;
+  document.getElementById('btnDeployAll').disabled = !v;
+}
+
+// ══════════════════════════════════════════════════════
+// PREPARE DEPLOYMENT
+// ══════════════════════════════════════════════════════
+async function prepareDeployment() {
+  const version = document.getElementById('versionSelect').value;
+  if (!version) return;
+
+  try {
+    setBtnLoading('btnPrepare', true);
+    const res = await api({ action: 'prepareDeployment', token: TOKEN, version }, 'POST');
+    toast(`✓ ${res.toUpdate} clients à mettre à jour vers ${version}. Email envoyé.`, 'info');
+    await loadLogs();
+  } catch(e) {
+    toast('Erreur: ' + e.message, 'err');
+  } finally {
+    setBtnLoading('btnPrepare', false);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// CONFIRM + DEPLOY ALL
+// ══════════════════════════════════════════════════════
+function confirmDeployAll() {
+  const version = document.getElementById('versionSelect').value;
+  if (!version) return;
+
+  const toUpdate = allClients.filter(c => c.version !== version && c.status === 'active');
+  if (toUpdate.length === 0) {
+    toast('Tous les clients sont déjà sur ' + version, 'info');
+    return;
+  }
+
+  deployTarget = { version };
+  document.getElementById('confirmBody').innerHTML =
+    `Vous allez déployer la version <strong>${version}</strong> sur
+    <strong>${toUpdate.length} client(s)</strong> :<br><br>` +
+    toUpdate.map(c => `&nbsp;· ${c.client_name} (actuellement ${c.version || '—'})`).join('<br>') +
+    `<br><br>La bascule est <strong>atomique</strong> : les anciens workflows
+    resteront actifs jusqu'à ce que les nouveaux soient opérationnels.`;
+
+  document.getElementById('confirmBtn').onclick = () => { closeModal(); deployAll(version); };
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('show');
+}
+
+async function deployAll(version) {
+  const toUpdate = allClients.filter(c => c.version !== version && c.status === 'active');
+  const total = toUpdate.length;
+
+  showProgress(`Déploiement ${version} — 0 / ${total}`, 0);
+  setBtnLoading('btnDeployAll', true);
+
+  try {
+    // Mise à jour UI optimiste
+    toUpdate.forEach(c => c._pending = true);
+    renderClientsTable(allClients);
+
+    const res = await api({ action: 'deployAll', token: TOKEN, version }, 'POST');
+
+    // Rafraîchir les données réelles
+    hideProgress();
+    await loadClientsAndVersions();
+    await loadLogs();
+
+    const msg = `✓ Déployé : ${res.success} succès` +
+      (res.errors > 0 ? `, ${res.errors} erreurs` : '');
+    toast(msg, res.errors > 0 ? 'err' : 'ok');
+
+  } catch(e) {
+    hideProgress();
+    toast('Erreur déploiement: ' + e.message, 'err');
+    await loadClientsAndVersions();
+  } finally {
+    setBtnLoading('btnDeployAll', false);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// DEPLOY ONE CLIENT
+// ══════════════════════════════════════════════════════
+async function deployOne(clientId) {
+  const version = document.getElementById('versionSelect').value;
+  if (!version) { toast('Choisissez une version cible', 'info'); return; }
+
+  const client = allClients.find(c => c.id === clientId);
+  if (!client) return;
+
+  document.getElementById('confirmBody').innerHTML =
+    `Déployer <strong>${version}</strong> pour <strong>${client.client_name}</strong> ?<br><br>
+    Version actuelle : <strong>${client.version || '—'}</strong>`;
+
+  document.getElementById('confirmBtn').onclick = async () => {
+    closeModal();
+    try {
+      const btn = document.getElementById(`btn_${clientId}`);
+      if (btn) { btn.disabled = true; btn.textContent = '...'; }
+      const res = await api({ action: 'deployOne', token: TOKEN, version, clientId }, 'POST');
+      toast(`✓ ${client.client_name} → ${version}`, 'ok');
+      await loadClientsAndVersions();
+      await loadLogs();
+    } catch(e) {
+      toast('Erreur: ' + e.message, 'err');
+      await loadClientsAndVersions();
+    }
+  };
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+// ══════════════════════════════════════════════════════
+// CLIENTS TABLE
+// ══════════════════════════════════════════════════════
+function renderClientsTable(clients) {
+  const filtered = clients.filter(c => c.status !== 'deleted');
+  if (filtered.length === 0) {
+    document.getElementById('clientsTable').innerHTML =
+      '<div class="empty">Aucun client enregistré.<br>Les clients apparaissent ici après installation via DEPLOIEMENT.HTML</div>';
+    return;
+  }
+
+  const selectedVersion = document.getElementById('versionSelect').value || currentVersion;
+
+  const rows = filtered.map(c => {
+    const isOutdated = selectedVersion && c.version !== selectedVersion;
+    const statusBadge = c._pending
+      ? `<span class="badge badge-updating"><span class="spinner" style="width:8px;height:8px;border-width:1px"></span> UPDATING</span>`
+      : c.status === 'active'
+        ? `<span class="badge badge-active">● ACTIF</span>`
+        : c.status === 'updating'
+          ? `<span class="badge badge-updating">↻ UPDATING</span>`
+          : `<span class="badge badge-error">⚠ ${c.status}</span>`;
+
+    const verPill = `<span class="ver-pill${c.version === currentVersion ? ' current' : ''}">${c.version || '—'}</span>`;
+    const newBadge = isOutdated && selectedVersion
+      ? `<span class="badge badge-new">↑ ${selectedVersion}</span>` : '';
+    const actionBtn = isOutdated && !c._pending
+      ? `<button class="btn btn-secondary btn-sm" id="btn_${c.id}" onclick="deployOne('${c.id}')">⚡ Mettre à jour</button>`
+      : `<span style="color:var(--dim);font-family:var(--mono);font-size:10px">À JOUR</span>`;
+
+    return `<tr class="${c._pending ? 'updating' : ''}">
+      <td><strong>${esc(c.client_name)}</strong></td>
+      <td class="mono" style="color:var(--muted)">${esc(c.email)}</td>
+      <td class="mono" style="color:var(--muted)">${esc(c.telegram)}</td>
+      <td>${verPill}${newBadge}</td>
+      <td>${statusBadge}</td>
+      <td class="mono" style="color:var(--dim);font-size:10px">${formatDate(c.last_update)}</td>
+      <td>${actionBtn}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('clientsTable').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Restaurant</th>
+          <th>Email</th>
+          <th>Telegram ID</th>
+          <th>Version</th>
+          <th>Statut</th>
+          <th>Dernière MAJ</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function filterClients() {
+  const q = document.getElementById('clientSearch').value.toLowerCase();
+  const filtered = allClients.filter(c =>
+    (c.client_name || '').toLowerCase().includes(q) ||
+    (c.email || '').toLowerCase().includes(q)
+  );
+  renderClientsTable(filtered);
+}
+
+// ══════════════════════════════════════════════════════
+// LOGS
+// ══════════════════════════════════════════════════════
+async function loadLogs() {
+  try {
+    const res = await api({}, 'GET', { action: 'getLogs', token: TOKEN });
+    renderLogs(res.logs || []);
+  } catch(e) { /* silencieux */ }
+}
+
+function renderLogs(logs) {
+  if (!logs.length) return;
+  const el = document.getElementById('logsBody');
+  el.innerHTML = logs.map(log => {
+    const ts = formatTime(log.timestamp);
+    const actionColor = {
+      DEPLOY_OK: 'var(--green)', DEPLOY_FAIL: 'var(--red)',
+      DEPLOY_START: 'var(--yellow)', PREPARE: 'var(--cyan)',
+      REGISTER: 'var(--green)', DEPLOY_DONE: 'var(--cyan)'
+    }[log.action] || 'var(--muted)';
+
+    return `<div class="log-line">
+      <span class="log-ts">${ts}</span>
+      <span class="log-action" style="color:${actionColor}">${log.action || ''}</span>
+      <span class="log-client">${esc(log.client || '')} ${log.version ? `<span style="color:var(--dim)">· ${log.version}</span>` : ''}</span>
+      <span class="log-status log-${log.status}">${log.status || ''}</span>
+    </div>`;
+  }).join('');
+
+  // Autoscroll vers le haut (logs récents en premier)
+  el.scrollTop = 0;
+}
+
+// ══════════════════════════════════════════════════════
+// PROGRESS
+// ══════════════════════════════════════════════════════
+function showProgress(text, pct) {
+  document.getElementById('progressWrap').classList.add('active');
+  document.getElementById('progressText').textContent = text;
+  document.getElementById('progressPct').textContent = Math.round(pct) + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+function hideProgress() {
+  document.getElementById('progressWrap').classList.remove('active');
+}
+
+// ══════════════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════════════
+async function api(body, method = 'POST', params = null) {
+  let url = APPS_SCRIPT_URL;
+
+  if (method === 'GET' && params) {
+    url += '?' + new URLSearchParams(params).toString();
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    mode: 'cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(body),
+    redirect: 'follow'
+  });
+
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('Réponse invalide: ' + text.slice(0, 200)); }
+}
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast toast-${type} show`;
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+function setBtnLoading(id, loading) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = loading;
+  if (loading) btn.dataset.orig = btn.innerHTML;
+  btn.innerHTML = loading
+    ? `<span class="spinner"></span>&nbsp; En cours...`
+    : (btn.dataset.orig || btn.innerHTML);
+}
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatDate(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+  } catch(e) { return iso; }
+}
+function formatTime(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  } catch(e) { return String(iso).slice(11,19); }
+}
+
+// ── AUTO-LOGIN (session) ──
+window.addEventListener('load', () => {
+  const saved = sessionStorage.getItem('chr360_admin_token');
+  if (saved) {
+    document.getElementById('tokenInput').value = saved;
+    doAuth();
+  }
+  document.getElementById('tokenInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doAuth();
+  });
+});
+</script>
+</body>
+</html>
