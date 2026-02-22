@@ -658,7 +658,7 @@ async function doAuth() {
   const t = document.getElementById('tokenInput').value.trim();
   if (!t) return;
   try {
-    const res = await api({ action: 'authCheck', token: t }, 'GET', { token: t });
+    const res = await api({}, 'GET', { action: 'authCheck', token: t });
     if (res.ok) {
       TOKEN = t;
       sessionStorage.setItem('chr360_admin_token', t);
