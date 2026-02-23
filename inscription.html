@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHR 360° — Essai gratuit 14 jours</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080C1F;--card:#111827;--border:rgba(255,255,255,0.08);
+  --cyan:#00E5FF;--green:#00C864;--white:#F0F4FF;--muted:#6B7280;--error:#F87171;
+  --fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;
+}
+html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:var(--fb);overflow-x:hidden}
+
+.bg-mesh{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 10% 20%,rgba(0,229,255,.07) 0%,transparent 60%),
+             radial-gradient(ellipse 50% 40% at 90% 80%,rgba(167,139,250,.08) 0%,transparent 60%)}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:40px 40px}
+
+.page{position:relative;z-index:1;min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+
+/* ── GAUCHE ── */
+.pitch{padding:64px 56px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.logo{font-family:var(--fh);font-size:22px;font-weight:800;letter-spacing:.04em;margin-bottom:64px;display:flex;align-items:center;gap:10px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
+.pitch-headline{font-family:var(--fh);font-size:44px;font-weight:800;line-height:1.1;margin-bottom:18px}
+.pitch-headline .accent{color:var(--cyan)}
+.pitch-sub{font-size:16px;color:#9CA3AF;line-height:1.7;margin-bottom:44px;max-width:420px}
+.features{display:flex;flex-direction:column;gap:12px;margin-bottom:40px}
+.feature{display:flex;align-items:flex-start;gap:13px;padding:13px 16px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:11px;transition:border-color .2s}
+.feature:hover{border-color:rgba(0,229,255,.2)}
+.feature-ico{font-size:20px;flex-shrink:0;margin-top:1px}
+.feature-text strong{font-size:13px;font-weight:600;color:var(--white);display:block;margin-bottom:2px}
+.feature-text span{font-size:12px;color:var(--muted)}
+.free-badge{display:inline-flex;align-items:center;gap:12px;padding:14px 20px;background:rgba(0,200,100,.08);border:1px solid rgba(0,200,100,.25);border-radius:12px}
+.free-badge .ico{font-size:26px}
+.free-badge-text strong{display:block;font-size:15px;font-weight:700;color:var(--green)}
+.free-badge-text span{font-size:12px;color:var(--muted)}
+
+/* ── DROITE ── */
+.form-col{padding:64px 56px;display:flex;flex-direction:column;justify-content:center}
+.form-header{margin-bottom:32px}
+.form-title{font-family:var(--fh);font-size:28px;font-weight:700;margin-bottom:8px}
+.form-subtitle{font-size:14px;color:var(--muted)}
+
+/* ÉTAPES */
+.steps{display:flex;align-items:center;margin-bottom:32px}
+.step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500}
+.step-num{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);flex-shrink:0}
+.step.active .step-num{background:var(--cyan);border-color:var(--cyan);color:var(--bg);font-weight:700}
+.step.done .step-num{background:var(--green);border-color:var(--green);color:#000}
+.step-label{color:var(--muted)}
+.step.active .step-label{color:var(--white);font-weight:600}
+.step-line{flex:1;height:1px;background:var(--border);margin:0 12px}
+
+.form-panel{display:none}
+.form-panel.active{display:block}
+
+/* INPUTS */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:500;color:#D1D5DB;margin-bottom:6px}
+.field input,.field select{width:100%;padding:12px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:var(--white);font-family:var(--fb);font-size:15px;transition:border-color .2s,background .2s;outline:none;appearance:none}
+.field input:focus,.field select:focus{border-color:var(--cyan);background:rgba(0,229,255,.04)}
+.field input::placeholder{color:var(--muted)}
+.field select option{background:#1F2937;color:var(--white)}
+.row2{display:flex;gap:12px}
+.row2 .field{flex:1}
+
+/* PLAN */
+.plan-box{padding:18px;margin-bottom:20px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.2);border-radius:12px}
+.plan-box-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.plan-box-name{font-family:var(--fh);font-size:17px;font-weight:700}
+.plan-box-price{font-size:20px;font-weight:700;color:var(--cyan)}
+.plan-box-price span{font-size:12px;color:var(--muted);font-weight:400}
+.plan-box-items{font-size:12px;color:#9CA3AF;line-height:2}
+.plan-box-items .tick{color:var(--green)}
+
+/* CALLOUT ESSAI */
+.trial-callout{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;margin-bottom:20px;background:rgba(0,200,100,.07);border:1px solid rgba(0,200,100,.2);border-radius:10px;font-size:13px;color:#9CA3AF;line-height:1.7}
+.trial-callout .ico{font-size:20px;flex-shrink:0}
+.trial-callout strong{color:var(--green)}
+
+/* RECAP */
+.recap-box{padding:13px 16px;margin-bottom:18px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;font-size:13px;line-height:2;color:#9CA3AF}
+.recap-box strong{color:var(--white)}
+
+/* BOUTONS */
+.btn-primary{width:100%;padding:14px;background:var(--cyan);color:var(--bg);border:none;border-radius:10px;font-family:var(--fh);font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:hover{background:#33EEFF;transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,229,255,.25)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-back{width:100%;padding:12px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-family:var(--fb);font-size:14px;cursor:pointer;transition:all .2s;margin-top:10px}
+.btn-back:hover{color:var(--white);border-color:rgba(255,255,255,.2)}
+
+/* STRIPE BADGE */
+.stripe-note{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;font-size:11px;color:var(--muted)}
+.badge-soon{padding:2px 8px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:4px;color:#818CF8;font-size:10px;font-weight:700}
+
+/* MESSAGES */
+.msg{padding:11px 15px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
+.msg.error{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);display:block}
+.msg.success{background:rgba(0,200,100,.1);border:1px solid rgba(0,200,100,.3);color:var(--green);display:block}
+
+/* SPINNER */
+.spin{display:inline-block;width:18px;height:18px;border:2px solid rgba(0,0,0,.25);border-top-color:var(--bg);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* SUCCÈS */
+.success-panel{text-align:center;padding:28px 0;display:none}
+.success-panel.show{display:block}
+.sico{font-size:68px;margin-bottom:18px;animation:pop .5s cubic-bezier(.16,1,.3,1)}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.stitle{font-family:var(--fh);font-size:26px;font-weight:800;margin-bottom:12px}
+.sdesc{font-size:15px;color:var(--muted);line-height:1.8;margin-bottom:22px}
+.sdesc strong{color:var(--white)}
+.sdays{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;margin-bottom:24px;background:rgba(0,200,100,.1);border:1px solid rgba(0,200,100,.25);border-radius:100px;font-size:14px;font-weight:600;color:var(--green)}
+.scta{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;background:var(--cyan);color:var(--bg);border-radius:10px;text-decoration:none;font-family:var(--fh);font-weight:700;font-size:15px;transition:all .2s}
+.scta:hover{background:#33EEFF;transform:translateY(-1px)}
+.snote{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.7}
+
+@media(max-width:900px){
+  .page{grid-template-columns:1fr}
+  .pitch{border-right:none;border-bottom:1px solid var(--border);padding:40px 24px}
+  .form-col{padding:40px 24px}
+  .pitch-headline{font-size:32px}
+}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+
+<div class="page">
+
+  <!-- ══ GAUCHE ══ -->
+  <div class="pitch">
+    <div class="logo"><div class="logo-dot"></div>CHR 360°</div>
+    <h1 class="pitch-headline">Gérez votre restaurant<br><span class="accent">sans vous noyer</span><br>dans la paperasse.</h1>
+    <p class="pitch-sub">CHR 360° automatise vos factures, surveille vos coûts en temps réel et vous alerte avant que les problèmes n'arrivent.</p>
+    <div class="features">
+      <div class="feature"><span class="feature-ico">🤖</span><div class="feature-text"><strong>Extraction IA automatique</strong><span>GPT-4o lit vos factures PDF — zéro saisie manuelle</span></div></div>
+      <div class="feature"><span class="feature-ico">📊</span><div class="feature-text"><strong>Dashboard temps réel</strong><span>Food cost, trésorerie, ticket moyen — sur mobile</span></div></div>
+      <div class="feature"><span class="feature-ico">🔔</span><div class="feature-text"><strong>Alertes intelligentes</strong><span>Email + Telegram dès qu'un seuil est dépassé</span></div></div>
+      <div class="feature"><span class="feature-ico">🖥️</span><div class="feature-text"><strong>8 caisses compatibles</strong><span>Lightspeed, Square, Zelty, Tiller, L'Addition…</span></div></div>
+    </div>
+    <div class="free-badge">
+      <div class="ico">🎁</div>
+      <div class="free-badge-text">
+        <strong>14 jours 100% gratuits</strong>
+        <span>Aucune carte bancaire requise · Accès immédiat</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DROITE ══ -->
+  <div class="form-col">
+
+    <!-- SUCCÈS -->
+    <div class="success-panel" id="successPanel">
+      <div class="sico">🎉</div>
+      <div class="stitle">Votre espace est prêt !</div>
+      <div class="sdesc">Un email vous a été envoyé avec le lien de votre dashboard.<br><strong>Vous pouvez commencer tout de suite.</strong></div>
+      <div class="sdays">✓ 14 jours d'essai démarrés</div><br>
+      <a href="#" id="successLink" class="scta">▶ Accéder à mon dashboard →</a>
+      <div class="snote">Après l'essai, l'abonnement sera proposé à 49€/mois.<br>Aucun engagement — annulation en 1 clic.</div>
+    </div>
+
+    <!-- FORMULAIRE -->
+    <div id="formWrapper">
+      <div class="form-header">
+        <div class="form-title">Démarrer gratuitement</div>
+        <div class="form-subtitle">14 jours d'essai — aucune carte bancaire</div>
+      </div>
+
+      <div class="steps">
+        <div class="step active" id="step1"><div class="step-num">1</div><div class="step-label">Votre restaurant</div></div>
+        <div class="step-line"></div>
+        <div class="step" id="step2"><div class="step-num">2</div><div class="step-label">Confirmation</div></div>
+      </div>
+
+      <div id="msgBox" class="msg"></div>
+
+      <!-- ÉTAPE 1 -->
+      <div class="form-panel active" id="panel1">
+        <div class="row2">
+          <div class="field"><label>Nom du restaurant *</label><input type="text" id="f-restaurant" placeholder="Le Petit Bistrot"></div>
+          <div class="field"><label>Devise</label>
+            <select id="f-devise">
+              <option value="EUR">€ Euro</option>
+              <option value="CHF">CHF Franc</option>
+              <option value="USD">$ Dollar</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Votre prénom et nom *</label><input type="text" id="f-nom" placeholder="Jean Dupont"></div>
+        <div class="field"><label>Email professionnel *</label><input type="email" id="f-email" placeholder="jean@restaurant.fr"></div>
+        <div class="field"><label>Téléphone <span style="color:var(--muted);font-weight:400">(optionnel)</span></label><input type="tel" id="f-tel" placeholder="+33 6 00 00 00 00"></div>
+        <button class="btn-primary" onclick="goToStep2()">Voir le récapitulatif →</button>
+      </div>
+
+      <!-- ÉTAPE 2 -->
+      <div class="form-panel" id="panel2">
+        <div class="plan-box">
+          <div class="plan-box-head">
+            <div class="plan-box-name">CHR 360° Pro</div>
+            <div class="plan-box-price">49<span id="deviseSymbol">€</span><span>/mois</span></div>
+          </div>
+          <div class="plan-box-items">
+            <span class="tick">✓</span> IA illimitée &nbsp;·&nbsp; <span class="tick">✓</span> Dashboard temps réel<br>
+            <span class="tick">✓</span> 8 caisses &nbsp;·&nbsp; <span class="tick">✓</span> Alertes Email + Telegram &nbsp;·&nbsp; <span class="tick">✓</span> Support
+          </div>
+        </div>
+
+        <div class="trial-callout">
+          <span class="ico">🎁</span>
+          <div><strong>14 jours entièrement gratuits</strong> — aucune carte bancaire.<br>À la fin de l'essai, vous recevrez une proposition par email. <strong>Aucun prélèvement automatique.</strong></div>
+        </div>
+
+        <div class="recap-box" id="recapBox"><!-- rempli par JS --></div>
+
+        <button class="btn-primary" id="btnSubmit" onclick="submitForm()">
+          <span id="btnText">🚀 Démarrer mon essai gratuit</span>
+        </button>
+        <button class="btn-back" onclick="goToStep(1)">← Modifier mes informations</button>
+
+        <div class="stripe-note">
+          💳 Paiement sécurisé Stripe sera ajouté prochainement
+          <span class="badge-soon">BIENTÔT</span>
+        </div>
+      </div>
+
+    </div><!-- /formWrapper -->
+  </div><!-- /form-col -->
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgOWc09nli4MU1_dEqVx9MlHmGGcrpK-rpite1maoyMEaH24k9zvneDqb6W2XfOAgAbA/exec';
+
+function goToStep(n) {
+  document.querySelectorAll('.form-panel').forEach((p,i) => p.classList.toggle('active', i===n-1));
+  document.querySelectorAll('.step').forEach((s,i) => {
+    s.classList.remove('active','done');
+    if(i<n-1) s.classList.add('done');
+    else if(i===n-1) s.classList.add('active');
+  });
+  clearMsg();
+}
+
+function goToStep2() {
+  const restaurant = document.getElementById('f-restaurant').value.trim();
+  const nom        = document.getElementById('f-nom').value.trim();
+  const email      = document.getElementById('f-email').value.trim();
+  if(!restaurant||!nom||!email){showMsg('Veuillez remplir tous les champs obligatoires.','error');return}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMsg('Adresse email invalide.','error');return}
+
+  const deviseMap = {EUR:'€',CHF:' CHF',USD:' $'};
+  document.getElementById('deviseSymbol').textContent = deviseMap[document.getElementById('f-devise').value]||'€';
+
+  const end    = new Date(Date.now()+14*864e5);
+  const endStr = end.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('recapBox').innerHTML =
+    `🏪 <strong>${restaurant}</strong><br>👤 ${nom}<br>📧 ${email}<br>🗓️ Essai gratuit jusqu'au <strong style="color:var(--green)">${endStr}</strong>`;
+
+  goToStep(2);
+}
+
+async function submitForm() {
+  const btn = document.getElementById('btnSubmit');
+  document.getElementById('btnText').innerHTML = '<div class="spin"></div> Création de votre espace…';
+  btn.disabled = true;
+  try {
+    const resp = await apiFetch({
+      action:     'registerTrial',
+      nom:        document.getElementById('f-nom').value.trim(),
+      email:      document.getElementById('f-email').value.trim(),
+      restaurant: document.getElementById('f-restaurant').value.trim(),
+      tel:        document.getElementById('f-tel').value.trim(),
+      devise:     document.getElementById('f-devise').value,
+    });
+    if(resp&&resp.error){showMsg('❌ '+resp.error,'error');resetBtn();return}
+    showSuccess(resp&&resp.dashboardUrl);
+  } catch(e) {
+    showMsg('Erreur de connexion. Veuillez réessayer.','error');
+    resetBtn();
+  }
+}
+
+function resetBtn(){
+  document.getElementById('btnSubmit').disabled=false;
+  document.getElementById('btnText').textContent='🚀 Démarrer mon essai gratuit';
+}
+
+function apiFetch(params){
+  return new Promise((resolve,reject)=>{
+    const cb='_chr360_'+Date.now();
+    window[cb]=(d)=>{delete window[cb];resolve(d)};
+    const qs=Object.entries(params).map(([k,v])=>`${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+    const s=document.createElement('script');
+    s.src=`${APPS_SCRIPT_URL}?${qs}&callback=${cb}`;
+    s.onerror=()=>{delete window[cb];reject(new Error('Erreur réseau'))};
+    document.head.appendChild(s);
+    setTimeout(()=>{if(window[cb]){delete window[cb];reject(new Error('Timeout'))}},20000);
+    setTimeout(()=>s.remove(),25000);
+  });
+}
+
+function showSuccess(url){
+  document.getElementById('formWrapper').style.display='none';
+  document.getElementById('successPanel').classList.add('show');
+  if(url) document.getElementById('successLink').href=url;
+}
+function showMsg(t,type='error'){const b=document.getElementById('msgBox');b.textContent=t;b.className='msg '+type}
+function clearMsg(){document.getElementById('msgBox').className='msg'}
+</script>
+</body>
+</html>

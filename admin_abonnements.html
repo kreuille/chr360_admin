@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHR 360° — Admin Abonnements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #07091A;
+    --panel:  #0E1225;
+    --card:   #141830;
+    --border: rgba(255,255,255,0.07);
+    --cyan:   #00E5FF;
+    --purple: #A78BFA;
+    --green:  #00C864;
+    --orange: #F59E0B;
+    --red:    #EF4444;
+    --white:  #EEF2FF;
+    --muted:  #64748B;
+  }
+  html, body { min-height: 100vh; background: var(--bg); color: var(--white); font-family: 'DM Sans', sans-serif; }
+
+  /* ── SIDEBAR ── */
+  .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 28px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .sidebar-logo {
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800;
+    padding: 8px 12px; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+  .sidebar-section { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; padding: 4px 12px; margin-top: 16px; margin-bottom: 4px; }
+  .nav-item {
+    padding: 9px 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none;
+  }
+  .nav-item:hover  { background: rgba(255,255,255,0.04); color: var(--white); }
+  .nav-item.active { background: rgba(0,229,255,0.08); color: var(--cyan); }
+  .nav-badge { margin-left: auto; font-size: 10px; background: var(--red); color: #fff; border-radius: 100px; padding: 2px 7px; font-weight: 700; }
+
+  /* ── MAIN ── */
+  .main { padding: 36px 40px; overflow-y: auto; }
+  .page-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 32px; }
+  .page-title  { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; }
+  .page-sub    { font-size: 14px; color: var(--muted); margin-top: 4px; }
+  .refresh-btn {
+    padding: 9px 18px; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.25);
+    border-radius: 8px; color: var(--cyan); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .refresh-btn:hover { background: rgba(0,229,255,0.15); }
+
+  /* ── STATS CARDS ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card {
+    padding: 18px 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    position: relative; overflow: hidden;
+  }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .stat-card.cyan::before   { background: var(--cyan); }
+  .stat-card.green::before  { background: var(--green); }
+  .stat-card.orange::before { background: var(--orange); }
+  .stat-card.purple::before { background: var(--purple); }
+  .stat-card.red::before    { background: var(--red); }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+  .stat-value.cyan   { color: var(--cyan); }
+  .stat-value.green  { color: var(--green); }
+  .stat-value.orange { color: var(--orange); }
+  .stat-value.purple { color: var(--purple); }
+  .stat-value.red    { color: var(--red); }
+  .stat-trend { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ── MRR HIGHLIGHT ── */
+  .mrr-banner {
+    padding: 20px 24px; margin-bottom: 28px;
+    background: linear-gradient(135deg, rgba(0,229,255,0.08), rgba(167,139,250,0.06));
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 14px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .mrr-main { flex: 1; }
+  .mrr-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .mrr-value { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--cyan); }
+  .mrr-sub   { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .mrr-detail { text-align: right; }
+  .mrr-arr    { font-size: 13px; color: var(--muted); }
+  .mrr-arr strong { color: var(--green); font-size: 18px; }
+
+  /* ── FILTRES ── */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .filter-btn {
+    padding: 7px 16px; border-radius: 100px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); background: transparent; color: var(--muted);
+    transition: all 0.15s;
+  }
+  .filter-btn:hover  { border-color: rgba(255,255,255,0.2); color: var(--white); }
+  .filter-btn.active { background: rgba(0,229,255,0.1); border-color: rgba(0,229,255,0.4); color: var(--cyan); }
+  .search-box {
+    margin-left: auto; padding: 7px 14px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--white); font-size: 13px;
+    outline: none; width: 200px; transition: border-color 0.2s;
+  }
+  .search-box:focus { border-color: var(--cyan); }
+  .search-box::placeholder { color: var(--muted); }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: rgba(255,255,255,0.03); }
+  th {
+    padding: 12px 16px; text-align: left;
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.07em;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── STATUS PILLS ── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 100px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .pill-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .pill.active   { background: rgba(0,200,100,0.12); color: var(--green); border: 1px solid rgba(0,200,100,0.25); }
+  .pill.trialing { background: rgba(0,229,255,0.1);  color: var(--cyan);  border: 1px solid rgba(0,229,255,0.25); }
+  .pill.past_due { background: rgba(245,158,11,0.1); color: var(--orange); border: 1px solid rgba(245,158,11,0.25); }
+  .pill.canceled { background: rgba(239,68,68,0.1);  color: var(--red);   border: 1px solid rgba(239,68,68,0.25); }
+  .pill.trial_expired { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+
+  /* ── ROW ACTIONS ── */
+  .row-actions { display: flex; gap: 6px; }
+  .act-btn {
+    padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); transition: all 0.15s;
+  }
+  .act-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.25); }
+  .act-btn.pause { color: var(--orange); border-color: rgba(245,158,11,0.3); }
+  .act-btn.pause:hover { background: rgba(245,158,11,0.1); }
+  .act-btn.resume { color: var(--green); border-color: rgba(0,200,100,0.3); }
+  .act-btn.resume:hover { background: rgba(0,200,100,0.1); }
+
+  /* ── MONO ── */
+  .mono { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+  .restaurant-name { font-weight: 600; color: var(--white); }
+  .client-email { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .amount { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--white); }
+
+  /* ── TRIAL PROGRESS ── */
+  .trial-bar { width: 80px; height: 5px; background: rgba(255,255,255,0.08); border-radius: 100px; overflow: hidden; }
+  .trial-bar-fill { height: 100%; border-radius: 100px; background: var(--cyan); }
+  .trial-days { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ── EMPTY STATE ── */
+  .empty { padding: 60px; text-align: center; color: var(--muted); }
+  .empty .ico { font-size: 40px; margin-bottom: 12px; }
+  .empty p { font-size: 14px; }
+
+  /* ── MODAL DETAILS ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    width: 540px; max-width: 95vw; max-height: 85vh; overflow-y: auto;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 32px;
+    animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform:none; } }
+  .modal-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; margin-bottom:24px; display:flex; justify-content:space-between; }
+  .modal-close { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; }
+  .detail-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .detail-row:last-child { border-bottom:none; }
+  .detail-key   { color: var(--muted); }
+  .detail-value { color: var(--white); font-weight:500; font-family:'DM Mono',monospace; font-size:12px; }
+
+  /* ── SPINNER ── */
+  .spinner { display:inline-block; width:24px; height:24px; border:2px solid rgba(0,229,255,0.2); border-top-color:var(--cyan); border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loading-row td { text-align:center; padding:40px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <div class="sidebar">
+    <div class="sidebar-logo"><div class="logo-dot"></div>CHR 360°</div>
+
+    <div class="sidebar-section">Navigation</div>
+    <a href="index.html" class="nav-item">🏠 Dashboard admin</a>
+    <a href="#" class="nav-item active">💳 Abonnements</a>
+    <a href="#" class="nav-item">👥 Clients</a>
+    <a href="#" class="nav-item">📊 Analytics</a>
+
+    <div class="sidebar-section">Alertes</div>
+    <a href="#" class="nav-item" id="navPastDue">⚠️ Paiements en retard <span class="nav-badge" id="badgePastDue" style="display:none">0</span></a>
+    <a href="#" class="nav-item" id="navTrialEnd">⏰ Essais expirants <span class="nav-badge" id="badgeTrialEnd" style="display:none">0</span></a>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Abonnements</div>
+        <div class="page-sub">Gestion des abonnements et paiements clients</div>
+      </div>
+      <button class="refresh-btn" onclick="loadData()">↻ Actualiser</button>
+    </div>
+
+    <!-- MRR -->
+    <div class="mrr-banner">
+      <div class="mrr-main">
+        <div class="mrr-label">Revenu mensuel récurrent</div>
+        <div class="mrr-value" id="mrrValue">—</div>
+        <div class="mrr-sub">Sur <span id="mrrActiveCount">—</span> clients actifs</div>
+      </div>
+      <div class="mrr-detail">
+        <div class="mrr-arr">ARR (annuel estimé)</div>
+        <div><strong id="arrValue">—</strong></div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card cyan">
+        <div class="stat-label">Total clients</div>
+        <div class="stat-value cyan" id="statTotal">—</div>
+        <div class="stat-trend">inscrits</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Actifs</div>
+        <div class="stat-value green" id="statActive">—</div>
+        <div class="stat-trend">abonnements payants</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">En essai</div>
+        <div class="stat-value purple" id="statTrial">—</div>
+        <div class="stat-trend">dans la période d'essai</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">En retard</div>
+        <div class="stat-value orange" id="statPastDue">—</div>
+        <div class="stat-trend">paiement échoué</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Annulés</div>
+        <div class="stat-value red" id="statCanceled">—</div>
+        <div class="stat-trend">résiliés</div>
+      </div>
+    </div>
+
+    <!-- FILTRES -->
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setFilter('all',this)">Tous</button>
+      <button class="filter-btn" onclick="setFilter('trialing',this)">En essai</button>
+      <button class="filter-btn" onclick="setFilter('active',this)">Actifs</button>
+      <button class="filter-btn" onclick="setFilter('past_due',this)">En retard ⚠️</button>
+      <button class="filter-btn" onclick="setFilter('canceled',this)">Annulés</button>
+      <input type="text" class="search-box" id="searchBox" placeholder="🔍 Rechercher…" oninput="filterTable()">
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Restaurant</th>
+            <th>Statut</th>
+            <th>Plan</th>
+            <th>Montant</th>
+            <th>Essai / Période</th>
+            <th>Dernier paiement</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="clientsTable">
+          <tr class="loading-row"><td colspan="7"><div class="spinner"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /main -->
+</div>
+
+<!-- ── MODAL DÉTAIL ── -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span id="modalRestaurant">Détails client</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgOWc09nli4MU1_dEqVx9MlHmGGcrpK-rpite1maoyMEaH24k9zvneDqb6W2XfOAgAbA/exec';
+
+let allClients = [];
+let currentFilter = 'all';
+
+// ── JSONP ──────────────────────────────────────────────────
+function apiFetch(url) {
+  return new Promise((resolve) => {
+    const cbName = '_chr360_adm_' + Date.now();
+    window[cbName] = (d) => { delete window[cbName]; resolve(d); };
+    const s = document.createElement('script');
+    s.src = url + '&callback=' + cbName;
+    s.onerror = () => { delete window[cbName]; resolve({}); };
+    document.head.appendChild(s);
+    setTimeout(() => s.remove(), 20000);
+  });
+}
+
+// ── CHARGER DONNÉES ────────────────────────────────────────
+async function loadData() {
+  document.getElementById('clientsTable').innerHTML =
+    '<tr class="loading-row"><td colspan="7"><div class="spinner"></div></td></tr>';
+
+  const data = await apiFetch(`${APPS_SCRIPT_URL}?action=subscriptionsDashboard`);
+
+  if (data.error || !data.clients) {
+    // Mode démo si pas de données
+    useDemoData();
+    return;
+  }
+
+  allClients = data.clients || [];
+  renderStats(data.stats || {});
+  filterTable();
+}
+
+function useDemoData() {
+  allClients = [
+    { restaurant:'Le Bistrot Parisien', nom:'Marie Leblanc', email:'marie@bistrot.fr', subscription_status:'active',   plan:'Pro', monthly_amount:'49', last_payment_date:'2026-02-01', trial_end:'', stripe_subscription_id:'sub_xxx1', token:'TOKEN1', workflows_paused:'false' },
+    { restaurant:'Brasserie du Port',   nom:'Jean Martin',   email:'jean@brasserie.fr', subscription_status:'trialing', plan:'Pro', monthly_amount:'49', last_payment_date:'', trial_end:'2026-03-02', stripe_subscription_id:'sub_xxx2', token:'TOKEN2', workflows_paused:'false' },
+    { restaurant:'Chez Giulia',         nom:'Giulia Rossi',  email:'giulia@resto.fr',  subscription_status:'past_due',  plan:'Pro', monthly_amount:'49', last_payment_date:'2026-01-01', trial_end:'', stripe_subscription_id:'sub_xxx3', token:'TOKEN3', workflows_paused:'true' },
+    { restaurant:'La Table du Chef',    nom:'Pierre Dumont', email:'pierre@table.fr',  subscription_status:'active',   plan:'Pro', monthly_amount:'49', last_payment_date:'2026-02-05', trial_end:'', stripe_subscription_id:'sub_xxx4', token:'TOKEN4', workflows_paused:'false' },
+    { restaurant:'Sushi Zen',           nom:'Kenji Tanaka',  email:'kenji@sushizen.fr', subscription_status:'canceled', plan:'Pro', monthly_amount:'49', last_payment_date:'2025-12-01', trial_end:'', stripe_subscription_id:'sub_xxx5', token:'TOKEN5', workflows_paused:'true' },
+    { restaurant:'Le Jardin Bio',       nom:'Emma Petit',    email:'emma@jardin.fr',   subscription_status:'trialing', plan:'Pro', monthly_amount:'49', last_payment_date:'', trial_end:'2026-02-25', stripe_subscription_id:'sub_xxx6', token:'TOKEN6', workflows_paused:'false' },
+  ];
+  const stats = {
+    total:    allClients.length,
+    active:   allClients.filter(c => c.subscription_status === 'active').length,
+    trialing: allClients.filter(c => c.subscription_status === 'trialing').length,
+    past_due: allClients.filter(c => c.subscription_status === 'past_due').length,
+    canceled: allClients.filter(c => c.subscription_status === 'canceled').length,
+    mrr:      allClients.filter(c => c.subscription_status === 'active').reduce((s,c) => s + 49, 0)
+  };
+  renderStats(stats);
+  filterTable();
+}
+
+// ── STATS ──────────────────────────────────────────────────
+function renderStats(stats) {
+  document.getElementById('statTotal').textContent   = stats.total || 0;
+  document.getElementById('statActive').textContent  = stats.active || 0;
+  document.getElementById('statTrial').textContent   = stats.trialing || 0;
+  document.getElementById('statPastDue').textContent = stats.past_due || 0;
+  document.getElementById('statCanceled').textContent= stats.canceled || 0;
+
+  const mrr = stats.mrr || 0;
+  document.getElementById('mrrValue').textContent      = mrr.toLocaleString('fr-FR') + ' €';
+  document.getElementById('mrrActiveCount').textContent = stats.active || 0;
+  document.getElementById('arrValue').textContent      = (mrr * 12).toLocaleString('fr-FR') + ' €';
+
+  // Badges sidebar
+  if (stats.past_due > 0) {
+    document.getElementById('badgePastDue').style.display = '';
+    document.getElementById('badgePastDue').textContent   = stats.past_due;
+  }
+
+  // Essais expirant dans 3 jours
+  const soonExpiring = allClients.filter(c => {
+    if (c.subscription_status !== 'trialing' || !c.trial_end) return false;
+    const days = Math.ceil((new Date(c.trial_end) - new Date()) / 86400000);
+    return days >= 0 && days <= 3;
+  }).length;
+  if (soonExpiring > 0) {
+    document.getElementById('badgeTrialEnd').style.display = '';
+    document.getElementById('badgeTrialEnd').textContent   = soonExpiring;
+  }
+}
+
+// ── FILTER ────────────────────────────────────────────────
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterTable();
+}
+
+function filterTable() {
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  let list = allClients;
+
+  if (currentFilter !== 'all') list = list.filter(c => c.subscription_status === currentFilter);
+  if (search) list = list.filter(c =>
+    (c.restaurant || '').toLowerCase().includes(search) ||
+    (c.email      || '').toLowerCase().includes(search) ||
+    (c.nom        || '').toLowerCase().includes(search)
+  );
+
+  renderTable(list);
+}
+
+// ── TABLE ──────────────────────────────────────────────────
+const statusLabel = { active:'Actif', trialing:'Essai', past_due:'En retard', canceled:'Annulé', trial_expired:'Essai expiré', unpaid:'Impayé' };
+
+function renderTable(list) {
+  const tbody = document.getElementById('clientsTable');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="ico">📭</div><p>Aucun client trouvé</p></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(c => {
+    const status = c.subscription_status || 'canceled';
+    const label  = statusLabel[status] || status;
+    const paused = c.workflows_paused === 'true';
+
+    // Calcul jours d'essai restants
+    let trialHtml = '—';
+    if (status === 'trialing' && c.trial_end) {
+      const days = Math.max(0, Math.ceil((new Date(c.trial_end) - new Date()) / 86400000));
+      const pct  = Math.max(0, Math.min(100, (days / 14) * 100));
+      const color = days <= 2 ? 'var(--red)' : days <= 5 ? 'var(--orange)' : 'var(--cyan)';
+      trialHtml = `
+        <div class="trial-bar"><div class="trial-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="trial-days" style="color:${color}">${days}j restants</div>`;
+    } else if (c.last_payment_date) {
+      trialHtml = `<span class="mono">${c.last_payment_date}</span>`;
+    }
+
+    return `
+      <tr>
+        <td>
+          <div class="restaurant-name">${c.restaurant || '—'}</div>
+          <div class="client-email">${c.email || ''}</div>
+        </td>
+        <td>
+          <span class="pill ${status}"><span class="pill-dot"></span>${label}</span>
+          ${paused ? '<br><span style="font-size:10px;color:var(--orange)">⏸ Workflows pausés</span>' : ''}
+        </td>
+        <td><span class="mono">${(c.plan || 'Pro').toUpperCase()}</span></td>
+        <td><span class="amount">${c.monthly_amount || '49'} €/mois</span></td>
+        <td>${trialHtml}</td>
+        <td><span class="mono">${c.last_payment_date || '—'}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="act-btn" onclick='showDetail(${JSON.stringify(c)})'>👁 Détail</button>
+            ${paused
+              ? `<button class="act-btn resume" onclick="toggleWorkflows('${c.token}','resume')">▶ Activer</button>`
+              : `<button class="act-btn pause"  onclick="toggleWorkflows('${c.token}','pause')">⏸ Pause</button>`
+            }
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+// ── ACTIONS ────────────────────────────────────────────────
+async function toggleWorkflows(token, action) {
+  const apiAction = action === 'pause' ? 'pauseWorkflows' : 'resumeWorkflows';
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  await apiFetch(`${APPS_SCRIPT_URL}?action=${apiAction}&id=${token}`);
+  loadData();
+}
+
+// ── MODAL DÉTAIL ───────────────────────────────────────────
+function showDetail(client) {
+  document.getElementById('modalRestaurant').textContent = client.restaurant || 'Client';
+  const fields = [
+    ['Restaurant',         client.restaurant],
+    ['Contact',            client.nom],
+    ['Email',              client.email],
+    ['Statut',             statusLabel[client.subscription_status] || client.subscription_status],
+    ['Plan',               client.plan || 'Pro'],
+    ['Montant mensuel',    (client.monthly_amount || '49') + ' €'],
+    ['Stripe Sub ID',      client.stripe_subscription_id || '—'],
+    ['Stripe Customer ID', client.stripe_customer_id || '—'],
+    ['Fin d\'essai',       client.trial_end || '—'],
+    ['Dernier paiement',   client.last_payment_date || '—'],
+    ['Échec paiement',     client.last_failed_payment || '—'],
+    ['Workflows',          client.workflows_paused === 'true' ? '⏸ En pause' : '▶ Actifs'],
+    ['Token dashboard',    client.token || '—'],
+  ];
+
+  document.getElementById('modalContent').innerHTML = fields.map(([k, v]) =>
+    `<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-value">${v || '—'}</span></div>`
+  ).join('') + `
+    <div style="margin-top:20px;display:flex;gap:10px">
+      <a href="dashboard.html?id=${client.token}" target="_blank"
+         style="flex:1;padding:10px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);border-radius:8px;color:var(--cyan);text-align:center;text-decoration:none;font-size:13px;font-weight:600">
+        📊 Voir dashboard
+      </a>
+      <a href="paywall.html?id=${client.token}" target="_blank"
+         style="flex:1;padding:10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--muted);text-align:center;text-decoration:none;font-size:13px">
+        🔒 Voir paywall
+      </a>
+    </div>`;
+
+  document.getElementById('detailModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('show');
+}
+document.getElementById('detailModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ── INIT ──────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

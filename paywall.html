@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHR 360° — Abonnement requis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:     #080C1F;
+    --card:   #111827;
+    --border: rgba(255,255,255,0.08);
+    --cyan:   #00E5FF;
+    --orange: #F59E0B;
+    --red:    #EF4444;
+    --green:  #00C864;
+    --white:  #F0F4FF;
+    --muted:  #6B7280;
+  }
+
+  html, body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  /* ── FOND ── */
+  .bg-anim {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 50%, rgba(239,68,68,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 20% 20%, rgba(245,158,11,0.05) 0%, transparent 60%);
+    animation: breathe 6s ease-in-out infinite alternate;
+  }
+  @keyframes breathe {
+    from { opacity: 0.7; }
+    to   { opacity: 1; }
+  }
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* ── CARD ── */
+  .container {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 520px;
+    margin: 24px;
+    padding: 48px 44px;
+    background: var(--card);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── LOGO ── */
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 800;
+    letter-spacing: 0.04em;
+    margin-bottom: 40px;
+    color: var(--white);
+  }
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+  }
+
+  /* ── STATUT BADGE ── */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .status-badge.past_due  { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: var(--orange); }
+  .status-badge.canceled  { background: rgba(239,68,68,0.1);   border: 1px solid rgba(239,68,68,0.3);  color: var(--red); }
+  .status-badge.trial_exp { background: rgba(239,68,68,0.1);   border: 1px solid rgba(239,68,68,0.3);  color: var(--red); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: blink 1.2s step-end infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  /* ── CONTENU DYNAMIQUE ── */
+  .icon-wrap { font-size: 56px; margin-bottom: 20px; line-height: 1; }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px; font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .desc {
+    font-size: 15px; color: #9CA3AF;
+    line-height: 1.7; margin-bottom: 32px;
+  }
+  .desc strong { color: var(--white); }
+
+  /* ── INFOS ── */
+  .info-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-bottom: 32px;
+  }
+  .info-cell {
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .info-cell .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .info-cell .value { font-size: 15px; font-weight: 600; color: var(--white); }
+  .info-cell .value.danger { color: var(--red); }
+  .info-cell .value.warn   { color: var(--orange); }
+
+  /* ── ACTIONS ── */
+  .actions { display: flex; flex-direction: column; gap: 10px; }
+
+  .btn-primary {
+    padding: 14px; width: 100%;
+    background: var(--cyan); color: var(--bg);
+    border: none; border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    text-decoration: none; display: flex;
+    align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary:hover { background: #33EEFF; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,229,255,0.25); }
+
+  .btn-outline {
+    padding: 13px; width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px; color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; cursor: pointer;
+    transition: all 0.2s; text-decoration: none;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-outline:hover { color: var(--white); border-color: rgba(255,255,255,0.25); }
+
+  /* ── SÉPARATEUR ── */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--muted); font-size: 12px;
+  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 32px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+    text-align: center; line-height: 1.8;
+  }
+  .footer a { color: var(--cyan); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* ── SPINNER ── */
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(0,0,0,0.2); border-top-color: var(--bg); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── LOADING STATE ── */
+  .loading-screen {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+    transition: opacity 0.4s;
+  }
+  .loading-screen.hidden { opacity: 0; pointer-events: none; }
+  .loading-screen .spinner { width: 36px; height: 36px; border-color: rgba(0,229,255,0.2); border-top-color: var(--cyan); }
+  .loading-screen span { font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- Écran de chargement -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <span>Vérification de l'abonnement…</span>
+</div>
+
+<div class="bg-anim"></div>
+<div class="bg-grid"></div>
+
+<div class="container" id="mainCard" style="display:none">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    CHR 360°
+  </div>
+
+  <!-- Badge statut dynamique -->
+  <div class="status-badge" id="statusBadge">
+    <div class="status-dot"></div>
+    <span id="statusLabel">Abonnement requis</span>
+  </div>
+
+  <div class="icon-wrap" id="paywallIcon">⛔</div>
+  <h1 id="paywallTitle">Accès suspendu</h1>
+  <p class="desc" id="paywallDesc">
+    Votre abonnement n'est plus actif. Régularisez votre situation pour retrouver l'accès à votre dashboard et à toutes vos automatisations.
+  </p>
+
+  <!-- Infos abonnement -->
+  <div class="info-grid" id="infoGrid" style="display:none">
+    <div class="info-cell">
+      <div class="label">Restaurant</div>
+      <div class="value" id="infoRestaurant">—</div>
+    </div>
+    <div class="info-cell">
+      <div class="label">Statut</div>
+      <div class="value danger" id="infoStatus">—</div>
+    </div>
+    <div class="info-cell">
+      <div class="label">Plan</div>
+      <div class="value" id="infoPlan">Pro</div>
+    </div>
+    <div class="info-cell">
+      <div class="label" id="infoDateLabel">Depuis</div>
+      <div class="value warn" id="infoDate">—</div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <a class="btn-primary" id="btnReactivate" href="#">
+      ✨ Réactiver mon abonnement
+    </a>
+    <div class="divider">ou</div>
+    <a class="btn-outline" href="inscription.html">
+      🔄 Créer un nouveau compte
+    </a>
+    <a class="btn-outline" id="btnContact" href="mailto:contact@chr360.fr">
+      📧 Contacter le support
+    </a>
+  </div>
+
+  <div class="footer">
+    En cas de problème, écrivez à <a href="mailto:contact@chr360.fr">contact@chr360.fr</a><br>
+    Vos données sont conservées pendant <strong>30 jours</strong> après la suspension.
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgOWc09nli4MU1_dEqVx9MlHmGGcrpK-rpite1maoyMEaH24k9zvneDqb6W2XfOAgAbA/exec';
+
+// ── JSONP ──────────────────────────────────────────────────
+window._chr360_cb = null;
+function apiFetch(url) {
+  return new Promise((resolve) => {
+    const cbName = '_chr360_pw_' + Date.now();
+    window[cbName] = (data) => { delete window[cbName]; resolve(data); };
+    const s = document.createElement('script');
+    s.src = url + '&callback=' + cbName;
+    s.onerror = () => { delete window[cbName]; resolve({}); };
+    document.head.appendChild(s);
+    setTimeout(() => s.remove(), 15000);
+  });
+}
+
+// ── CONFIG STATUT ──────────────────────────────────────────
+const statusConfig = {
+  past_due: {
+    badge:    'past_due',
+    label:    '⚠️ Paiement en attente',
+    icon:     '💳',
+    title:    'Problème de paiement détecté',
+    desc:     'Votre dernier paiement n\'a pas pu être traité. Vos workflows sont temporairement en pause.<br><br>Mettez à jour votre moyen de paiement pour retrouver l\'accès immédiatement.',
+    btnLabel: '✨ Mettre à jour ma carte',
+    dateLabel:'Échec depuis',
+  },
+  canceled: {
+    badge:    'canceled',
+    label:    '❌ Abonnement annulé',
+    icon:     '📭',
+    title:    'Abonnement résilié',
+    desc:     'Votre abonnement CHR 360° a été annulé. Vos données sont conservées 30 jours.<br><br>Réabonnez-vous pour retrouver l\'accès à votre dashboard et vos automatisations.',
+    btnLabel: '🚀 Me réabonner',
+    dateLabel:'Annulé le',
+  },
+  trial_expired: {
+    badge:    'trial_exp',
+    label:    '⏰ Essai expiré',
+    icon:     '⏰',
+    title:    'Votre essai gratuit est terminé',
+    desc:     'Les 14 jours d\'essai sont écoulés. Passez à un abonnement payant pour continuer à profiter de CHR 360° sans interruption.',
+    btnLabel: '✨ Activer mon abonnement',
+    dateLabel:'Essai expiré',
+  },
+  unpaid: {
+    badge:    'past_due',
+    label:    '⚠️ Facture impayée',
+    icon:     '🧾',
+    title:    'Facture en attente de paiement',
+    desc:     'Une facture est en attente. Votre espace est suspendu jusqu\'au règlement.<br><br>Accédez à votre portail de paiement pour régulariser.',
+    btnLabel: '💳 Régler ma facture',
+    dateLabel:'En attente depuis',
+  },
+};
+
+// ── INIT ──────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(location.search);
+  const token  = params.get('id');
+
+  if (!token) {
+    // Pas de token → afficher page générique
+    renderGeneric();
+    return;
+  }
+
+  try {
+    const data = await apiFetch(`${APPS_SCRIPT_URL}?action=checkSubscription&id=${token}`);
+    render(data, token);
+  } catch(e) {
+    renderGeneric();
+  } finally {
+    document.getElementById('loadingScreen').classList.add('hidden');
+    document.getElementById('mainCard').style.display = '';
+  }
+}
+
+function render(data, token) {
+  const status = data.status || 'canceled';
+  const cfg    = statusConfig[status] || statusConfig.canceled;
+
+  // Si abonnement actif → rediriger vers dashboard
+  if (!data.isBlocked && data.status !== 'trial_expired') {
+    window.location.href = 'dashboard.html?id=' + token;
+    return;
+  }
+
+  // Badge
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'status-badge ' + cfg.badge;
+  document.getElementById('statusLabel').textContent = cfg.label;
+
+  // Contenu
+  document.getElementById('paywallIcon').textContent  = cfg.icon;
+  document.getElementById('paywallTitle').textContent = cfg.title;
+  document.getElementById('paywallDesc').innerHTML    = cfg.desc;
+
+  // Bouton principal
+  document.getElementById('btnReactivate').textContent = cfg.btnLabel;
+  if (data.portal_url) {
+    document.getElementById('btnReactivate').href = data.portal_url;
+  } else {
+    document.getElementById('btnReactivate').href = 'inscription.html';
+  }
+
+  // Info grid
+  if (data.restaurant || data.status) {
+    document.getElementById('infoGrid').style.display = 'grid';
+    document.getElementById('infoRestaurant').textContent = data.restaurant || '—';
+    document.getElementById('infoStatus').textContent     = translateStatus(status);
+    document.getElementById('infoPlan').textContent       = (data.plan || 'Pro').toUpperCase();
+    document.getElementById('infoDateLabel').textContent  = cfg.dateLabel;
+    document.getElementById('infoDate').textContent       = data.lastFailedDate || data.trialEnd || '—';
+  }
+}
+
+function renderGeneric() {
+  document.getElementById('loadingScreen').classList.add('hidden');
+  document.getElementById('mainCard').style.display = '';
+  document.getElementById('btnReactivate').href = 'inscription.html';
+  document.getElementById('infoGrid').style.display = 'none';
+}
+
+function translateStatus(s) {
+  const map = {
+    past_due:     'Paiement en attente',
+    canceled:     'Annulé',
+    trial_expired:'Essai expiré',
+    unpaid:       'Impayé',
+  };
+  return map[s] || s;
+}
+
+init();
+</script>
+</body>
+</html>
