@@ -937,10 +937,13 @@ async function loadData() {
     }
     
     // Mettre à jour DATA avec les données du Sheet
-    DATA.mois = {
-      achats: data.mois?.achats || [],  // ✅ Lire depuis data.mois
+    // Stocker les données brutes non filtrées
+    DATA.all = {
+      achats: data.mois?.achats || [],
       ventes: data.mois?.ventes || []
     };
+    // DATA.mois = alias vers DATA.all (compatibilité)
+    DATA.mois = DATA.all;
     
     // Charger la configuration
     if (data.config) {
@@ -1068,6 +1071,7 @@ function compute(data) {
 // ═══════════════════════════════════════════════════════════
 function render(periodKey) {
   const data = DATA[periodKey] || DATA.mois;
+  console.log('[render] période:', periodKey, '| achats:', data.achats.length, '| ventes:', data.ventes.length);
   const k = compute(data);
 
   // Date chip
@@ -1386,16 +1390,23 @@ function filterByPeriod(period) {
   };
 
   return {
-    achats: DATA.mois.achats.filter(a => filterDate(a)),
-    ventes: DATA.mois.ventes.filter(v => filterDate(v))
+    achats: (DATA.all || DATA.mois).achats.filter(a => filterDate(a)),
+    ventes: (DATA.all || DATA.mois).ventes.filter(v => filterDate(v))
   };
 }
 
 function switchPeriod(period, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  DATA._tmp = filterByPeriod(period);
-  render('_tmp');
+
+  if (period === 'mois') {
+    // Ce mois : utilise les données brutes complètes (pas de re-filtrage)
+    render('mois');
+  } else {
+    const filtered = filterByPeriod(period);
+    DATA._tmp = filtered;
+    render('_tmp');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
