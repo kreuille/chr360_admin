@@ -670,6 +670,7 @@
 
   <!-- ═══ PERIOD TABS ═══ -->
   <div class="period-tabs">
+    <button class="tab" onclick="switchPeriod('today', this)">Aujourd'hui</button>
     <button class="tab" onclick="switchPeriod('semaine', this)">7 jours</button>
     <button class="tab active" onclick="switchPeriod('mois', this)">Ce mois</button>
     <button class="tab" onclick="switchPeriod('trimestre', this)">Trimestre</button>
@@ -1361,28 +1362,40 @@ function animateValue(id, target, formatter) {
 // ═══════════════════════════════════════════════════════════
 // SWITCH PERIOD
 // ═══════════════════════════════════════════════════════════
+function filterByPeriod(period) {
+  const now   = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  let dateMin;
+  if (period === 'today') {
+    dateMin = today;
+  } else if (period === 'semaine') {
+    dateMin = new Date(today); dateMin.setDate(today.getDate() - 6);
+  } else if (period === 'mois') {
+    dateMin = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (period === 'trimestre') {
+    const q = Math.floor(now.getMonth() / 3);
+    dateMin = new Date(now.getFullYear(), q * 3, 1);
+  } else {
+    return DATA.mois; // fallback
+  }
+
+  const filterDate = item => {
+    const d = new Date(item.date || item.date_facture || '');
+    return !isNaN(d) && d >= dateMin && d <= now;
+  };
+
+  return {
+    achats: DATA.mois.achats.filter(a => filterDate(a)),
+    ventes: DATA.mois.ventes.filter(v => filterDate(v))
+  };
+}
+
 function switchPeriod(period, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  // Simulation de données différentes selon la période
-  if (period === 'semaine') {
-    const week = {
-      achats: DATA.mois.achats.slice(0,2),
-      ventes: DATA.mois.ventes.slice(0,2)
-    };
-    DATA._tmp = week;
-    render('_tmp');
-  } else if (period === 'trimestre') {
-    // Multiplier les données pour simuler un trimestre
-    const q = {
-      achats: [...DATA.mois.achats, ...DATA.mois.achats.map(a=>({...a,ht:a.ht*0.95,ttc:a.ttc*0.95}))],
-      ventes: [...DATA.mois.ventes, ...DATA.mois.ventes.map(v=>({...v,caTTC:v.caTTC*1.08,caHT:v.caHT*1.08,couverts:Math.round(v.couverts*1.1)}))]
-    };
-    DATA._tmp = q;
-    render('_tmp');
-  } else {
-    render('mois');
-  }
+  DATA._tmp = filterByPeriod(period);
+  render('_tmp');
 }
 
 // ═══════════════════════════════════════════════════════════
