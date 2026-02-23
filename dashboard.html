@@ -215,6 +215,11 @@
   .gauge-value { font-family: var(--font-mono); font-size: 20px; font-weight: 600; fill: var(--text); }
   .gauge-label { font-size: 11px; color: var(--muted); margin-top: 6px; text-align: center; }
   .gauge-obj   { font-size: 10px; color: var(--dim); margin-top: 2px; }
+  .caisse-section { border-top: 1px solid rgba(255,255,255,0.08); margin-top: 18px; padding-top: 18px; }
+  .caisse-section-title { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+  .caisse-fields { display: none; }
+  .caisse-fields.visible { display: block; }
+  .form-badge { display: inline-block; background: rgba(0,229,255,0.1); color: var(--accent); font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; }
 
   /* ── WATERFALL / BAR ── */
   .chart-area { padding: 8px 0; }
@@ -926,7 +931,7 @@ async function loadData() {
     
     // Appeler l'API avec le token
     const apiUrl = `${APPS_SCRIPT_URL}?action=dashboard&id=${CLIENT_TOKEN}`;
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, { redirect: 'follow' });
     if (!response.ok) throw new Error('Erreur API: ' + response.status);
     
     const data = await response.json();
@@ -953,7 +958,9 @@ async function loadData() {
         objectifTicketMoyen: parseFloat(data.config.objectif_ticket_moyen) || 38.00,
         alerteTresorerie: parseFloat(data.config.alerte_tresorerie) || 2000,
         tauxChargesFixes: parseFloat(data.config.taux_charges_fixes) || 0.35,
-        tauxPersonnel: parseFloat(data.config.taux_personnel) || 0.30
+        tauxPersonnel: parseFloat(data.config.taux_personnel) || 0.30,
+        caisseType: data.config.caisse_type || 'manual',
+        caisseCredentials: (() => { try { return JSON.parse(data.config.caisse_credentials || '{}'); } catch(e) { return {}; } })()
       };
       console.log('⚙️ Configuration chargée:', CFG);
     }
@@ -1430,6 +1437,7 @@ function openSettingsModal() {
   document.getElementById('alerteTresorerie').value = CFG.alerteTresorerie;
   document.getElementById('tauxChargesFixes').value = (CFG.tauxChargesFixes * 100).toFixed(1);
   document.getElementById('tauxPersonnel').value = (CFG.tauxPersonnel * 100).toFixed(1);
+  loadCaisseSettings();
   
   // Afficher la modal
   document.getElementById('settingsModal').classList.add('show');
@@ -1455,6 +1463,13 @@ async function saveSettings(event) {
       taux_personnel: parseFloat(document.getElementById('tauxPersonnel').value) / 100
     };
     
+    // ── Récupérer config caisse ──
+    const caisseConfig = getCaisseConfig();
+
+    // ── Étendre config avec caisse ──
+    config.caisse_type        = caisseConfig.caisseType;
+    config.caisse_credentials = JSON.stringify(caisseConfig.caisseCredentials);
+
     // ── Mettre à jour CFG immédiatement (sans attendre serveur) ──
     CFG = {
       objectifFoodCost:    config.objectif_food_cost,
@@ -1462,7 +1477,9 @@ async function saveSettings(event) {
       objectifTicketMoyen: config.objectif_ticket_moyen,
       alerteTresorerie:    config.alerte_tresorerie,
       tauxChargesFixes:    config.taux_charges_fixes,
-      tauxPersonnel:       config.taux_personnel
+      tauxPersonnel:       config.taux_personnel,
+      caisseType:          caisseConfig.caisseType,
+      caisseCredentials:   caisseConfig.caisseCredentials
     };
     render('mois'); // Affichage mis à jour instantanément
     closeSettingsModal();
@@ -1474,7 +1491,7 @@ async function saveSettings(event) {
       config: JSON.stringify(config)
     });
     
-    const response = await fetch(`${APPS_SCRIPT_URL}?${params.toString()}`);
+    const response = await fetch(`${APPS_SCRIPT_URL}?${params.toString()}`, { redirect: 'follow' });
     
     if (!response.ok) throw new Error('Erreur sauvegarde');
     
@@ -1504,6 +1521,96 @@ document.addEventListener('click', (e) => {
     closeSettingsModal();
   }
 });
+
+// ══════════════════════════════════════════════════
+// GESTION INTÉGRATION CAISSE
+// ══════════════════════════════════════════════════
+
+const CAISSE_FIELDS_MAP = {
+  manual:     [],
+  lightspeed: ['caisse_client_id', 'caisse_client_secret', 'caisse_account_id'],
+  zelty:      ['caisse_api_key', 'caisse_restaurant_id'],
+  laddition:  ['caisse_token'],
+  tiller:     ['caisse_api_key', 'caisse_restaurant_id'],
+  square:     ['caisse_token', 'caisse_location_id'],
+  clyo:       ['caisse_api_key', 'caisse_site_id'],
+  cashpad:    ['caisse_token', 'caisse_etab_id'],
+  custom:     ['caisse_api_url', 'caisse_token']
+};
+
+function onCaisseTypeChange() {
+  const type = document.getElementById('caisseType').value;
+  document.querySelectorAll('.caisse-fields').forEach(el => el.classList.remove('visible'));
+  const block = document.getElementById('caisseFields-' + type);
+  if (block) block.classList.add('visible');
+  // Afficher le bouton test uniquement si pas manuel
+  const testZone = document.getElementById('caisseTestZone');
+  if (testZone) testZone.style.display = type !== 'manual' ? 'block' : 'none';
+  // Reset résultat
+  const res = document.getElementById('caisseTestResult');
+  if (res) res.style.display = 'none';
+}
+
+async function testCaisseConnection() {
+  const btn = document.getElementById('btnTestCaisse');
+  const res = document.getElementById('caisseTestResult');
+  btn.textContent = '⏳ Test en cours...';
+  btn.disabled = true;
+  res.style.display = 'none';
+  try {
+    // Sauvegarder d'abord les credentials
+    const caisseConfig = getCaisseConfig();
+    const config = {
+      caisse_type: caisseConfig.caisseType,
+      caisse_credentials: JSON.stringify(caisseConfig.caisseCredentials)
+    };
+    await fetch(`${APPS_SCRIPT_URL}?action=saveConfig&id=${CLIENT_TOKEN}&config=${encodeURIComponent(JSON.stringify(config))}`, { redirect: 'follow' });
+    // Puis tester
+    const resp = await fetch(`${APPS_SCRIPT_URL}?action=testCaisse&id=${CLIENT_TOKEN}`, { redirect: 'follow' });
+    const data = await resp.json();
+    res.style.display = 'block';
+    if (data.success) {
+      res.style.background = 'rgba(0,200,100,0.15)';
+      res.style.color = '#00c864';
+      res.textContent = '✅ ' + (data.message || 'Connexion réussie');
+    } else {
+      res.style.background = 'rgba(231,76,60,0.15)';
+      res.style.color = '#e74c3c';
+      res.textContent = '❌ ' + (data.error || 'Échec de connexion');
+    }
+  } catch(e) {
+    res.style.display = 'block';
+    res.style.background = 'rgba(231,76,60,0.15)';
+    res.style.color = '#e74c3c';
+    res.textContent = '❌ Erreur réseau';
+  }
+  btn.textContent = '🔌 Tester la connexion';
+  btn.disabled = false;
+}
+
+function loadCaisseSettings() {
+  const type = CFG.caisseType || 'manual';
+  const sel = document.getElementById('caisseType');
+  if (sel) sel.value = type;
+  onCaisseTypeChange();
+  // Pré-remplir les champs (sauf passwords)
+  const creds = CFG.caisseCredentials || {};
+  Object.entries(creds).forEach(([key, val]) => {
+    const el = document.getElementById(key);
+    if (el && el.type !== 'password') el.value = val || '';
+  });
+}
+
+function getCaisseConfig() {
+  const type = document.getElementById('caisseType')?.value || 'manual';
+  const fields = CAISSE_FIELDS_MAP[type] || [];
+  const creds = {};
+  fields.forEach(fieldId => {
+    const el = document.getElementById(fieldId);
+    if (el && el.value) creds[fieldId] = el.value;
+  });
+  return { caisseType: type, caisseCredentials: creds };
+}
 
 // ═══════════════════════════════════════════════════════════
 // INIT
@@ -1562,6 +1669,137 @@ document.addEventListener("DOMContentLoaded", () => startAutoRefresh());
         <input type="number" id="tauxPersonnel" class="form-input" 
                step="0.1" min="0" max="100" required>
         <div class="form-hint">Taux de coût du personnel en % du CA</div>
+      </div>
+
+      <!-- ════ SECTION CAISSE ════ -->
+      <div class="caisse-section">
+        <div class="caisse-section-title">🖥️ Intégration Caisse</div>
+
+        <div class="form-group">
+          <label class="form-label">Type de caisse <span class="form-badge">AUTOMATIQUE</span></label>
+          <select id="caisseType" class="form-input" onchange="onCaisseTypeChange()">
+            <option value="manual">📄 Manuel (scan ticket Z)</option>
+            <option value="lightspeed">⚡ Lightspeed</option>
+            <option value="zelty">🟢 Zelty</option>
+            <option value="laddition">➕ L'Addition</option>
+            <option value="tiller">🔷 Tiller</option>
+            <option value="square">⬛ Square</option>
+            <option value="clyo">🔵 Clyo Systems</option>
+            <option value="cashpad">💳 Cashpad</option>
+            <option value="custom">🔧 Autre (API custom)</option>
+          </select>
+          <div class="form-hint">Sélectionnez votre logiciel de caisse pour activer la synchronisation automatique</div>
+        </div>
+
+        <div id="caisseTestZone" style="display:none; margin-bottom:14px;">
+          <button type="button" class="btn btn-secondary" onclick="testCaisseConnection()" id="btnTestCaisse"
+                  style="font-size:12px; padding:8px 16px; width:100%;">
+            🔌 Tester la connexion
+          </button>
+          <div id="caisseTestResult" style="margin-top:8px; font-size:12px; padding:8px; border-radius:6px; display:none;"></div>
+        </div>
+
+        <!-- Champs API dynamiques selon la caisse -->
+        <div id="caisseFields-lightspeed" class="caisse-fields">
+          <div class="form-group">
+            <label class="form-label">Lightspeed — Client ID</label>
+            <input type="text" id="caisse_client_id" class="form-input" placeholder="ex: abc123xyz">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Lightspeed — Client Secret</label>
+            <input type="password" id="caisse_client_secret" class="form-input" placeholder="••••••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Lightspeed — Account ID</label>
+            <input type="text" id="caisse_account_id" class="form-input" placeholder="ex: 12345">
+            <div class="form-hint">Trouvez ces informations dans Lightspeed → Back-office → API</div>
+          </div>
+        </div>
+
+        <div id="caisseFields-zelty" class="caisse-fields">
+          <div class="form-group">
+            <label class="form-label">Zelty — Clé API</label>
+            <input type="password" id="caisse_api_key" class="form-input" placeholder="••••••••••••">
+            <div class="form-hint">Zelty → Paramètres → API → Générer une clé</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Zelty — Restaurant ID</label>
+            <input type="text" id="caisse_restaurant_id" class="form-input" placeholder="ex: 42">
+          </div>
+        </div>
+
+        <div id="caisseFields-laddition" class="caisse-fields">
+          <div class="form-group">
+            <label class="form-label">L'Addition — Token API</label>
+            <input type="password" id="caisse_token" class="form-input" placeholder="••••••••••••">
+            <div class="form-hint">L'Addition → Mon compte → Intégrations → Token API</div>
+          </div>
+        </div>
+
+        <div id="caisseFields-tiller" class="caisse-fields">
+          <div class="form-group">
+            <label class="form-label">Tiller — API Key</label>
+            <input type="password" id="caisse_api_key" class="form-input" placeholder="••••••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tiller — Restaurant UUID</label>
+            <input type="text" id="caisse_restaurant_id" class="form-input" placeholder="ex: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+            <div class="form-hint">Tiller → Paramètres → API Partners</div>
+          </div>
+        </div>
+
+        <div id="caisseFields-square" class="caisse-fields">
+          <div class="form-group">
+            <label class="form-label">Square — Access Token</label>
+            <input type="password" id="caisse_token" class="form-input" placeholder="••••••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Square — Location ID</label>
+            <input type="text" id="caisse_location_id" class="form-input" placeholder="ex: LXXXXXXXXXXXXXXXXX">
+            <div class="form-hint">Square Developer → Applications → Credentials</div>
+          </div>
+        </div>
+
+        <div id="caisseFields-clyo" class="caisse-fields">
+          <div class="form-group">
+            <label class="form-label">Clyo — API Key</label>
+            <input type="password" id="caisse_api_key" class="form-input" placeholder="••••••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Clyo — Site ID</label>
+            <input type="text" id="caisse_site_id" class="form-input" placeholder="ex: 1234">
+            <div class="form-hint">Clyo → Administration → API</div>
+          </div>
+        </div>
+
+        <div id="caisseFields-cashpad" class="caisse-fields">
+          <div class="form-group">
+            <label class="form-label">Cashpad — API Token</label>
+            <input type="password" id="caisse_token" class="form-input" placeholder="••••••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cashpad — Établissement ID</label>
+            <input type="text" id="caisse_etab_id" class="form-input" placeholder="ex: 56789">
+            <div class="form-hint">Cashpad → Paramètres → Intégrations</div>
+          </div>
+        </div>
+
+        <div id="caisseFields-custom" class="caisse-fields">
+          <div class="form-group">
+            <label class="form-label">URL de l'API</label>
+            <input type="text" id="caisse_api_url" class="form-input" placeholder="https://api.votrecaisse.com/v1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Token / API Key</label>
+            <input type="password" id="caisse_token" class="form-input" placeholder="••••••••••••">
+          </div>
+        </div>
+
+        <div id="caisseFields-manual" class="caisse-fields visible">
+          <div class="form-hint" style="color:var(--dim); font-size:12px; padding: 8px 0;">
+            📄 Mode manuel actif — Les tickets Z sont traités par scan et reconnaissance IA. Aucune configuration supplémentaire requise.
+          </div>
+        </div>
       </div>
 
       <div class="modal-actions">
