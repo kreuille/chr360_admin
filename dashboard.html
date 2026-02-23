@@ -472,6 +472,36 @@
     margin-top: 4px;
   }
 
+  .devise-selector {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .devise-btn {
+    flex: 1;
+    padding: 10px 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    color: #8892b0;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .devise-btn:hover {
+    border-color: rgba(0,229,255,0.4);
+    color: #ccd6f6;
+    background: rgba(0,229,255,0.06);
+  }
+  .devise-btn.active {
+    border-color: #00e5ff;
+    color: #00e5ff;
+    background: rgba(0,229,255,0.12);
+    font-weight: 700;
+  }
+
   .modal-actions {
     display: flex;
     gap: 12px;
@@ -981,6 +1011,7 @@ let CFG = {
   alerteTresorerie:    2000,
   tauxChargesFixes:    0.35,
   tauxPersonnel:       0.30,
+  devise:              '€',
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -1024,6 +1055,7 @@ async function loadData() {
         alerteTresorerie: parseFloat(data.config.alerte_tresorerie) || 2000,
         tauxChargesFixes: parseFloat(data.config.taux_charges_fixes) || 0.35,
         tauxPersonnel: parseFloat(data.config.taux_personnel) || 0.30,
+        devise: data.config.devise || '€',
         caisseType: data.config.caisse_type || 'manual',
         caisseCredentials: (() => { try { return JSON.parse(data.config.caisse_credentials || '{}'); } catch(e) { return {}; } })()
       };
@@ -1098,8 +1130,8 @@ function startAutoRefresh() {
 // ═══════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════
-const fmt  = v => new Intl.NumberFormat('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v) + ' €';
-const fmtK = v => v >= 1000 ? (v/1000).toFixed(1).replace('.',',') + 'k €' : fmt(v);
+const fmt  = v => new Intl.NumberFormat('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v) + '\u00A0' + (CFG.devise || '€');
+const fmtK = v => v >= 1000 ? (v/1000).toFixed(1).replace('.',',') + 'k\u00A0' + (CFG.devise || '€') : fmt(v);
 const fmtP = v => (v*100).toFixed(1).replace('.',',') + '%';
 const fmtI = v => Math.round(v).toLocaleString('fr-FR');
 const qs   = s => document.querySelector(s);
@@ -1513,6 +1545,14 @@ document.addEventListener('mousemove', e => {
 // GESTION DES PARAMÈTRES
 // ═══════════════════════════════════════════════════════════
 
+function selectDevise(btn) {
+  document.querySelectorAll('.devise-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Mettre à jour les labels dynamiques dans le formulaire
+  const sym = btn.dataset.devise;
+  document.querySelectorAll('.devise-label').forEach(el => el.textContent = sym);
+}
+
 function openSettingsModal() {
   // Remplir le formulaire avec les valeurs actuelles
   document.getElementById('objectifFoodCost').value = (CFG.objectifFoodCost * 100).toFixed(1);
@@ -1521,8 +1561,14 @@ function openSettingsModal() {
   document.getElementById('alerteTresorerie').value = CFG.alerteTresorerie;
   document.getElementById('tauxChargesFixes').value = (CFG.tauxChargesFixes * 100).toFixed(1);
   document.getElementById('tauxPersonnel').value = (CFG.tauxPersonnel * 100).toFixed(1);
+  // Sélectionner la devise active
+  document.querySelectorAll('.devise-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.devise === (CFG.devise || '€'));
+  });
+  // Sync des labels
+  const activeDevise = CFG.devise || '€';
+  document.querySelectorAll('.devise-label').forEach(el => el.textContent = activeDevise);
   loadCaisseSettings();
-  
   // Afficher la modal
   document.getElementById('settingsModal').classList.add('show');
 }
@@ -1544,7 +1590,8 @@ async function saveSettings(event) {
       taux_charges_fixes:  parseFloat(document.getElementById('tauxChargesFixes').value) / 100,
       taux_personnel:      parseFloat(document.getElementById('tauxPersonnel').value) / 100,
       taux_charges_fixes: parseFloat(document.getElementById('tauxChargesFixes').value) / 100,
-      taux_personnel: parseFloat(document.getElementById('tauxPersonnel').value) / 100
+      taux_personnel: parseFloat(document.getElementById('tauxPersonnel').value) / 100,
+      devise: document.querySelector('.devise-btn.active')?.dataset.devise || '€'
     };
     
     // ── Récupérer config caisse ──
@@ -1562,6 +1609,7 @@ async function saveSettings(event) {
       alerteTresorerie:    config.alerte_tresorerie,
       tauxChargesFixes:    config.taux_charges_fixes,
       tauxPersonnel:       config.taux_personnel,
+      devise:              config.devise,
       caisseType:          caisseConfig.caisseType,
       caisseCredentials:   caisseConfig.caisseCredentials
     };
@@ -1797,6 +1845,16 @@ document.addEventListener("DOMContentLoaded", () => startAutoRefresh());
     
     <form id="settingsForm" onsubmit="saveSettings(event)">
       <div class="form-group">
+        <label class="form-label">💱 Devise</label>
+        <div class="devise-selector">
+          <button type="button" class="devise-btn active" data-devise="€" onclick="selectDevise(this)">€ Euro</button>
+          <button type="button" class="devise-btn" data-devise="CHF" onclick="selectDevise(this)">CHF Franc suisse</button>
+          <button type="button" class="devise-btn" data-devise="$" onclick="selectDevise(this)">$ Dollar US</button>
+        </div>
+        <div class="form-hint">Symbole affiché sur tous les montants du dashboard</div>
+      </div>
+
+      <div class="form-group">
         <label class="form-label">🍽️ Objectif Food Cost (%)</label>
         <input type="number" id="objectifFoodCost" class="form-input" 
                step="0.1" min="0" max="100" required>
@@ -1811,14 +1869,14 @@ document.addEventListener("DOMContentLoaded", () => startAutoRefresh());
       </div>
       
       <div class="form-group">
-        <label class="form-label">📊 Objectif Ticket Moyen (€)</label>
+        <label class="form-label">📊 Objectif Ticket Moyen (<span class="devise-label">€</span>)</label>
         <input type="number" id="objectifTicketMoyen" class="form-input" 
                step="0.01" min="0" required>
         <div class="form-hint">Ticket moyen minimum attendu</div>
       </div>
       
       <div class="form-group">
-        <label class="form-label">💳 Alerte Trésorerie (€)</label>
+        <label class="form-label">💳 Alerte Trésorerie (<span class="devise-label">€</span>)</label>
         <input type="number" id="alerteTresorerie" class="form-input" 
                step="1" min="0" required>
         <div class="form-hint">Montant maximum d'échéances à 30 jours</div>
