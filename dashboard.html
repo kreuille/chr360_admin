@@ -1377,6 +1377,8 @@ function openSettingsModal() {
   document.getElementById('objectifBevCost').value = (CFG.objectifBevCost * 100).toFixed(1);
   document.getElementById('objectifTicketMoyen').value = CFG.objectifTicketMoyen.toFixed(2);
   document.getElementById('alerteTresorerie').value = CFG.alerteTresorerie;
+  document.getElementById('tauxChargesFixes').value = (CFG.tauxChargesFixes * 100).toFixed(1);
+  document.getElementById('tauxPersonnel').value = (CFG.tauxPersonnel * 100).toFixed(1);
   
   // Afficher la modal
   document.getElementById('settingsModal').classList.add('show');
@@ -1396,6 +1398,8 @@ async function saveSettings(event) {
       objectif_bev_cost: parseFloat(document.getElementById('objectifBevCost').value) / 100,
       objectif_ticket_moyen: parseFloat(document.getElementById('objectifTicketMoyen').value),
       alerte_tresorerie: parseFloat(document.getElementById('alerteTresorerie').value),
+      taux_charges_fixes: parseFloat(document.getElementById('tauxChargesFixes').value) / 100,
+      taux_personnel: parseFloat(document.getElementById('tauxPersonnel').value) / 100,
       taux_charges_fixes: CFG.tauxChargesFixes,
       taux_personnel: CFG.tauxPersonnel
     };
@@ -1420,6 +1424,8 @@ async function saveSettings(event) {
         objectifBevCost: config.objectif_bev_cost,
         objectifTicketMoyen: config.objectif_ticket_moyen,
         alerteTresorerie: config.alerte_tresorerie,
+        tauxChargesFixes: parseFloat(config.taux_charges_fixes) || 0.35,
+        tauxPersonnel: parseFloat(config.taux_personnel) || 0.30,
         tauxChargesFixes: config.taux_charges_fixes,
         tauxPersonnel: config.taux_personnel
       };
@@ -1499,6 +1505,20 @@ document.addEventListener("DOMContentLoaded", () => startAutoRefresh());
         <div class="form-hint">Montant maximum d'échéances à 30 jours</div>
       </div>
       
+      <div class="form-group">
+        <label class="form-label">💼 Charges Fixes (%)</label>
+        <input type="number" id="tauxChargesFixes" class="form-input" 
+               step="0.1" min="0" max="100" required>
+        <div class="form-hint">Taux de charges fixes en % du CA (loyer, énergie, assurances...)</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">👥 Coût Personnel (%)</label>
+        <input type="number" id="tauxPersonnel" class="form-input" 
+               step="0.1" min="0" max="100" required>
+        <div class="form-hint">Taux de coût du personnel en % du CA</div>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeSettingsModal()">
           Annuler
