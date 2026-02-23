@@ -1394,17 +1394,29 @@ async function saveSettings(event) {
   try {
     // Récupérer les valeurs du formulaire
     const config = {
-      objectif_food_cost: parseFloat(document.getElementById('objectifFoodCost').value) / 100,
-      objectif_bev_cost: parseFloat(document.getElementById('objectifBevCost').value) / 100,
+      objectif_food_cost:  parseFloat(document.getElementById('objectifFoodCost').value) / 100,
+      objectif_bev_cost:   parseFloat(document.getElementById('objectifBevCost').value) / 100,
       objectif_ticket_moyen: parseFloat(document.getElementById('objectifTicketMoyen').value),
-      alerte_tresorerie: parseFloat(document.getElementById('alerteTresorerie').value),
-      taux_charges_fixes: parseFloat(document.getElementById('tauxChargesFixes').value) / 100,
-      taux_personnel: parseFloat(document.getElementById('tauxPersonnel').value) / 100,
+      alerte_tresorerie:   parseFloat(document.getElementById('alerteTresorerie').value),
+      taux_charges_fixes:  parseFloat(document.getElementById('tauxChargesFixes').value) / 100,
+      taux_personnel:      parseFloat(document.getElementById('tauxPersonnel').value) / 100,
       taux_charges_fixes: parseFloat(document.getElementById('tauxChargesFixes').value) / 100,
       taux_personnel: parseFloat(document.getElementById('tauxPersonnel').value) / 100
     };
     
-    // Envoyer au serveur via GET (contournement CORS)
+    // ── Mettre à jour CFG immédiatement (sans attendre serveur) ──
+    CFG = {
+      objectifFoodCost:    config.objectif_food_cost,
+      objectifBevCost:     config.objectif_bev_cost,
+      objectifTicketMoyen: config.objectif_ticket_moyen,
+      alerteTresorerie:    config.alerte_tresorerie,
+      tauxChargesFixes:    config.taux_charges_fixes,
+      tauxPersonnel:       config.taux_personnel
+    };
+    render('mois'); // Affichage mis à jour instantanément
+    closeSettingsModal();
+
+    // ── Envoyer au serveur en arrière-plan ──
     const params = new URLSearchParams({
       action: 'saveConfig',
       id: CLIENT_TOKEN,
@@ -1418,28 +1430,12 @@ async function saveSettings(event) {
     const result = await response.json();
     
     if (result.success) {
-      // Mettre à jour CFG local
-      CFG = {
-        objectifFoodCost:    parseFloat(config.objectif_food_cost)  || 0.28,
-        objectifBevCost:     parseFloat(config.objectif_bev_cost)   || 0.22,
-        objectifTicketMoyen: parseFloat(config.objectif_ticket_moyen) || 38,
-        alerteTresorerie:    parseFloat(config.alerte_tresorerie)   || 2000,
-        tauxChargesFixes:    parseFloat(config.taux_charges_fixes)  || 0.35,
-        tauxPersonnel:       parseFloat(config.taux_personnel)      || 0.30
-      };
-      
-      // Fermer la modal
-      closeSettingsModal();
-      
       // Afficher l'indicateur de succès
       const indicator = document.getElementById('saveIndicator');
       indicator.classList.add('show');
       setTimeout(() => {
         indicator.classList.remove('show');
       }, 3000);
-      
-      // Rafraîchir l'affichage avec les nouveaux paramètres
-      render('mois');
       
       console.log('✅ Paramètres sauvegardés:', CFG);
     }
