@@ -9,21 +9,21 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:        #0a0a0f;
-    --surface:   #12121a;
-    --card:      #1a1a26;
-    --border:    #2a2a3d;
-    --accent:    #f0a500;
-    --accent2:   #e05c5c;
-    --accent3:   #4ecdc4;
-    --green:     #2ecc71;
-    --red:       #e74c3c;
-    --orange:    #f39c12;
-    --text:      #f0f0f0;
-    --muted:     #8888a0;
-    --dim:       #55556a;
+    --bg:        #080C1F;
+    --surface:   #0d1230;
+    --card:      #0d1230;
+    --border:    #1e2a50;
+    --accent:    #00E5FF;
+    --accent2:   #F87171;
+    --accent3:   #A78BFA;
+    --green:     #00D084;
+    --red:       #F87171;
+    --orange:    #F59E0B;
+    --text:      #E8EFF8;
+    --muted:     #8899bb;
+    --dim:       #3a4a6b;
     --font-head: 'DM Serif Display', serif;
-    --font-body: 'DM Sans', sans-serif;
+    --font-body: 'Segoe UI', 'DM Sans', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
     --r:         12px;
     --r-lg:      20px;
@@ -37,6 +37,7 @@
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-body);
+    min-height: 100vh;
     font-size: 14px;
     line-height: 1.5;
     min-height: 100vh;
@@ -64,8 +65,8 @@
     z-index: 0;
     opacity: 0.12;
   }
-  .bg-glow-1 { background: var(--accent); top: -200px; left: -100px; }
-  .bg-glow-2 { background: var(--accent3); bottom: -200px; right: -100px; }
+  .bg-glow-1 { background: #00E5FF44; top: -200px; left: -100px; }
+  .bg-glow-2 { background: #A78BFA44; bottom: -200px; right: -100px; }
 
   /* ── LAYOUT ── */
   .app { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 28px 24px 60px; }
@@ -76,26 +77,28 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 36px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
     animation: fadeDown 0.6s ease both;
   }
   .header-left { display: flex; align-items: center; gap: 16px; }
   .logo-mark {
     width: 48px; height: 48px;
-    background: linear-gradient(135deg, var(--accent), #c07800);
+    background: linear-gradient(135deg, var(--accent), #0099bb);
     border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     font-size: 22px;
-    box-shadow: 0 0 30px rgba(240,165,0,0.3);
+    box-shadow: 0 0 30px rgba(0,229,255,0.25);
   }
   .header-title { font-family: var(--font-head); font-size: 26px; letter-spacing: -0.5px; }
   .header-subtitle { color: var(--muted); font-size: 12px; font-weight: 400; margin-top: 2px; }
   .header-right { display: flex; align-items: center; gap: 12px; }
   .badge-live {
     display: flex; align-items: center; gap: 7px;
-    background: rgba(46,204,113,0.12);
-    border: 1px solid rgba(46,204,113,0.3);
+    background: rgba(0,208,132,0.12);
+    border: 1px solid rgba(0,208,132,0.3);
     padding: 6px 14px; border-radius: 100px;
     font-size: 11px; font-weight: 600; color: var(--green);
     letter-spacing: 0.5px;
@@ -132,7 +135,7 @@
   }
   .tab.active {
     background: var(--accent);
-    color: #000;
+    color: #080C1F;
     font-weight: 600;
   }
   .tab:hover:not(.active) { color: var(--text); }
@@ -141,7 +144,7 @@
   .section-label {
     font-size: 10px; font-weight: 600;
     letter-spacing: 2px; text-transform: uppercase;
-    color: var(--dim); margin-bottom: 14px; margin-top: 32px;
+    color: var(--muted); margin-bottom: 14px; margin-top: 32px; letter-spacing: 1.5px;
   }
   .section-label:first-child { margin-top: 0; }
 
@@ -163,12 +166,12 @@
     transition: border-color 0.2s, transform 0.2s;
     animation: fadeUp 0.5s ease both;
   }
-  .card:hover { border-color: var(--dim); transform: translateY(-1px); }
+  .card:hover { border-color: #00E5FF44; transform: translateY(-1px); }
   .card::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(600px circle at var(--mouse-x,50%) var(--mouse-y,50%), rgba(240,165,0,0.04), transparent 40%);
+    background: radial-gradient(600px circle at var(--mouse-x,50%) var(--mouse-y,50%), rgba(0,229,255,0.03), transparent 40%);
     pointer-events: none;
   }
   .card-label {
@@ -191,9 +194,9 @@
     padding: 3px 8px; border-radius: 6px;
     margin-top: 8px;
   }
-  .delta-up   { background: rgba(46,204,113,0.15); color: var(--green); }
-  .delta-down { background: rgba(231,76,60,0.15);  color: var(--red); }
-  .delta-warn { background: rgba(243,156,18,0.15); color: var(--orange); }
+  .delta-up   { background: rgba(0,208,132,0.15); color: var(--green); }
+  .delta-down { background: rgba(248,113,113,0.15);  color: var(--red); }
+  .delta-warn { background: rgba(245,158,11,0.15); color: var(--orange); }
 
   /* ── ACCENT LINE ── */
   .accent-line {
@@ -204,7 +207,7 @@
   }
   .accent-line.green  { background: linear-gradient(90deg, var(--green), transparent); }
   .accent-line.red    { background: linear-gradient(90deg, var(--red), transparent); }
-  .accent-line.teal   { background: linear-gradient(90deg, var(--accent3), transparent); }
+  .accent-line.purple { background: linear-gradient(90deg, var(--accent3), transparent); }
   .accent-line.orange { background: linear-gradient(90deg, var(--orange), transparent); }
 
   /* ── GAUGE ── */
@@ -252,10 +255,10 @@
     padding: 3px 9px; border-radius: 6px;
     font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
   }
-  .pill-green  { background: rgba(46,204,113,0.15); color: var(--green); }
-  .pill-red    { background: rgba(231,76,60,0.15);  color: var(--red); }
-  .pill-orange { background: rgba(243,156,18,0.15); color: var(--orange); }
-  .pill-blue   { background: rgba(78,205,196,0.15); color: var(--accent3); }
+  .pill-green  { background: rgba(0,208,132,0.15); color: var(--green); }
+  .pill-red    { background: rgba(248,113,113,0.15);  color: var(--red); }
+  .pill-orange { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .pill-blue   { background: rgba(167,139,250,0.15); color: var(--accent3); }
 
   /* ── ALERTS ── */
   .alert-card {
@@ -267,9 +270,9 @@
     animation: slideIn 0.4s ease both;
   }
   .alert-card:last-child { margin-bottom: 0; }
-  .alert-ok     { background: rgba(46,204,113,0.07);  border-color: rgba(46,204,113,0.2); }
-  .alert-warn   { background: rgba(243,156,18,0.07);  border-color: rgba(243,156,18,0.2); }
-  .alert-danger { background: rgba(231,76,60,0.07);   border-color: rgba(231,76,60,0.2); }
+  .alert-ok     { background: rgba(0,208,132,0.07);  border-color: rgba(0,208,132,0.2); }
+  .alert-warn   { background: rgba(245,158,11,0.07);  border-color: rgba(245,158,11,0.2); }
+  .alert-danger { background: rgba(248,113,113,0.07);   border-color: rgba(248,113,113,0.2); }
   .alert-icon { font-size: 18px; flex-shrink: 0; line-height: 1.4; }
   .alert-text strong { display: block; font-size: 12px; font-weight: 600; margin-bottom: 2px; }
   .alert-text span   { font-size: 11px; color: var(--muted); }
@@ -371,7 +374,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.7);
+    background: rgba(4,7,20,0.85);
     backdrop-filter: blur(4px);
     z-index: 9999;
     align-items: center;
@@ -382,13 +385,59 @@
   }
 
   .modal-content {
-    background: #1e2139;
-    border-radius: 16px;
-    padding: 32px;
-    max-width: 500px;
-    width: 90%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    background: #0d1230;
+    border: 1px solid #1e2a50;
+    border-radius: 20px;
+    padding: 0;
+    max-width: 860px;
+    width: 95%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,229,255,0.08);
     animation: modalSlideIn 0.3s ease;
+  }
+  .modal-header-sticky {
+    padding: 24px 32px 20px;
+    border-bottom: 1px solid #1e2a50;
+    flex-shrink: 0;
+    background: #0a0e24;
+    border-radius: 20px 20px 0 0;
+  }
+  .modal-body-scroll {
+    overflow-y: auto;
+    flex: 1;
+    padding: 28px 32px;
+    scrollbar-width: thin;
+    scrollbar-color: #1e2a50 transparent;
+  }
+  .modal-body-scroll::-webkit-scrollbar { width: 6px; }
+  .modal-body-scroll::-webkit-scrollbar-track { background: transparent; }
+  .modal-body-scroll::-webkit-scrollbar-thumb { background: #1e2a50; border-radius: 3px; }
+  .modal-footer-sticky {
+    padding: 20px 32px;
+    border-top: 1px solid #1e2a50;
+    flex-shrink: 0;
+    background: #0a0e24;
+    border-radius: 0 0 20px 20px;
+  }
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .settings-col-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #00E5FF;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #1e2a50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   @keyframes modalSlideIn {
     from { opacity: 0; transform: translateY(-20px); }
@@ -410,7 +459,7 @@
     background: none;
     border: none;
     font-size: 28px;
-    color: #6b7280;
+    color: #8899bb;
     cursor: pointer;
     padding: 0;
     width: 32px;
@@ -433,28 +482,28 @@
     display: block;
     font-size: 14px;
     font-weight: 500;
-    color: #9ca3af;
+    color: #ccd6f6;
     margin-bottom: 8px;
   }
   .form-input {
     width: 100%;
-    background: #151829;
-    border: 1px solid rgba(255,255,255,0.1);
+    background: #070a1a;
+    border: 1px solid #1e2a50;
     border-radius: 8px;
-    padding: 12px;
-    font-size: 16px;
+    padding: 10px 14px;
+    font-size: 14px;
     color: #fff;
     transition: all 0.2s;
     box-sizing: border-box;
   }
   .form-input:focus {
     outline: none;
-    border-color: #fbbf24;
-    background: #1a1d35;
+    border-color: #00E5FF;
+    background: #0d1230;
   }
   .form-hint {
     font-size: 12px;
-    color: #6b7280;
+    color: #8899bb;
     margin-top: 4px;
   }
 
@@ -466,28 +515,30 @@
   .btn {
     flex: 1;
     padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
     border: none;
   }
   .btn-primary {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    color: #1e2139;
+    background: linear-gradient(135deg, #00E5FF 0%, #0099bb 100%);
+    color: #080C1F;
+    font-weight: 700;
   }
   .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(251,191,36,0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,229,255,0.35);
   }
   .btn-secondary {
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.2);
+    background: #131c3a;
+    color: #ccd6f6;
+    border: 1px solid #1e2a50;
   }
   .btn-secondary:hover {
-    background: rgba(255,255,255,0.15);
+    background: #1e2a50;
+    border-color: #2a3a60;
   }
 
   .save-indicator {
@@ -513,15 +564,15 @@
   /* UPLOAD MODAL                                              */
   /* ══════════════════════════════════════════════════════════ */
   .btn-upload {
-    background: linear-gradient(135deg, rgba(240,165,0,0.2), rgba(240,165,0,0.08));
-    border-color: rgba(240,165,0,0.4) !important;
+    background: linear-gradient(135deg, rgba(0,229,255,0.12), rgba(0,229,255,0.05));
+    border-color: rgba(0,229,255,0.4) !important;
   }
   .btn-upload:hover {
-    background: linear-gradient(135deg, rgba(240,165,0,0.3), rgba(240,165,0,0.15)) !important;
+    background: linear-gradient(135deg, rgba(0,229,255,0.25), rgba(167,139,250,0.15)) !important;
   }
 
   .upload-modal-content {
-    background: #1e2139;
+    background: #0d1230;
     border-radius: 16px;
     padding: 32px;
     max-width: 700px;
@@ -567,7 +618,7 @@
     cursor: pointer;
   }
   .drop-zone:hover, .drop-zone.dragover { background: rgba(255,255,255,0.03); }
-  .drop-zone.achats:hover, .drop-zone.achats.dragover { border-color: var(--accent); background: rgba(240,165,0,0.04); }
+  .drop-zone.achats:hover, .drop-zone.achats.dragover { border-color: var(--accent); background: rgba(0,229,255,0.03); }
   .drop-zone.ventes:hover, .drop-zone.ventes.dragover { border-color: var(--accent3); background: rgba(78,205,196,0.04); }
   .drop-zone-icon { font-size: 28px; }
   .drop-zone-text { font-size: 12px; font-weight: 500; color: var(--muted); }
@@ -587,9 +638,9 @@
     font-size: 11px;
     transition: border-color 0.3s;
   }
-  .file-item.sending  { border-color: rgba(240,165,0,0.4); }
-  .file-item.ok       { border-color: rgba(46,204,113,0.4); }
-  .file-item.error    { border-color: rgba(231,76,60,0.4); }
+  .file-item.sending  { border-color: rgba(0,229,255,0.4); }
+  .file-item.ok       { border-color: rgba(0,208,132,0.4); }
+  .file-item.error    { border-color: rgba(248,113,113,0.4); }
   .file-item-icon { font-size: 14px; flex-shrink: 0; }
   .file-item-name {
     flex: 1; white-space: nowrap;
@@ -619,8 +670,8 @@
   .upload-info {
     margin-top: 18px;
     padding: 10px 14px;
-    background: rgba(240,165,0,0.06);
-    border: 1px solid rgba(240,165,0,0.15);
+    background: rgba(0,229,255,0.04);
+    border: 1px solid rgba(0,229,255,0.15);
     border-radius: 8px;
     font-size: 11px; color: var(--muted);
     line-height: 1.6;
@@ -724,7 +775,7 @@
         <svg class="gauge-svg" viewBox="0 0 140 80">
           <path class="gauge-track" d="M15,75 A55,55 0 0,1 125,75" />
           <path class="gauge-fill" id="gauge-fc-path" d="M15,75 A55,55 0 0,1 125,75"
-            stroke="#f0a500" stroke-dasharray="173" stroke-dashoffset="173" />
+            stroke="#00E5FF" stroke-dasharray="173" stroke-dashoffset="173" />
           <text class="gauge-value" x="70" y="68" text-anchor="middle" id="gauge-fc-text">—</text>
         </svg>
         <div class="gauge-label">Food Cost réel</div>
@@ -739,7 +790,7 @@
         <svg class="gauge-svg" viewBox="0 0 140 80">
           <path class="gauge-track" d="M15,75 A55,55 0 0,1 125,75" />
           <path class="gauge-fill" id="gauge-bev-path" d="M15,75 A55,55 0 0,1 125,75"
-            stroke="#4ecdc4" stroke-dasharray="173" stroke-dashoffset="173" />
+            stroke="#A78BFA" stroke-dasharray="173" stroke-dashoffset="173" />
           <text class="gauge-value" x="70" y="68" text-anchor="middle" id="gauge-bev-text">—</text>
         </svg>
         <div class="gauge-label">Beverage Cost réel</div>
@@ -753,12 +804,12 @@
       <svg class="sparkline" id="sparkline" viewBox="0 0 300 50" preserveAspectRatio="none">
         <defs>
           <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#f0a500" stop-opacity="0.3"/>
-            <stop offset="100%" stop-color="#f0a500" stop-opacity="0"/>
+            <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#00E5FF" stop-opacity="0"/>
           </linearGradient>
         </defs>
         <path class="sparkline-area" id="spark-area" fill="url(#sparkGrad)" />
-        <path class="sparkline-line" id="spark-line" stroke="#f0a500" />
+        <path class="sparkline-line" id="spark-line" stroke="#00E5FF" />
       </svg>
       <div style="display:flex;justify-content:space-between;margin-top:6px">
         <span style="font-size:10px;color:var(--dim)" id="spark-min">min —</span>
@@ -987,8 +1038,8 @@ async function loadData() {
     // Afficher erreur dans le badge
     if (badgeLive) {
       badgeLive.innerHTML = '<span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block"></span> ERREUR';
-      badgeLive.style.background = 'rgba(231,76,60,0.12)';
-      badgeLive.style.borderColor = 'rgba(231,76,60,0.3)';
+      badgeLive.style.background = 'rgba(248,113,113,0.12)';
+      badgeLive.style.borderColor = 'rgba(248,113,113,0.3)';
       badgeLive.style.color = 'var(--red)';
     }
     
@@ -1063,9 +1114,9 @@ function compute(data) {
     ech30, ech60, tot30, tot60,
     echeancesTotal: tot30+tot60,
     catBreak: [
-      { label:'Alimentaire', val:alimHT, color:'#f0a500' },
-      { label:'Boissons',    val:boisHT, color:'#4ecdc4' },
-      { label:'Entretien',   val:entrHT, color:'#8888a0' },
+      { label:'Alimentaire', val:alimHT, color:'#00E5FF' },
+      { label:'Boissons',    val:boisHT, color:'#A78BFA' },
+      { label:'Entretien',   val:entrHT, color:'#8899bb' },
     ]
   };
 }
@@ -1124,8 +1175,8 @@ function render(periodKey) {
 
   // ─ Jauges
   setTimeout(() => {
-    renderGauge('gauge-fc-path', 'gauge-fc-text', k.foodCost, CFG.objectifFoodCost, k.foodCost > CFG.objectifFoodCost ? '#e74c3c' : '#f0a500');
-    renderGauge('gauge-bev-path', 'gauge-bev-text', k.bevCost, CFG.objectifBevCost, k.bevCost > CFG.objectifBevCost ? '#e74c3c' : '#4ecdc4');
+    renderGauge('gauge-fc-path', 'gauge-fc-text', k.foodCost, CFG.objectifFoodCost, k.foodCost > CFG.objectifFoodCost ? '#F87171' : '#00E5FF');
+    renderGauge('gauge-bev-path', 'gauge-bev-text', k.bevCost, CFG.objectifBevCost, k.bevCost > CFG.objectifBevCost ? '#F87171' : '#A78BFA');
   }, 300);
 
   // ─ Sparkline
@@ -1292,7 +1343,7 @@ function renderAlertes(k) {
 function renderTableFactures(achats) {
   const pillClass = { 'EN_ATTENTE':'pill-orange', 'PAYE':'pill-green', 'EN_RETARD':'pill-red', 'LITIGE':'pill-red' };
   const pillLabel = { 'EN_ATTENTE':'En attente', 'PAYE':'Payé', 'EN_RETARD':'En retard', 'LITIGE':'Litige' };
-  const catColor  = { 'ALIMENTAIRE':'#f0a500','BOISSONS':'#4ecdc4','ENTRETIEN':'#8888a0','EMBALLAGE':'#e05c5c','MATERIEL':'#aaaaff' };
+  const catColor  = { 'ALIMENTAIRE':'#00E5FF','BOISSONS':'#A78BFA','ENTRETIEN':'#8899bb','EMBALLAGE':'#F87171','MATERIEL':'#aaaaff' };
   qs('#table-body').innerHTML = achats.map(f => `
     <tr>
       <td style="font-weight:500">${f.fournisseur}</td>
@@ -1492,111 +1543,131 @@ document.addEventListener("DOMContentLoaded", () => startAutoRefresh());
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- MODAL PARAMÈTRES -->
+<!-- MODAL PARAMÈTRES — 2 colonnes + scroll -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <div id="settingsModal" class="modal-overlay">
   <div class="modal-content">
-    <div class="modal-header">
-      <h2 class="modal-title">⚙️ Paramètres</h2>
-      <button class="modal-close" onclick="closeSettingsModal()">×</button>
+
+    <!-- Header sticky -->
+    <div class="modal-header-sticky">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <h2 class="modal-title">⚙️ Paramètres</h2>
+          <div style="font-size:12px;color:#8899bb;margin-top:3px">Objectifs KPIs et canaux de notification</div>
+        </div>
+        <button class="modal-close" onclick="closeSettingsModal()">×</button>
+      </div>
     </div>
-    
-    <form id="settingsForm" onsubmit="saveSettings(event)">
-      <div class="form-group">
-        <label class="form-label">🍽️ Objectif Food Cost (%)</label>
-        <input type="number" id="objectifFoodCost" class="form-input" 
-               step="0.1" min="0" max="100" required>
-        <div class="form-hint">Pourcentage maximum de coût alimentaire</div>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">🍷 Objectif Beverage Cost (%)</label>
-        <input type="number" id="objectifBevCost" class="form-input" 
-               step="0.1" min="0" max="100" required>
-        <div class="form-hint">Pourcentage maximum de coût boissons</div>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">📊 Objectif Ticket Moyen (€)</label>
-        <input type="number" id="objectifTicketMoyen" class="form-input" 
-               step="0.01" min="0" required>
-        <div class="form-hint">Ticket moyen minimum attendu</div>
-      </div>
-      
-      <div class="form-group">
-        <label class="form-label">💳 Alerte Trésorerie (€)</label>
-        <input type="number" id="alerteTresorerie" class="form-input" 
-               step="1" min="0" required>
-        <div class="form-hint">Montant maximum d'échéances à 30 jours</div>
-      </div>
 
-      <!-- ── SECTION NOTIFICATIONS ── -->
-      <div style="border-top:1px solid #1e2a50;margin:8px 0 16px;padding-top:16px">
-        <div style="font-size:12px;font-weight:700;color:#8899bb;text-transform:uppercase;letter-spacing:.6px;margin-bottom:16px">
-          🔔 Canaux de notification
-        </div>
+    <!-- Corps scrollable -->
+    <div class="modal-body-scroll">
+      <form id="settingsForm" onsubmit="saveSettings(event)">
+        <div class="settings-grid">
 
-        <!-- Email -->
-        <div style="background:#0a0e24;border:1px solid #1e2a50;border-radius:10px;padding:14px 16px;margin-bottom:10px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-size:20px">📧</span>
-              <div>
-                <div style="font-size:13px;font-weight:600">Email</div>
-                <div style="font-size:11px;color:#8899bb">Alertes par email</div>
+          <!-- ── COLONNE GAUCHE : KPIs ── -->
+          <div>
+            <div class="settings-col-title">🎯 Objectifs & Seuils</div>
+
+            <div class="form-group">
+              <label class="form-label">🍽️ Food Cost maximum (%)</label>
+              <input type="number" id="objectifFoodCost" class="form-input"
+                     step="0.1" min="0" max="100" required>
+              <div class="form-hint">Alerte déclenchée si dépassé</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">🍷 Beverage Cost maximum (%)</label>
+              <input type="number" id="objectifBevCost" class="form-input"
+                     step="0.1" min="0" max="100" required>
+              <div class="form-hint">Coût boissons maximum</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">🧾 Ticket Moyen minimum</label>
+              <input type="number" id="objectifTicketMoyen" class="form-input"
+                     step="0.01" min="0" required>
+              <div class="form-hint">Alerte si ticket moyen tombe en dessous</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">💰 Alerte Trésorerie (minimum)</label>
+              <input type="number" id="alerteTresorerie" class="form-input"
+                     step="1" min="0" required>
+              <div class="form-hint">Alerte si trésorerie passe sous ce seuil</div>
+            </div>
+          </div>
+
+          <!-- ── COLONNE DROITE : NOTIFICATIONS ── -->
+          <div>
+            <div class="settings-col-title">🔔 Notifications</div>
+
+            <!-- Email -->
+            <div style="background:#070a1a;border:1px solid #1e2a50;border-radius:12px;padding:16px;margin-bottom:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:36px;height:36px;background:#00E5FF15;border:1px solid #00E5FF33;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📧</div>
+                  <div>
+                    <div style="font-size:13px;font-weight:600;color:#E8EFF8">Email</div>
+                    <div style="font-size:11px;color:#8899bb">Alertes par email</div>
+                  </div>
+                </div>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0">
+                  <span style="font-size:12px;color:#8899bb">Activer</span>
+                  <input type="checkbox" id="notifEmail" onchange="updateTelegramSection()"
+                         style="width:18px;height:18px;accent-color:#00E5FF;cursor:pointer">
+                </label>
+              </div>
+              <input type="email" id="alertEmail" class="form-input"
+                     placeholder="votre@email.com">
+              <div class="form-hint" style="margin-top:6px">Peut être différent de votre email de connexion</div>
+            </div>
+
+            <!-- Telegram -->
+            <div id="telegramBlock" style="background:#070a1a;border:1px solid #1e2a50;border-radius:12px;padding:16px;transition:border-color .2s">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:36px;height:36px;background:#2196F315;border:1px solid #2196F333;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">✈️</div>
+                  <div>
+                    <div style="font-size:13px;font-weight:600;color:#E8EFF8">Telegram</div>
+                    <div style="font-size:11px;color:#8899bb">Alertes instantanées sur téléphone</div>
+                  </div>
+                </div>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0">
+                  <span style="font-size:12px;color:#8899bb">Activer</span>
+                  <input type="checkbox" id="notifTelegram" onchange="updateTelegramSection()"
+                         style="width:18px;height:18px;accent-color:#2196F3;cursor:pointer">
+                </label>
+              </div>
+
+              <input type="text" id="telegramChatId" class="form-input"
+                     placeholder="Votre Chat ID (ex: 123456789)">
+
+              <div id="telegramHelp" style="margin-top:10px;background:#2196F30d;border:1px solid #2196F322;border-radius:8px;padding:12px;font-size:12px;color:#ccd;line-height:1.7;display:none">
+                <div style="color:#2196F3;font-weight:700;margin-bottom:6px">✈️ Comment obtenir votre Chat ID :</div>
+                <div>1. Ouvrez Telegram</div>
+                <div>2. Cherchez <strong style="color:#2196F3">@userinfobot</strong></div>
+                <div>3. Envoyez n'importe quel message</div>
+                <div>4. Il vous répond avec votre Chat ID — copiez-le ici</div>
               </div>
             </div>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="notifEmail" onchange="updateTelegramSection()"
-                     style="width:16px;height:16px;accent-color:#00E5FF;cursor:pointer">
-              <span style="font-size:12px;color:#8899bb">Activer</span>
-            </label>
-          </div>
-          <input type="email" id="alertEmail" class="form-input"
-                 placeholder="votre@email.com" style="margin-bottom:0">
-          <div class="form-hint">Email qui recevra les alertes (peut être différent de votre email de connexion)</div>
-        </div>
 
-        <!-- Telegram -->
-        <div style="background:#0a0e24;border:1px solid #1e2a50;border-radius:10px;padding:14px 16px" id="telegramBlock">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-size:20px">✈️</span>
-              <div>
-                <div style="font-size:13px;font-weight:600">Telegram</div>
-                <div style="font-size:11px;color:#8899bb">Alertes instantanées sur téléphone</div>
-              </div>
-            </div>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="notifTelegram" onchange="updateTelegramSection()"
-                     style="width:16px;height:16px;accent-color:#2196F3;cursor:pointer">
-              <span style="font-size:12px;color:#8899bb">Activer</span>
-            </label>
-          </div>
-          <input type="text" id="telegramChatId" class="form-input"
-                 placeholder="Votre Chat ID Telegram (ex: 123456789)" style="margin-bottom:4px">
-          <div class="form-hint" style="margin-bottom:10px">
-            Pour obtenir votre Chat ID : ouvrez Telegram → cherchez
-            <strong style="color:#2196F3">@userinfobot</strong> → envoyez n'importe quel message → il vous répond avec votre ID.
-          </div>
-          <div id="telegramHelp" style="display:none;background:#2196F30d;border:1px solid #2196F333;border-radius:8px;padding:10px 14px;font-size:12px;color:#ccd;line-height:1.7">
-            <strong style="color:#2196F3">✈️ Activer les alertes Telegram en 2 étapes :</strong><br>
-            1. Ouvrez Telegram et cherchez <strong>@userinfobot</strong><br>
-            2. Envoyez-lui un message — il vous répond avec votre Chat ID<br>
-            3. Copiez ce numéro dans le champ ci-dessus
           </div>
         </div>
-      </div>
+      </form>
+    </div>
 
-      <div class="modal-actions">
-        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal()">
+    <!-- Footer sticky avec boutons -->
+    <div class="modal-footer-sticky">
+      <div style="display:flex;gap:12px">
+        <button type="button" class="btn btn-secondary" onclick="closeSettingsModal()" style="flex:1">
           Annuler
         </button>
-        <button type="submit" class="btn btn-primary">
-          💾 Sauvegarder
+        <button type="submit" form="settingsForm" class="btn btn-primary" style="flex:2">
+          💾 Sauvegarder les paramètres
         </button>
       </div>
-    </form>
+    </div>
+
   </div>
 </div>
 
