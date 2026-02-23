@@ -691,10 +691,10 @@
 
   <!-- ═══ PERIOD TABS ═══ -->
   <div class="period-tabs">
-    <button class="tab" onclick="switchPeriod('today', this)">Aujourd'hui</button>
-    <button class="tab" onclick="switchPeriod('semaine', this)">7 jours</button>
-    <button class="tab active" onclick="switchPeriod('mois', this)">Ce mois</button>
-    <button class="tab" onclick="switchPeriod('trimestre', this)">Trimestre</button>
+    <button class="tab" data-period="today"    onclick="switchPeriod('today', this)">Aujourd'hui</button>
+    <button class="tab" data-period="semaine"  onclick="switchPeriod('semaine', this)">7 jours</button>
+    <button class="tab active" data-period="mois" onclick="switchPeriod('mois', this)">Ce mois</button>
+    <button class="tab" data-period="trimestre" onclick="switchPeriod('trimestre', this)">Trimestre</button>
   </div>
 
   <!-- ═══ KPIs PRINCIPAUX ═══ -->
@@ -906,32 +906,37 @@
 // ⚠️ IMPORTANT : Remplacez par l'URL de votre Web App Apps Script déployée
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgOWc09nli4MU1_dEqVx9MlHmGGcrpK-rpite1maoyMEaH24k9zvneDqb6W2XfOAgAbA/exec';
 
-// ── Wrapper fetch anti-CORS pour Apps Script ──
-async function apiFetch(url) {
-  // Tentative 1 : fetch standard avec redirect
-  try {
-    const r = await fetch(url, {
-      redirect:    'follow',
-      cache:       'no-cache',
-      credentials: 'omit',
-      headers:     { 'Accept': 'application/json' }
-    });
-    if (r.ok) return await r.json();
-  } catch(e) { /* CORS bloqué → essai 2 */ }
+// ── JSONP : contourne le CORS Apps Script de façon fiable ──
+let _jsonpCounter = 0;
 
-  // Tentative 2 : XMLHttpRequest (contourne parfois le CORS avec redirect)
+function apiFetch(url) {
   return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.onload = () => {
-      try { resolve(JSON.parse(xhr.responseText)); }
-      catch(e) { reject(new Error('Parse JSON: ' + e)); }
+    const cbName = '_chr360cb_' + (++_jsonpCounter) + '_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      reject(new Error('JSONP timeout (25s)'));
+    }, 25000);
+
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      console.log('[JSONP] ✅ réponse reçue pour', url.split('action=')[1]?.split('&')[0]);
+      resolve(data);
     };
-    xhr.onerror = () => reject(new Error('XHR erreur réseau'));
-    xhr.ontimeout = () => reject(new Error('XHR timeout'));
-    xhr.timeout = 20000;
-    xhr.send();
+
+    const sep = url.includes('?') ? '&' : '?';
+    const src = url + sep + 'callback=' + cbName;
+    const script = document.createElement('script');
+    script.src = src;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('JSONP script erreur — vérifier URL Apps Script'));
+    };
+    console.log('[JSONP] 📡 requête:', url.split('action=')[1]?.split('&')[0] || url.slice(-30));
+    document.head.appendChild(script);
   });
 }
 
@@ -1016,9 +1021,13 @@ async function loadData() {
     }
     
     // Re-render le dashboard avec les nouvelles données
-    // Render initial : filtre sur le mois en cours
-    DATA._tmp = filterByPeriod('mois');
+    // Render sur les données du mois actif
+    const activeTab = document.querySelector('.tab.active');
+    const activePeriod = activeTab ? activeTab.getAttribute('data-period') : 'mois';
+    DATA._tmp = filterByPeriod(activePeriod);
     render('_tmp');
+    console.log('[loadData] DATA.all achats:', DATA.all.achats.length, '| ventes:', DATA.all.ventes.length);
+    console.log('[loadData] DATA._tmp achats:', DATA._tmp.achats.length, '| ventes:', DATA._tmp.ventes.length);
     
     // Badge de succès
     if (badgeLive) {
