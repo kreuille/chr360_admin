@@ -970,7 +970,9 @@ async function loadData() {
     }
     
     // Re-render le dashboard avec les nouvelles données
-    render('mois');
+    // Render initial : filtre sur le mois en cours
+    DATA._tmp = filterByPeriod('mois');
+    render('_tmp');
     
     // Badge de succès
     if (badgeLive) {
@@ -1398,15 +1400,9 @@ function filterByPeriod(period) {
 function switchPeriod(period, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-
-  if (period === 'mois') {
-    // Ce mois : utilise les données brutes complètes (pas de re-filtrage)
-    render('mois');
-  } else {
-    const filtered = filterByPeriod(period);
-    DATA._tmp = filtered;
-    render('_tmp');
-  }
+  // Toutes les périodes filtrent depuis DATA.all par date
+  DATA._tmp = filterByPeriod(period);
+  render('_tmp');
 }
 
 // ═══════════════════════════════════════════════════════════
