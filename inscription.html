@@ -163,11 +163,14 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
 
     <!-- SUCCÈS -->
     <div class="success-panel" id="successPanel">
-      <div class="sico">🎉</div>
-      <div class="stitle">Votre espace est prêt !</div>
-      <div class="sdesc">Un email vous a été envoyé avec le lien de votre dashboard.<br><strong>Vous pouvez commencer tout de suite.</strong></div>
+      <div class="sico" id="successIcon">⏳</div>
+      <div class="stitle" id="successTitle">Installation en cours…</div>
+      <div class="sdesc" id="successDesc">
+        Votre espace est en cours de création.<br>
+        <strong>Vous recevrez un email dans 2-3 minutes</strong> avec votre lien dashboard.
+      </div>
       <div class="sdays">✓ 14 jours d'essai démarrés</div><br>
-      <a href="#" id="successLink" class="scta">▶ Accéder à mon dashboard →</a>
+      <a href="#" id="successLink" class="scta" style="display:none">▶ Accéder à mon dashboard →</a>
       <div class="snote">Après l'essai, l'abonnement sera proposé à 49€/mois.<br>Aucun engagement — annulation en 1 clic.</div>
     </div>
 
@@ -233,6 +236,11 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
           💳 Paiement sécurisé Stripe sera ajouté prochainement
           <span class="badge-soon">BIENTÔT</span>
         </div>
+        <div style="text-align:center;margin-top:16px">
+          <button onclick="testConnexion()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline;padding:4px 8px">
+            🔧 Tester la connexion serveur
+          </button>
+        </div>
       </div>
 
     </div><!-- /formWrapper -->
@@ -274,19 +282,49 @@ async function submitForm() {
   const btn = document.getElementById('btnSubmit');
   document.getElementById('btnText').innerHTML = '<div class="spin"></div> Création de votre espace…';
   btn.disabled = true;
+  clearMsg();
+
+  const payload = {
+    action:     'registerTrial',
+    nom:        document.getElementById('f-nom').value.trim(),
+    email:      document.getElementById('f-email').value.trim(),
+    restaurant: document.getElementById('f-restaurant').value.trim(),
+    tel:        document.getElementById('f-tel').value.trim(),
+    devise:     document.getElementById('f-devise').value,
+  };
+
+  console.log('[CHR360] Envoi inscription:', payload);
+
   try {
-    const resp = await apiFetch({
-      action:     'registerTrial',
-      nom:        document.getElementById('f-nom').value.trim(),
-      email:      document.getElementById('f-email').value.trim(),
-      restaurant: document.getElementById('f-restaurant').value.trim(),
-      tel:        document.getElementById('f-tel').value.trim(),
-      devise:     document.getElementById('f-devise').value,
-    });
-    if(resp&&resp.error){showMsg('❌ '+resp.error,'error');resetBtn();return}
-    showSuccess(resp&&resp.dashboardUrl);
+    const resp = await apiFetch(payload);
+    console.log('[CHR360] Réponse reçue:', resp);
+
+    if (resp && resp.error) {
+      showMsg('❌ ' + resp.error, 'error');
+      resetBtn();
+      return;
+    }
+
+    // Succès : queued=true (nouvelle archi async) OU success=true (direct)
+    if (resp && (resp.success || resp.queued)) {
+      showSuccessQueued(payload.email);
+      return;
+    }
+
+    showMsg('Réponse inattendue du serveur. Vérifiez votre email.', 'error');
+    resetBtn();
+
   } catch(e) {
-    showMsg('Erreur de connexion. Veuillez réessayer.','error');
+    console.error('[CHR360] Erreur:', e.message);
+
+    if (e.message === 'Timeout') {
+      // L'installation prend du temps — ce n'est pas forcément une erreur
+      showMsg('⏳ La création prend plus de temps que prévu. Vous recevrez un email dès que votre espace est prêt.', 'success');
+    } else if (e.message === 'Script invalide') {
+      showMsg('❌ URL Apps Script incorrecte. Vérifiez la configuration.', 'error');
+    } else {
+      showMsg('❌ ' + e.message + ' — Vérifiez que le script Apps Script est bien déployé.', 'error');
+    }
     resetBtn();
   }
 }
@@ -296,18 +334,76 @@ function resetBtn(){
   document.getElementById('btnText').textContent='🚀 Démarrer mon essai gratuit';
 }
 
-function apiFetch(params){
-  return new Promise((resolve,reject)=>{
-    const cb='_chr360_'+Date.now();
-    window[cb]=(d)=>{delete window[cb];resolve(d)};
-    const qs=Object.entries(params).map(([k,v])=>`${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
-    const s=document.createElement('script');
-    s.src=`${APPS_SCRIPT_URL}?${qs}&callback=${cb}`;
-    s.onerror=()=>{delete window[cb];reject(new Error('Erreur réseau'))};
+// Test rapide de la connexion Apps Script (sans paramètres client)
+async function testConnexion() {
+  showMsg('🔄 Test de connexion en cours…', 'success');
+  try {
+    const resp = await apiFetch({ action: 'health' });
+    if (resp && resp.status === 'ok') {
+      showMsg('✅ Connexion OK — Apps Script répond correctement.', 'success');
+    } else {
+      showMsg('⚠️ Connexion OK mais réponse inattendue : ' + JSON.stringify(resp), 'error');
+    }
+  } catch(e) {
+    showMsg('❌ Test échoué : ' + e.message, 'error');
+  }
+}
+
+function apiFetch(params, timeoutMs) {
+  timeoutMs = timeoutMs || 8000; // 8 sec — répond immédiatement avec la nouvelle archi async
+  return new Promise((resolve, reject) => {
+    const cb = '_chr360_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    let done = false;
+
+    window[cb] = function(d) {
+      if (done) return;
+      done = true;
+      delete window[cb];
+      resolve(d);
+    };
+
+    const qs = Object.entries(params)
+      .map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
+      .join('&');
+    const url = APPS_SCRIPT_URL + '?' + qs + '&callback=' + cb;
+    console.log('[CHR360] URL:', url);
+
+    const s = document.createElement('script');
+    s.src = url;
+    s.onerror = function() {
+      if (done) return;
+      done = true;
+      delete window[cb];
+      s.remove();
+      reject(new Error('Script invalide — URL Apps Script inaccessible'));
+    };
     document.head.appendChild(s);
-    setTimeout(()=>{if(window[cb]){delete window[cb];reject(new Error('Timeout'))}},20000);
-    setTimeout(()=>s.remove(),25000);
+
+    setTimeout(function() {
+      if (done) return;
+      done = true;
+      delete window[cb];
+      s.remove();
+      reject(new Error('Timeout'));
+    }, timeoutMs);
   });
+}
+
+// Succès pour l'archi async (pas de dashboardUrl immédiat)
+function showSuccessQueued(email) {
+  document.getElementById('formWrapper').style.display = 'none';
+  const p = document.getElementById('successPanel');
+  p.classList.add('show');
+  // Icone et titre
+  const ico = document.getElementById('successIcon');
+  if (ico) ico.textContent = '🎉';
+  const title = document.getElementById('successTitle');
+  if (title) title.textContent = 'Demande reçue !';
+  // Message avec email
+  const desc = document.getElementById('successDesc');
+  if (desc) desc.innerHTML =
+    'Votre espace est en cours de création.<br>' +
+    '<strong>Vous recevrez un email à ' + email + '<br>dans 2 à 3 minutes</strong> avec votre lien dashboard.';
 }
 
 function showSuccess(url){
