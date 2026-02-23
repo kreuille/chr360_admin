@@ -1722,7 +1722,9 @@ async function runSimulation() {
 
   try {
     const url = `${APPS_SCRIPT_URL}?action=simulateCaisse&id=${CLIENT_TOKEN}&jours=${simDays}&scenario=${simScenario}`;
+    console.log('[SIM] Appel:', url.split('?')[1]);
     const data = await apiFetch(url);
+    console.log('[SIM] Réponse complète:', JSON.stringify(data));
 
     res.className = 'sim-result ' + (data.success ? 'success' : 'error');
     res.style.display = 'block';
@@ -1731,20 +1733,20 @@ async function runSimulation() {
       res.innerHTML = `✅ <strong>${data.nb_ventes} jours de ventes</strong> et <strong>${data.nb_achats} factures</strong> générés<br>
         CA total simulé : <strong>${parseFloat(data.ca_total).toLocaleString('fr-FR')} €</strong><br>
         Scénario : ${simScenario} — Période : ${simDays} jours`;
-      // Rafraîchir et switcher sur Trimestre pour tout voir
+      // Attendre 3s puis rafraîchir sur Trimestre
       setTimeout(async () => {
+        closeSimulationModal();
         await loadData();
-        // Activer l'onglet Trimestre pour voir toutes les données simulées
         const tabs = document.querySelectorAll('.tab');
         tabs.forEach(t => t.classList.remove('active'));
         const trimTab = [...tabs].find(t => t.getAttribute('data-period') === 'trimestre');
         if (trimTab) { trimTab.classList.add('active'); switchPeriod('trimestre', trimTab); }
-        closeSimulationModal();
-      }, 2000);
+      }, 3000);
     } else {
       res.textContent = '❌ ' + (data.error || 'Erreur inconnue');
     }
   } catch(e) {
+    console.error('[SIM] Exception:', e);
     res.className = 'sim-result error';
     res.style.display = 'block';
     res.textContent = '❌ Erreur : ' + e.message;
