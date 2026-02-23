@@ -728,7 +728,7 @@
           <text class="gauge-value" x="70" y="68" text-anchor="middle" id="gauge-fc-text">—</text>
         </svg>
         <div class="gauge-label">Food Cost réel</div>
-        <div class="gauge-obj">Objectif max : 28,0%</div>
+        <div class="gauge-obj" id="gauge-fc-obj">Objectif max : —</div>
       </div>
     </div>
 
@@ -743,7 +743,7 @@
           <text class="gauge-value" x="70" y="68" text-anchor="middle" id="gauge-bev-text">—</text>
         </svg>
         <div class="gauge-label">Beverage Cost réel</div>
-        <div class="gauge-obj">Objectif max : 22,0%</div>
+        <div class="gauge-obj" id="gauge-bev-obj">Objectif max : —</div>
       </div>
     </div>
 
@@ -1074,8 +1074,33 @@ function render(periodKey) {
 
   // ─ KPI: CA
   animateValue('kpi-ca', k.caTTC, v => fmtK(v));
-  qs('#kpi-ca-delta').className = 'card-delta delta-up';
-  qs('#kpi-ca-delta').textContent = '▲ +8,4% vs mois préc.';
+  // Calcul CA vs mois précédent (depuis les données disponibles)
+  const now = new Date();
+  const moisActuel = now.getMonth();
+  const anneeActuelle = now.getFullYear();
+  const moisPrecNum = moisActuel === 0 ? 11 : moisActuel - 1;
+  const anneePrecNum = moisActuel === 0 ? anneeActuelle - 1 : anneeActuelle;
+
+  const ventesPrec = DATA.mois.ventes.filter(v => {
+    const d = new Date(v.date);
+    return d.getMonth() === moisPrecNum && d.getFullYear() === anneePrecNum;
+  });
+  const caTTCPrec = ventesPrec.reduce((s, v) => s + (v.caTTC || 0), 0);
+
+  const caDelta = qs('#kpi-ca-delta');
+  if (caTTCPrec > 0) {
+    const variation = ((k.caTTC - caTTCPrec) / caTTCPrec) * 100;
+    if (variation >= 0) {
+      caDelta.className = 'card-delta delta-up';
+      caDelta.textContent = '▲ +' + variation.toFixed(1) + '% vs mois préc.';
+    } else {
+      caDelta.className = 'card-delta delta-down';
+      caDelta.textContent = '▼ ' + variation.toFixed(1) + '% vs mois préc.';
+    }
+  } else {
+    caDelta.className = 'card-delta';
+    caDelta.textContent = '— Pas de données mois préc.';
+  }
 
   // ─ KPI: Couverts
   animateValue('kpi-couverts', k.couverts, v => fmtI(v));
@@ -1118,6 +1143,12 @@ function render(periodKey) {
   setTimeout(() => {
     renderGauge('gauge-fc-path', 'gauge-fc-text', k.foodCost, CFG.objectifFoodCost, k.foodCost > CFG.objectifFoodCost ? '#e74c3c' : '#f0a500');
     renderGauge('gauge-bev-path', 'gauge-bev-text', k.bevCost, CFG.objectifBevCost, k.bevCost > CFG.objectifBevCost ? '#e74c3c' : '#4ecdc4');
+    // Mettre à jour les labels objectif (évite les valeurs hardcodées)
+    const fcObjPct  = (CFG.objectifFoodCost * 100).toFixed(1) + '%';
+    const bevObjPct = (CFG.objectifBevCost  * 100).toFixed(1) + '%';
+    qs('#kpi-fc-obj').textContent    = fcObjPct;
+    qs('#gauge-fc-obj').textContent  = 'Objectif max : ' + fcObjPct;
+    qs('#gauge-bev-obj').textContent = 'Objectif max : ' + bevObjPct;
   }, 300);
 
   // ─ Sparkline
