@@ -1048,7 +1048,15 @@ async function loadData() {
     DATA._tmp = filterByPeriod(activePeriod);
     render('_tmp');
     console.log('[loadData] DATA.all achats:', DATA.all.achats.length, '| ventes:', DATA.all.ventes.length);
+    if (DATA.all.ventes.length > 0) {
+      console.log('[loadData] 1ère vente:', JSON.stringify(DATA.all.ventes[0]));
+      console.log('[loadData] dernière vente:', JSON.stringify(DATA.all.ventes[DATA.all.ventes.length-1]));
+    }
+    if (DATA.all.achats.length > 0) {
+      console.log('[loadData] 1er achat:', JSON.stringify(DATA.all.achats[0]));
+    }
     console.log('[loadData] DATA._tmp achats:', DATA._tmp.achats.length, '| ventes:', DATA._tmp.ventes.length);
+    console.log('[loadData] activePeriod:', activePeriod, '| dateMin utilisée pour filtrage');
     
     // Badge de succès
     if (badgeLive) {
@@ -1467,9 +1475,15 @@ function filterByPeriod(period) {
     return !isNaN(d) && d >= dateMin && d <= now;
   };
 
+  const src = DATA.all || DATA.mois;
+  const filteredAchats = src.achats.filter(a => filterDate(a));
+  const filteredVentes = src.ventes.filter(v => filterDate(v));
+  console.log('[filter] période:', period, '| dateMin:', dateMin?.toISOString().slice(0,10),
+              '| achats:', src.achats.length, '→', filteredAchats.length,
+              '| ventes:', src.ventes.length, '→', filteredVentes.length);
   return {
-    achats: (DATA.all || DATA.mois).achats.filter(a => filterDate(a)),
-    ventes: (DATA.all || DATA.mois).ventes.filter(v => filterDate(v))
+    achats: filteredAchats,
+    ventes: filteredVentes
   };
 }
 
@@ -1717,8 +1731,16 @@ async function runSimulation() {
       res.innerHTML = `✅ <strong>${data.nb_ventes} jours de ventes</strong> et <strong>${data.nb_achats} factures</strong> générés<br>
         CA total simulé : <strong>${parseFloat(data.ca_total).toLocaleString('fr-FR')} €</strong><br>
         Scénario : ${simScenario} — Période : ${simDays} jours`;
-      // Rafraîchir le dashboard
-      setTimeout(() => { loadData(); closeSimulationModal(); }, 2000);
+      // Rafraîchir et switcher sur Trimestre pour tout voir
+      setTimeout(async () => {
+        await loadData();
+        // Activer l'onglet Trimestre pour voir toutes les données simulées
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(t => t.classList.remove('active'));
+        const trimTab = [...tabs].find(t => t.getAttribute('data-period') === 'trimestre');
+        if (trimTab) { trimTab.classList.add('active'); switchPeriod('trimestre', trimTab); }
+        closeSimulationModal();
+      }, 2000);
     } else {
       res.textContent = '❌ ' + (data.error || 'Erreur inconnue');
     }
