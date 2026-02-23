@@ -906,36 +906,57 @@
 // ⚠️ IMPORTANT : Remplacez par l'URL de votre Web App Apps Script déployée
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgOWc09nli4MU1_dEqVx9MlHmGGcrpK-rpite1maoyMEaH24k9zvneDqb6W2XfOAgAbA/exec';
 
-// ── JSONP : contourne le CORS Apps Script de façon fiable ──
-let _jsonpCounter = 0;
+// ── JSONP avec dispatcher global fixe (survit aux redirections Apps Script) ──
+// Apps Script redirige script.google.com → script.googleusercontent.com
+// Les callbacks dynamiques window[name] sont perdus → on utilise une file d'attente
+
+window._chr360_queue = [];   // file des resolve() en attente
+window._chr360_pending = {}; // map id → {resolve, reject, timeout}
+let _chr360_counter = 0;
+
+// Fonction globale FIXE appelée par Apps Script via &callback=_chr360_cb
+function _chr360_cb(data) {
+  // Chercher le premier resolve en attente
+  const keys = Object.keys(window._chr360_pending);
+  if (keys.length === 0) {
+    console.warn('[JSONP] réponse reçue mais aucun pending');
+    return;
+  }
+  // FIFO : prendre le plus ancien (premier clé insérée)
+  const key = keys[0];
+  const pending = window._chr360_pending[key];
+  clearTimeout(pending.timeout);
+  delete window._chr360_pending[key];
+  if (pending.script && pending.script.parentNode) {
+    pending.script.parentNode.removeChild(pending.script);
+  }
+  console.log('[JSONP] ✅ réponse reçue:', data ? Object.keys(data).join(',') : 'vide');
+  pending.resolve(data);
+}
 
 function apiFetch(url) {
   return new Promise((resolve, reject) => {
-    const cbName = '_chr360cb_' + (++_jsonpCounter) + '_' + Date.now();
-    const timeout = setTimeout(() => {
-      delete window[cbName];
+    const id = ++_chr360_counter;
+    const action = url.split('action=')[1]?.split('&')[0] || '?';
+    console.log('[JSONP] 📡 requête:', action);
+
+    const script = document.createElement('script');
+
+    const timer = setTimeout(() => {
+      delete window._chr360_pending[id];
       if (script.parentNode) script.parentNode.removeChild(script);
-      reject(new Error('JSONP timeout (25s)'));
+      reject(new Error('Timeout 25s — Apps Script ne répond pas'));
     }, 25000);
 
-    window[cbName] = function(data) {
-      clearTimeout(timeout);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-      console.log('[JSONP] ✅ réponse reçue pour', url.split('action=')[1]?.split('&')[0]);
-      resolve(data);
-    };
+    window._chr360_pending[id] = { resolve, reject, timeout: timer, script };
 
     const sep = url.includes('?') ? '&' : '?';
-    const src = url + sep + 'callback=' + cbName;
-    const script = document.createElement('script');
-    script.src = src;
+    script.src = url + sep + 'callback=_chr360_cb';
     script.onerror = () => {
-      clearTimeout(timeout);
-      delete window[cbName];
-      reject(new Error('JSONP script erreur — vérifier URL Apps Script'));
+      clearTimeout(timer);
+      delete window._chr360_pending[id];
+      reject(new Error('Erreur chargement script — vérifier URL Apps Script et déploiement'));
     };
-    console.log('[JSONP] 📡 requête:', url.split('action=')[1]?.split('&')[0] || url.slice(-30));
     document.head.appendChild(script);
   });
 }
