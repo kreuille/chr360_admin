@@ -163,11 +163,11 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
 
     <!-- SUCCÈS -->
     <div class="success-panel" id="successPanel">
-      <div class="sico" id="successIcon">⏳</div>
-      <div class="stitle" id="successTitle">Installation en cours…</div>
+      <div class="sico" id="successIcon">📧</div>
+      <div class="stitle" id="successTitle">Email envoyé !</div>
       <div class="sdesc" id="successDesc">
-        Votre espace est en cours de création.<br>
-        <strong>Vous recevrez un email dans 2-3 minutes</strong> avec votre lien dashboard.
+        Vérifiez votre boîte mail.<br>
+        <strong>Votre lien dashboard vous a été envoyé</strong> avec tous les détails.
       </div>
       <div class="sdays">✓ 14 jours d'essai démarrés</div><br>
       <a href="#" id="successLink" class="scta" style="display:none">▶ Accéder à mon dashboard →</a>
@@ -305,21 +305,21 @@ async function submitForm() {
       return;
     }
 
-    // Succès : queued=true (nouvelle archi async) OU success=true (direct)
-    if (resp && (resp.success || resp.queued)) {
+    // Succès
+    if (resp && resp.success) {
       showSuccessQueued(payload.email);
       return;
     }
 
-    showMsg('Réponse inattendue du serveur. Vérifiez votre email.', 'error');
+    showMsg('Réponse inattendue du serveur. Vérifiez votre email dans quelques minutes.', 'error');
     resetBtn();
 
   } catch(e) {
     console.error('[CHR360] Erreur:', e.message);
 
     if (e.message === 'Timeout') {
-      // L'installation prend du temps — ce n'est pas forcément une erreur
-      showMsg('⏳ La création prend plus de temps que prévu. Vous recevrez un email dès que votre espace est prêt.', 'success');
+      // Timeout = les workflows n8n sont longs mais l'email a déjà été envoyé
+      showSuccessQueued(payload.email);
     } else if (e.message === 'Script invalide') {
       showMsg('❌ URL Apps Script incorrecte. Vérifiez la configuration.', 'error');
     } else {
@@ -350,7 +350,7 @@ async function testConnexion() {
 }
 
 function apiFetch(params, timeoutMs) {
-  timeoutMs = timeoutMs || 8000; // 8 sec — répond immédiatement avec la nouvelle archi async
+  timeoutMs = timeoutMs || 30000; // 30 sec — si timeout, l'email a déjà été envoyé
   return new Promise((resolve, reject) => {
     const cb = '_chr360_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     let done = false;
@@ -394,16 +394,14 @@ function showSuccessQueued(email) {
   document.getElementById('formWrapper').style.display = 'none';
   const p = document.getElementById('successPanel');
   p.classList.add('show');
-  // Icone et titre
   const ico = document.getElementById('successIcon');
-  if (ico) ico.textContent = '🎉';
+  if (ico) ico.textContent = '📧';
   const title = document.getElementById('successTitle');
-  if (title) title.textContent = 'Demande reçue !';
-  // Message avec email
+  if (title) title.textContent = 'Email envoyé !';
   const desc = document.getElementById('successDesc');
   if (desc) desc.innerHTML =
-    'Votre espace est en cours de création.<br>' +
-    '<strong>Vous recevrez un email à ' + email + '<br>dans 2 à 3 minutes</strong> avec votre lien dashboard.';
+    'Vérifiez votre boîte mail : <strong>' + email + '</strong><br>' +
+    'Votre lien dashboard vous y a été envoyé.';
 }
 
 function showSuccess(url){
