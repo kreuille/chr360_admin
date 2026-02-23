@@ -1128,7 +1128,7 @@ function compute(data) {
   const foodCost = caHT>0 ? alimHT/caHT : 0;
   const bevCost  = caHT>0 ? boisHT/caHT : 0;
   const totalCost= caHT>0 ? totalHT/caHT : 0;
-  const margeB   = Math.max(0, 1 - totalCost - CFG.tauxChargesFixes - CFG.tauxPersonnel);
+  const margeB   = 1 - totalCost - CFG.tauxChargesFixes - CFG.tauxPersonnel; // peut être négatif
 
   const now = new Date();
   const f30 = new Date(now); f30.setDate(f30.getDate()+30);
