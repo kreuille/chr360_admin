@@ -1037,8 +1037,9 @@ async function loadData() {
         minute: '2-digit'
       });
       console.log('📊 Données chargées:', updateTime);
-      console.log('   → Achats:', data.count?.achats || 0, 'factures');
-      console.log('   → Ventes:', data.count?.ventes || 0, 'tickets');
+      console.log('   → Achats:', data.count?.achats ?? data.mois?.achats?.length ?? 0, 'factures');
+      console.log('   → Ventes:', data.count?.ventes ?? data.mois?.ventes?.length ?? 0, 'tickets');
+      console.log('   → Réponse brute mois.ventes[0]:', JSON.stringify(data.mois?.ventes?.[0] || null));
     }
     
     // Re-render le dashboard avec les nouvelles données
