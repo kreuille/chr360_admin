@@ -1400,8 +1400,8 @@ async function saveSettings(event) {
       alerte_tresorerie: parseFloat(document.getElementById('alerteTresorerie').value),
       taux_charges_fixes: parseFloat(document.getElementById('tauxChargesFixes').value) / 100,
       taux_personnel: parseFloat(document.getElementById('tauxPersonnel').value) / 100,
-      taux_charges_fixes: CFG.tauxChargesFixes,
-      taux_personnel: CFG.tauxPersonnel
+      taux_charges_fixes: parseFloat(document.getElementById('tauxChargesFixes').value) / 100,
+      taux_personnel: parseFloat(document.getElementById('tauxPersonnel').value) / 100
     };
     
     // Envoyer au serveur via GET (contournement CORS)
@@ -1420,14 +1420,12 @@ async function saveSettings(event) {
     if (result.success) {
       // Mettre à jour CFG local
       CFG = {
-        objectifFoodCost: config.objectif_food_cost,
-        objectifBevCost: config.objectif_bev_cost,
-        objectifTicketMoyen: config.objectif_ticket_moyen,
-        alerteTresorerie: config.alerte_tresorerie,
-        tauxChargesFixes: parseFloat(config.taux_charges_fixes) || 0.35,
-        tauxPersonnel: parseFloat(config.taux_personnel) || 0.30,
-        tauxChargesFixes: config.taux_charges_fixes,
-        tauxPersonnel: config.taux_personnel
+        objectifFoodCost:    parseFloat(config.objectif_food_cost)  || 0.28,
+        objectifBevCost:     parseFloat(config.objectif_bev_cost)   || 0.22,
+        objectifTicketMoyen: parseFloat(config.objectif_ticket_moyen) || 38,
+        alerteTresorerie:    parseFloat(config.alerte_tresorerie)   || 2000,
+        tauxChargesFixes:    parseFloat(config.taux_charges_fixes)  || 0.35,
+        tauxPersonnel:       parseFloat(config.taux_personnel)      || 0.30
       };
       
       // Fermer la modal
