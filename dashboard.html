@@ -1002,8 +1002,14 @@ async function loadData() {
 
     // Mettre à jour DATA avec les données du Sheet
     DATA.mois = {
-      achats: data.mois?.achats || [],  // ✅ Lire depuis data.mois
+      achats: data.mois?.achats || [],
       ventes: data.mois?.ventes || []
+    };
+
+    // Mois précédent pour la variation CA
+    DATA.moisPrec = {
+      achats: data.moisPrec?.achats || [],
+      ventes: data.moisPrec?.ventes || []
     };
     
     // Charger la configuration
@@ -1223,10 +1229,25 @@ function render(periodKey) {
   // Date chip
   qs('#dateChip').textContent = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
 
-  // ─ KPI: CA
+  // ─ KPI: CA avec variation vs mois précédent
   animateValue('kpi-ca', k.caTTC, v => fmtK(v));
-  qs('#kpi-ca-delta').className = 'card-delta delta-up';
-  qs('#kpi-ca-delta').textContent = '▲ +8,4% vs mois préc.';
+  const caDelta = qs('#kpi-ca-delta');
+  const kPrec   = DATA.moisPrec && DATA.moisPrec.ventes && DATA.moisPrec.ventes.length > 0
+                  ? compute(DATA.moisPrec)
+                  : null;
+  if (kPrec && kPrec.caTTC > 0) {
+    const variation = ((k.caTTC - kPrec.caTTC) / kPrec.caTTC) * 100;
+    const sign      = variation >= 0 ? '+' : '';
+    const arrow     = variation >= 0 ? '▲' : '▼';
+    caDelta.className   = 'card-delta ' + (variation >= 0 ? 'delta-up' : 'delta-down');
+    caDelta.textContent = arrow + ' ' + sign + variation.toFixed(1).replace('.', ',') + '% vs mois préc.';
+  } else if (k.caTTC > 0) {
+    caDelta.className   = 'card-delta delta-up';
+    caDelta.textContent = '— Pas de données mois préc.';
+  } else {
+    caDelta.className   = 'card-delta';
+    caDelta.textContent = '—';
+  }
 
   // ─ KPI: Couverts
   animateValue('kpi-couverts', k.couverts, v => fmtI(v));
