@@ -250,7 +250,7 @@ async function init() {
     const maxWait    = 30000; // 30s max
     const interval   = 2000;  // vérification toutes les 2s
     const started    = Date.now();
-    const APPS_URL   = 'https://script.google.com/macros/s/AKfycbxkX9CRkKQEMY6fKB_V8kgMqpQ-oVqBJO4Y4GJb1wqlJ9lnYHnOYVbm0ItA16iFzBA/exec';
+    const APPS_URL   = APPS_SCRIPT_URL; // ← utiliser la constante existante
 
     const poll = async () => {
       try {
@@ -282,9 +282,8 @@ async function init() {
         setTimeout(poll, interval);
 
       } catch(e) {
-        // Erreur réseau → rediriger après timeout
         if (Date.now() - started >= maxWait) {
-          window.location.href = 'dashboard.html?id=' + token;
+          window.location.href = 'dashboard.html?id=' + token + '&just_paid=1';
         } else {
           setTimeout(poll, interval);
         }
