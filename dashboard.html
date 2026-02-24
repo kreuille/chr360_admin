@@ -1132,9 +1132,9 @@ async function checkSubscriptionStatus() {
       return false;
     }
 
-    // Essai en cours → afficher bandeau
+    // Essai en cours → afficher bandeau selon état carte
     if (data.status === 'trialing' && data.daysRemaining !== null) {
-      showTrialBanner(data.daysRemaining, data.trialEnd);
+      showTrialBanner(data.daysRemaining, data.trialEnd, data.card_registered === true || data.card_registered === 'true');
     }
 
     return true;
@@ -1144,14 +1144,36 @@ async function checkSubscriptionStatus() {
   }
 }
 
-function showTrialBanner(daysRemaining, trialEnd) {
-  if (document.getElementById('trialBanner')) return; // déjà affiché
+function showTrialBanner(daysRemaining, trialEnd, cardRegistered) {
+  if (document.getElementById('trialBanner')) return;
   const urgency = daysRemaining <= 3 ? '#EF4444' : daysRemaining <= 7 ? '#F59E0B' : '#00C864';
-  const msg = daysRemaining === 0
-    ? 'Votre essai se termine aujourd\'hui'
-    : daysRemaining === 1
-    ? '1 jour restant dans votre essai gratuit'
-    : `${daysRemaining} jours restants dans votre essai gratuit`;
+
+  let msg, actionBtn;
+
+  if (cardRegistered) {
+    // Carte enregistrée — essai actif, prélèvement prévu
+    const dateStr = trialEnd ? new Date(trialEnd).toLocaleDateString('fr-FR', {day:'numeric', month:'long'}) : '';
+    msg = daysRemaining <= 1
+      ? '💳 Votre abonnement commence demain — aucune action requise'
+      : `💳 Essai actif · Premier prélèvement le ${dateStr}`;
+    actionBtn = `<a href="#" onclick="openSubscriptionPortal();return false"
+       style="padding:4px 12px;background:${urgency}22;border:1px solid ${urgency}44;
+              border-radius:6px;color:${urgency};text-decoration:none;font-weight:600;font-size:11px">
+      Gérer mon abonnement →
+    </a>`;
+  } else {
+    // Pas de carte — inciter à activer
+    msg = daysRemaining === 0
+      ? '⚠️ Votre essai se termine aujourd\'hui'
+      : daysRemaining === 1
+      ? '🎁 1 jour restant — activez votre abonnement'
+      : `🎁 ${daysRemaining} jours d'essai restants`;
+    actionBtn = `<a href="#" onclick="openSubscriptionPortal();return false"
+       style="padding:4px 12px;background:${urgency}22;border:1px solid ${urgency}44;
+              border-radius:6px;color:${urgency};text-decoration:none;font-weight:600;font-size:11px">
+      Activer mon abonnement →
+    </a>`;
+  }
 
   const banner = document.createElement('div');
   banner.id = 'trialBanner';
@@ -1160,12 +1182,8 @@ function showTrialBanner(daysRemaining, trialEnd) {
     padding:8px 20px;display:flex;align-items:center;justify-content:center;
     gap:16px;font-size:12px;color:${urgency};`;
   banner.innerHTML = `
-    <span>🎁 ${msg}</span>
-    <a href="https://kreuille.github.io/chr360_admin/paywall.html?id=${CLIENT_TOKEN}"
-       style="padding:4px 12px;background:${urgency}22;border:1px solid ${urgency}44;
-              border-radius:6px;color:${urgency};text-decoration:none;font-weight:600;font-size:11px">
-      Activer mon abonnement →
-    </a>
+    <span>${msg}</span>
+    ${actionBtn}
     <button onclick="this.parentElement.remove()" style="background:none;border:none;color:${urgency};cursor:pointer;font-size:16px;line-height:1">×</button>
   `;
   document.body.prepend(banner);
