@@ -1084,35 +1084,132 @@ function startAutoRefresh() {
 // ═══════════════════════════════════════════════════════════
 // VÉRIFICATION ABONNEMENT
 // ═══════════════════════════════════════════════════════════
-async function openSubscriptionPortal() {
+function openSubscriptionPortal() {
   const btn = document.querySelector('[onclick="openSubscriptionPortal()"]');
+
+  // Si déjà client Stripe (carte enregistrée) → ouvrir directement le portal
+  const trialBanner = document.getElementById('trialBanner');
+  const hasCard = trialBanner && trialBanner.innerHTML.includes('Premier prélèvement');
+
+  if (hasCard) {
+    openStripePortalDirect(btn);
+    return;
+  }
+
+  // Sinon → afficher le modal de sélection de plan
+  showPlanModal(btn);
+}
+
+async function openStripePortalDirect(btn) {
   try {
     if (btn) { btn.textContent = '⏳…'; btn.disabled = true; }
-
-    const url  = APPS_SCRIPT_URL + '?action=getPortalSession&id=' + encodeURIComponent(CLIENT_TOKEN);
+    const url  = APPS_SCRIPT_URL + '?action=getPortalSession&id=' + encodeURIComponent(CLIENT_TOKEN) + '&plan=current';
     const resp = await fetch(url).then(r => r.json());
-
-    if (resp && resp.url) {
-      if (resp.type === 'checkout') {
-        // Client sans carte → page Stripe pour entrer sa carte
-        if (confirm('Vous allez être redirigé vers Stripe pour activer votre abonnement.\n\n14 jours gratuits — aucun prélèvement immédiat.\n\nContinuer ?')) {
-          window.location.href = resp.url;
-        }
-      } else if (resp.type === 'inscription') {
-        // Stripe non configuré → page inscription
-        window.location.href = resp.url;
-      } else {
-        // Portal Stripe → gérer abonnement, carte, factures
-        window.open(resp.url, '_blank');
-      }
-    } else {
-      const msg = resp && resp.error ? resp.error : 'Impossible d\'ouvrir le portail.';
-      alert('❌ ' + msg);
-    }
+    if (resp && resp.url) window.open(resp.url, '_blank');
+    else alert('❌ ' + (resp.error || 'Impossible d\'ouvrir le portail.'));
   } catch(e) {
     alert('Erreur : ' + e.message);
   } finally {
     if (btn) { btn.textContent = '💳 Abonnement'; btn.disabled = false; }
+  }
+}
+
+function showPlanModal(btn) {
+  if (document.getElementById('planModal')) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'planModal';
+  modal.style.cssText = `position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.7);
+    display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)`;
+
+  modal.innerHTML = `
+    <div style="background:#0F1629;border:1px solid rgba(255,255,255,.1);border-radius:20px;
+                padding:32px;width:100%;max-width:480px;margin:16px">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:24px;margin-bottom:8px">🚀</div>
+        <h2 style="margin:0;font-size:18px;color:#fff">Activer votre abonnement</h2>
+        <p style="margin:8px 0 0;font-size:13px;color:#6B7280">14 jours gratuits inclus · Résiliez à tout moment</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+
+        <div id="modal-plan-starter" onclick="selectModalPlan('starter',this)"
+             style="padding:16px;border:2px solid rgba(0,229,255,.3);border-radius:12px;cursor:pointer;transition:all .2s">
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:#fff">STARTER</div>
+          <div style="font-size:22px;font-weight:800;color:#00E5FF">89 CHF<span style="font-size:11px;font-weight:400;color:#6B7280">/mois</span></div>
+          <div style="font-size:11px;color:#6B7280;margin-top:8px;line-height:1.6">
+            50 docs/mois<br>1 caisse · Email alerts<br>Self-service
+          </div>
+        </div>
+
+        <div id="modal-plan-pro" onclick="selectModalPlan('pro',this)"
+             style="padding:16px;border:2px solid #00E5FF;border-radius:12px;cursor:pointer;
+                    background:rgba(0,229,255,.05);transition:all .2s;position:relative">
+          <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+                      background:#00E5FF;color:#080C1F;font-size:10px;font-weight:700;
+                      padding:2px 10px;border-radius:20px">⭐ RECOMMANDÉ</div>
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:#fff">PRO</div>
+          <div style="font-size:22px;font-weight:800;color:#00E5FF">149 CHF<span style="font-size:11px;font-weight:400;color:#6B7280">/mois</span></div>
+          <div style="font-size:11px;color:#6B7280;margin-top:8px;line-height:1.6">
+            IA illimitée · 8 caisses<br>Email + Telegram<br>Support prioritaire
+          </div>
+        </div>
+
+      </div>
+
+      <input type="hidden" id="modal-selected-plan" value="pro">
+
+      <button id="modal-confirm-btn" onclick="confirmPlanAndCheckout()"
+              style="width:100%;padding:14px;background:#00E5FF;color:#080C1F;border:none;
+                     border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px">
+        💳 Configurer mon moyen de paiement →
+      </button>
+      <button onclick="document.getElementById('planModal').remove()"
+              style="width:100%;padding:10px;background:transparent;color:#6B7280;
+                     border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;font-size:13px">
+        Annuler
+      </button>
+
+      <p style="text-align:center;font-size:11px;color:#4B5563;margin-top:14px">
+        🔒 Paiement sécurisé par Stripe · Aucun prélèvement pendant l'essai
+      </p>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function selectModalPlan(plan, el) {
+  document.querySelectorAll('#modal-plan-starter, #modal-plan-pro').forEach(c => {
+    c.style.borderColor = 'rgba(0,229,255,.3)';
+    c.style.background  = 'transparent';
+  });
+  el.style.borderColor = '#00E5FF';
+  el.style.background  = 'rgba(0,229,255,.05)';
+  document.getElementById('modal-selected-plan').value = plan;
+}
+
+async function confirmPlanAndCheckout() {
+  const plan = document.getElementById('modal-selected-plan').value || 'pro';
+  const btn  = document.getElementById('modal-confirm-btn');
+  btn.textContent = '⏳ Connexion à Stripe…';
+  btn.disabled = true;
+
+  try {
+    const url  = APPS_SCRIPT_URL + '?action=getPortalSession&id=' + encodeURIComponent(CLIENT_TOKEN) + '&plan=' + plan;
+    const resp = await fetch(url).then(r => r.json());
+
+    if (resp && resp.url) {
+      window.location.href = resp.url;
+    } else {
+      alert('❌ ' + (resp.error || 'Erreur lors de la connexion à Stripe.'));
+      btn.textContent = '💳 Configurer mon moyen de paiement →';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+    btn.textContent = '💳 Configurer mon moyen de paiement →';
+    btn.disabled = false;
   }
 }
 
