@@ -361,7 +361,8 @@ async function goToStripe() {
   };
 
   try {
-    const resp = await apiFetch(params, 20000);
+    // 🟢 CORRECTION 1 : On augmente le timeout à 45 secondes (45000 ms)
+    const resp = await apiFetch(params, 45000);
 
     if (resp && resp.error) {
       showMsg('❌ ' + resp.error, 'error');
@@ -387,7 +388,6 @@ async function goToStripe() {
     resetBtn();
   }
 }
-
 // ── Traitement retour Stripe (success.html nous redirige ici) ─
 // Si URL contient ?session_id= → lancer l'installation
 async function handleStripeReturn() {
@@ -470,7 +470,7 @@ async function testConnexion() {
 
 // ── JSONP fetch ───────────────────────────────────────────────
 function apiFetch(params, timeoutMs) {
-  timeoutMs = timeoutMs || 30000;
+  timeoutMs = timeoutMs || 45000; // 🟢 CORRECTION 2 : Valeur par défaut à 45s
   return new Promise((resolve, reject) => {
     const cb = '_chr360_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     let done = false;
@@ -502,7 +502,11 @@ function apiFetch(params, timeoutMs) {
     setTimeout(function() {
       if (done) return;
       done = true;
-      delete window[cb];
+      
+      // 🟢 CORRECTION 3 : Au lieu de supprimer la fonction, on la rend "vide".
+      // Ainsi, si la réponse arrive en retard, le navigateur ne plantera pas avec une ReferenceError.
+      window[cb] = function() {}; 
+      
       s.remove();
       reject(new Error('Timeout'));
     }, timeoutMs);
