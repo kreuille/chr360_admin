@@ -1227,38 +1227,48 @@ async function confirmPlanAndCheckout() {
 
 
 // Statut abonnement global (rempli par checkSubscriptionStatus)
-let _subData = null;
+let _subData  = null;
+let _subRetry = 0; // nombre de fois qu'on a détecté isBlocked
 
 async function checkSubscriptionStatus() {
   if (!CLIENT_TOKEN) return true;
 
-  // Si l'utilisateur vient de payer (success.html → dashboard),
-  // on attend que le webhook Stripe ait mis à jour le statut avant de bloquer
+  // Si l'utilisateur vient de payer, ne pas vérifier au premier chargement.
+  // Le webhook Stripe peut prendre jusqu'à 30s pour mettre à jour le sheet.
   const justPaid = new URLSearchParams(window.location.search).get('just_paid');
   if (justPaid === '1') {
-    // Nettoyer l'URL sans recharger la page
-    const cleanUrl = window.location.pathname + '?id=' + encodeURIComponent(CLIENT_TOKEN);
-    window.history.replaceState({}, '', cleanUrl);
-    // Ne pas vérifier maintenant — le webhook arrivera dans les prochaines secondes
-    // La prochaine ouverture du dashboard vérifiera normalement
+    // Nettoyer l'URL sans recharger
+    window.history.replaceState({}, '', window.location.pathname + '?id=' + encodeURIComponent(CLIENT_TOKEN));
     return true;
   }
 
   try {
-    const url = APPS_SCRIPT_URL + '?action=checkSubscription&id=' + encodeURIComponent(CLIENT_TOKEN);
+    const url      = APPS_SCRIPT_URL + '?action=checkSubscription&id=' + encodeURIComponent(CLIENT_TOKEN);
     const response = await fetch(url);
     if (!response.ok) return true;
     const data = await response.json();
 
     _subData = data;
 
-    // Statuts bloquants → rediriger vers paywall
     if (data.isBlocked) {
+      // Avant de bloquer, attendre 6s et repoller une fois
+      // Gère le cas où le webhook Stripe arrive juste après le chargement du dashboard
+      if (_subRetry < 1) {
+        _subRetry++;
+        return new Promise(resolve => {
+          setTimeout(async () => {
+            const ok = await checkSubscriptionStatus();
+            resolve(ok);
+          }, 6000);
+        });
+      }
+      // Toujours bloqué après le retry → paywall
       window.location.href = 'https://kreuille.github.io/chr360_admin/paywall.html?id=' + CLIENT_TOKEN;
       return false;
     }
 
-    // Essai en cours → afficher bandeau
+    _subRetry = 0; // réinitialiser si non bloqué
+
     if (data.status === 'trialing' && data.daysRemaining !== null) {
       showTrialBanner(data.daysRemaining, data.trialEnd, data.card_registered === true || data.card_registered === 'true');
     }
