@@ -1116,6 +1116,19 @@ async function openStripePortalDirect(btn) {
 function showPlanModal(btn) {
   if (document.getElementById('planModal')) return;
 
+  const status    = _subData ? _subData.status : '';
+  const daysLeft  = _subData ? (_subData.daysRemaining || 0) : 0;
+  const hasActiveTrial = status === 'trialing' && daysLeft > 0;
+
+  // Texte selon contexte
+  const subtitle = hasActiveTrial
+    ? `${daysLeft} jour${daysLeft > 1 ? 's' : ''} d'essai restants · Résiliez à tout moment`
+    : 'Sans engagement · Résiliez à tout moment';
+
+  const btnLabel = hasActiveTrial
+    ? `💳 Configurer le paiement (débité dans ${daysLeft}j) →`
+    : '💳 S\'abonner maintenant →';
+
   const modal = document.createElement('div');
   modal.id = 'planModal';
   modal.style.cssText = `position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.7);
@@ -1126,8 +1139,8 @@ function showPlanModal(btn) {
                 padding:32px;width:100%;max-width:480px;margin:16px">
       <div style="text-align:center;margin-bottom:24px">
         <div style="font-size:24px;margin-bottom:8px">🚀</div>
-        <h2 style="margin:0;font-size:18px;color:#fff">Activer votre abonnement</h2>
-        <p style="margin:8px 0 0;font-size:13px;color:#6B7280">14 jours gratuits inclus · Résiliez à tout moment</p>
+        <h2 style="margin:0;font-size:18px;color:#fff">Choisissez votre plan</h2>
+        <p style="margin:8px 0 0;font-size:13px;color:#6B7280">${subtitle}</p>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
@@ -1161,7 +1174,7 @@ function showPlanModal(btn) {
       <button id="modal-confirm-btn" onclick="confirmPlanAndCheckout()"
               style="width:100%;padding:14px;background:#00E5FF;color:#080C1F;border:none;
                      border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-bottom:10px">
-        💳 Configurer mon moyen de paiement →
+        ${btnLabel}
       </button>
       <button onclick="document.getElementById('planModal').remove()"
               style="width:100%;padding:10px;background:transparent;color:#6B7280;
@@ -1170,7 +1183,7 @@ function showPlanModal(btn) {
       </button>
 
       <p style="text-align:center;font-size:11px;color:#4B5563;margin-top:14px">
-        🔒 Paiement sécurisé par Stripe · Aucun prélèvement pendant l'essai
+        🔒 Paiement sécurisé par Stripe
       </p>
     </div>
   `;
