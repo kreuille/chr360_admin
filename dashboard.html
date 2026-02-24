@@ -1087,17 +1087,17 @@ function startAutoRefresh() {
 function openSubscriptionPortal() {
   const btn = document.querySelector('[onclick="openSubscriptionPortal()"]');
 
-  // Si déjà client Stripe (carte enregistrée) → ouvrir directement le portal
-  const trialBanner = document.getElementById('trialBanner');
-  const hasCard = trialBanner && trialBanner.innerHTML.includes('Premier prélèvement');
+  // Détecter si carte déjà enregistrée ET abonnement actif/trialing
+  const banner  = document.getElementById('trialBanner');
+  const hasCard = banner && banner.innerHTML.includes('Premier prélèvement');
 
   if (hasCard) {
+    // Abonnement actif avec carte → ouvrir le portal Stripe directement
     openStripePortalDirect(btn);
-    return;
+  } else {
+    // Pas de carte ou annulé → sélection du plan
+    showPlanModal(btn);
   }
-
-  // Sinon → afficher le modal de sélection de plan
-  showPlanModal(btn);
 }
 
 async function openStripePortalDirect(btn) {
