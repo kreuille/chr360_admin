@@ -1100,6 +1100,7 @@ async function openSubscriptionPortal() {
 }
 
 
+async function checkSubscriptionStatus() {
   if (!CLIENT_TOKEN) return true; // pas de token = pas de vérification
 
   try {
