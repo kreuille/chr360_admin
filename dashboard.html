@@ -1085,22 +1085,33 @@ function startAutoRefresh() {
 // VÉRIFICATION ABONNEMENT
 // ═══════════════════════════════════════════════════════════
 async function openSubscriptionPortal() {
+  const btn = document.querySelector('[onclick="openSubscriptionPortal()"]');
   try {
-    const btn = document.querySelector('[onclick="openSubscriptionPortal()"]');
     if (btn) { btn.textContent = '⏳…'; btn.disabled = true; }
 
-    const url = APPS_SCRIPT_URL + '?action=getPortalSession&id=' + encodeURIComponent(CLIENT_TOKEN);
+    const url  = APPS_SCRIPT_URL + '?action=getPortalSession&id=' + encodeURIComponent(CLIENT_TOKEN);
     const resp = await fetch(url).then(r => r.json());
 
     if (resp && resp.url) {
-      window.open(resp.url, '_blank');
+      if (resp.type === 'checkout') {
+        // Client sans carte → page Stripe pour entrer sa carte
+        if (confirm('Vous allez être redirigé vers Stripe pour activer votre abonnement.\n\n14 jours gratuits — aucun prélèvement immédiat.\n\nContinuer ?')) {
+          window.location.href = resp.url;
+        }
+      } else if (resp.type === 'inscription') {
+        // Stripe non configuré → page inscription
+        window.location.href = resp.url;
+      } else {
+        // Portal Stripe → gérer abonnement, carte, factures
+        window.open(resp.url, '_blank');
+      }
     } else {
-      alert('Impossible d\'ouvrir le portail. Contactez le support.');
+      const msg = resp && resp.error ? resp.error : 'Impossible d\'ouvrir le portail.';
+      alert('❌ ' + msg);
     }
   } catch(e) {
     alert('Erreur : ' + e.message);
   } finally {
-    const btn = document.querySelector('[onclick="openSubscriptionPortal()"]');
     if (btn) { btn.textContent = '💳 Abonnement'; btn.disabled = false; }
   }
 }
