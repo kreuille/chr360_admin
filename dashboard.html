@@ -1961,9 +1961,12 @@ function showUploadToast(type, msg) {
 
 <script>
 // ═══════════════════════════════════════════════════════════
-// SIMULATION — MOT DE PASSE
+// SIMULATION — MOT DE PASSE (validé côté serveur)
 // ═══════════════════════════════════════════════════════════
-const SIM_PWD = 'chr360admin';
+
+// La clé n'est JAMAIS stockée dans le JS côté client.
+// Elle est validée par Apps Script via PropertiesService.
+let _simKey = null; // clé validée, gardée en mémoire le temps de la session
 
 function openSimulationGuard() {
   document.getElementById('simGuardModal').classList.add('show');
@@ -1974,16 +1977,38 @@ function closeSimGuard() {
   document.getElementById('simGuardInput').value = '';
   document.getElementById('simGuardError').style.display = 'none';
 }
-function checkSimPassword() {
-  const val = document.getElementById('simGuardInput').value;
+
+async function checkSimPassword() {
+  const val = document.getElementById('simGuardInput').value.trim();
   const err = document.getElementById('simGuardError');
-  if (val === SIM_PWD) {
-    closeSimGuard();
-    openSimulationModal();
-  } else {
+  const btn = document.querySelector('#simGuardModal button:first-of-type');
+  if (!val) return;
+
+  // Feedback visuel pendant la vérification
+  if (btn) { btn.textContent = '⏳ Vérification...'; btn.disabled = true; }
+
+  try {
+    const url = APPS_SCRIPT_URL + '?action=checkAdminKey&key=' + encodeURIComponent(val);
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.valid === true) {
+      _simKey = val; // stocker en mémoire de session uniquement
+      closeSimGuard();
+      openSimulationModal();
+    } else {
+      err.textContent = '❌ Mot de passe incorrect';
+      err.style.display = 'block';
+      document.getElementById('simGuardInput').value = '';
+      setTimeout(() => { err.style.display = 'none'; }, 2500);
+    }
+  } catch(e) {
+    err.textContent = '❌ Erreur serveur — réessayez';
     err.style.display = 'block';
+    setTimeout(() => { err.style.display = 'none'; }, 3000);
+  } finally {
+    if (btn) { btn.textContent = '🔓 Accéder'; btn.disabled = false; }
     document.getElementById('simGuardInput').value = '';
-    setTimeout(() => { err.style.display = 'none'; }, 2000);
   }
 }
 
@@ -2030,9 +2055,11 @@ async function runSimulation() {
   try {
     const token = typeof CLIENT_TOKEN !== 'undefined' ? CLIENT_TOKEN : '';
     if (!token) throw new Error('Token client manquant — ouvrez le dashboard via votre lien personnalisé');
+    if (!_simKey) throw new Error('Session expirée — fermez et ré-ouvrez la modal');
 
     const url = APPS_SCRIPT_URL + '?action=simulateCaisse&id=' + encodeURIComponent(token) +
-      '&jours=' + simDays + '&scenario=' + simScenario;
+      '&jours=' + simDays + '&scenario=' + simScenario +
+      '&adminKey=' + encodeURIComponent(_simKey);
     const response = await fetch(url);
     if (!response.ok) throw new Error('HTTP ' + response.status);
     const data = await response.json();
@@ -2070,7 +2097,9 @@ async function clearSimulation() {
 
   try {
     const token = typeof CLIENT_TOKEN !== 'undefined' ? CLIENT_TOKEN : '';
-    const url = APPS_SCRIPT_URL + '?action=clearSimulation&id=' + encodeURIComponent(token);
+    if (!_simKey) throw new Error('Session expirée — fermez et ré-ouvrez la modal');
+    const url = APPS_SCRIPT_URL + '?action=clearSimulation&id=' + encodeURIComponent(token) +
+      '&adminKey=' + encodeURIComponent(_simKey);
     const response = await fetch(url);
     if (!response.ok) throw new Error('HTTP ' + response.status);
     const data = await response.json();
