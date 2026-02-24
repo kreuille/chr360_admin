@@ -65,17 +65,18 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:'
 
   <div class="card">
     <div class="icon-wrap" id="mainIcon">⚡</div>
-    <div class="title" id="mainTitle">Paiement en cours de validation...</div>
+    <div class="title" id="mainTitle">Paiement confirmé !</div>
     <div class="subtitle" id="mainSubtitle">
       Votre essai gratuit de 14 jours commence maintenant.<br>
       Nous installons votre espace, quelques secondes…
     </div>
 
+    <!-- Progress -->
     <div id="progressSection">
       <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
       <div class="progress-label" id="progressLabel">Initialisation…</div>
 
-      <div class="steps-list" id="stepsList">
+      <div class="steps-list">
         <div class="step-item active" id="s1">
           <div class="step-dot" id="d1">◉</div>
           <div class="step-text">
@@ -107,15 +108,16 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:'
       </div>
     </div>
 
+    <!-- Final state -->
     <div class="final" id="finalState">
       <div class="final-email" id="finalEmail"></div>
-      <p style="font-size:13px;color:var(--muted);line-height:1.7" id="finalMsg">
+      <p style="font-size:13px;color:var(--muted);line-height:1.7">
         Vérifiez votre boîte mail (et les spams).<br>
         Votre lien dashboard vous y a été envoyé.
       </p>
       <br>
       <a class="btn-dashboard" id="btnDashboard" href="#">→ Accéder à mon dashboard</a>
-      <p style="font-size:11px;color:var(--muted);margin-top:12px" id="finalNote">
+      <p style="font-size:11px;color:var(--muted);margin-top:12px">
         Si vous ne recevez rien dans 5 minutes, contactez-nous.
       </p>
     </div>
@@ -125,8 +127,8 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:'
 </div>
 
 <script>
-// ⚠️ ASSUREZ-VOUS QUE CETTE URL EST LA BONNE (La dernière générée par Apps Script)
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgOWc09nli4MU1_dEqVx9MlHmGGcrpK-rpite1maoyMEaH24k9zvneDqb6W2XfOAgAbA/exec';
+const BASE_URL = 'https://kreuille.github.io/chr360_admin';
 
 // ── Étapes animées ──────────────────────────────────────────
 const STEPS = [
@@ -135,6 +137,8 @@ const STEPS = [
   { id:'s3', d:'d3', label:'Génération du lien dashboard…',    pct: 75 },
   { id:'s4', d:'d4', label:'Envoi de l\'email de bienvenue…',  pct: 95 },
 ];
+
+let currentStep = 0;
 
 function advanceStep(idx) {
   if (idx > 0) {
@@ -152,180 +156,176 @@ function advanceStep(idx) {
 }
 
 function startAnimation() {
-  document.getElementById('mainTitle').textContent = 'Paiement confirmé !';
   advanceStep(0);
   setTimeout(() => advanceStep(1), 4000);
   setTimeout(() => advanceStep(2), 10000);
   setTimeout(() => advanceStep(3), 20000);
 }
 
-// ── Appel API JSONP (Contournement CORS) ─────────────────────
-function fetchAPI(params, timeoutMs = 35000) {
+// Mise à jour directe de la barre de progression (pour le polling)
+function updateProgress(label, pct) {
+  const bar = document.getElementById('progressBar');
+  const lbl = document.getElementById('progressLabel');
+  if (bar) bar.style.width = Math.min(pct, 100) + '%';
+  if (lbl) lbl.textContent = label;
+}
+
+// ── Appel install ───────────────────────────────────────────
+async function installClient(params) {
   return new Promise((resolve, reject) => {
-    // Nom de callback unique
-    const cb = '_api_' + Date.now() + Math.random().toString(36).substring(7);
+    const cb = '_chr360_' + Date.now();
     let done = false;
-    
-    window[cb] = d => { 
-      if(!done){
-        done = true;
-        delete window[cb];
-        resolve(d);
-      } 
-    };
+    window[cb] = d => { if(!done){done=true;delete window[cb];resolve(d);} };
 
     const qs = Object.entries(params).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
     const s = document.createElement('script');
     s.src = APPS_SCRIPT_URL + '?' + qs + '&callback=' + cb;
-    
-    s.onerror = () => { 
-      if(!done){
-        done = true;
-        delete window[cb];
-        s.remove();
-        reject(new Error('Network error'));
-      } 
-    };
-    
+    s.onerror = () => { if(!done){done=true;delete window[cb];s.remove();reject(new Error('Erreur réseau'));} };
     document.head.appendChild(s);
 
-    setTimeout(() => { 
-      if(!done){
-        done = true;
-        delete window[cb];
-        s.remove();
-        reject(new Error('Timeout'));
-      } 
-    }, timeoutMs);
+    setTimeout(() => {
+      if(!done){done=true;delete window[cb];s.remove();resolve({ timeout: true });}
+    }, 40000);
   });
 }
 
-// ── Affichage final ──────────────────────────────────────────
-function showFinal(email, dashboardUrl, customTitle = "Votre espace est prêt !") {
+function showFinal(email, dashboardUrl) {
   // Marquer toutes les étapes comme done
-  STEPS.forEach((step) => {
-    const el = document.getElementById(step.id);
-    if(el) el.className = 'step-item done';
-    const dot = document.getElementById(step.d);
-    if(dot) dot.textContent = '✓';
+  STEPS.forEach((step, i) => {
+    document.getElementById(step.id).className = 'step-item done';
+    document.getElementById(step.d).textContent = '✓';
   });
-  
   document.getElementById('progressBar').style.width = '100%';
-  document.getElementById('progressLabel').textContent = 'Terminé ✅';
+  document.getElementById('progressLabel').textContent = 'Installation terminée ✅';
 
   setTimeout(() => {
     document.getElementById('progressSection').style.display = 'none';
     document.getElementById('mainIcon').textContent = '🎉';
-    document.getElementById('mainTitle').textContent = customTitle;
-    
-    if(email) {
-      document.getElementById('mainSubtitle').textContent = 'Email envoyé à :';
-      document.getElementById('finalEmail').textContent = email;
-      document.getElementById('finalEmail').style.display = 'block';
-      document.getElementById('finalMsg').style.display = 'block';
-    } else {
-      document.getElementById('mainSubtitle').style.display = 'none';
-      document.getElementById('finalEmail').style.display = 'none';
-      document.getElementById('finalMsg').style.display = 'none';
-    }
-
+    document.getElementById('mainTitle').textContent = 'Votre espace est prêt !';
+    document.getElementById('mainSubtitle').textContent = 'Email envoyé à :';
+    document.getElementById('finalEmail').textContent = email;
     if (dashboardUrl) {
       document.getElementById('btnDashboard').href = dashboardUrl;
-      document.getElementById('btnDashboard').style.display = 'inline-block';
     } else {
       document.getElementById('btnDashboard').style.display = 'none';
-      document.getElementById('finalNote').style.display = 'none';
     }
-    
     document.getElementById('finalState').style.display = 'block';
   }, 800);
 }
 
+function showError(msg) {
+  document.getElementById('progressSection').style.display = 'none';
+  document.getElementById('mainIcon').textContent = '📧';
+  document.getElementById('mainTitle').textContent = 'Installation en cours…';
+  document.getElementById('mainSubtitle').textContent = 'Vérifiez votre email dans quelques minutes.';
+  document.getElementById('finalState').style.display = 'block';
+  document.getElementById('btnDashboard').style.display = 'none';
+}
 
-// ── Init (Routeur) ───────────────────────────────────────────
+// ── Init ─────────────────────────────────────────────────────
 async function init() {
   const url       = new URLSearchParams(window.location.search);
   const sessionId = url.get('session_id');
   const canceled  = url.get('canceled');
-  const activated = url.get('activated'); // 1 si retour du portal Stripe
-  const token     = url.get('token');     // Token client existant
-  const installId = url.get('install_id'); // UUID généré lors du checkout
+  const activated = url.get('activated'); // client existant qui active son abonnement
+  const token     = url.get('token');     // token dashboard du client existant
 
-  // 1. Annulation
   if (canceled) {
     window.location.href = 'inscription.html?canceled=1';
     return;
   }
 
-  // 2. Sécurité
-  if (!sessionId && !activated) {
+  if (!sessionId) {
     window.location.href = 'inscription.html';
     return;
   }
 
-  // ── CAS A : CLIENT EXISTANT (Réactivation depuis Paywall/Dashboard) ──
+  // ── Cas : client existant qui active son abonnement ──
   if (activated === '1' && token) {
-    document.getElementById('stepsList').style.display = 'none';
-    document.getElementById('mainTitle').textContent = 'Validation du paiement...';
-    document.getElementById('mainSubtitle').textContent = 'Veuillez patienter pendant la synchronisation avec notre base de données.';
-    document.getElementById('progressLabel').textContent = 'Synchronisation en cours...';
-    document.getElementById('progressBar').style.width = '30%';
-    
-    let attempts = 0;
-    
-    // Polling : On interroge le serveur toutes les 2 secondes pour voir si le webhook a mis à jour le statut
-    const syncInterval = setInterval(async () => {
-      attempts++;
-      try {
-        const resp = await fetchAPI({action: 'syncSubscription', id: token}, 5000);
-        document.getElementById('progressBar').style.width = (30 + attempts * 10) + '%';
+    startAnimation();
+    updateProgress('Validation du paiement en cours…', 40);
 
-        // Si le serveur répond que le statut est bien synchronisé
-        if (resp && resp.synced) {
-          clearInterval(syncInterval);
-          showFinal(null, resp.dashboard_url || ('dashboard.html?id=' + token), "Abonnement réactivé avec succès !");
-        } else if (attempts >= 6) { 
-          // Après 12 secondes, on redirige de force
-          clearInterval(syncInterval);
-          window.location.href = 'dashboard.html?id=' + token; 
+    // Poller checkSubscription jusqu'à ce que le webhook Stripe ait mis à jour le statut
+    // Le webhook peut prendre 5-20s selon la charge Apps Script
+    const maxWait    = 30000; // 30s max
+    const interval   = 2000;  // vérification toutes les 2s
+    const started    = Date.now();
+    const APPS_URL   = 'https://script.google.com/macros/s/AKfycbxkX9CRkKQEMY6fKB_V8kgMqpQ-oVqBJO4Y4GJb1wqlJ9lnYHnOYVbm0ItA16iFzBA/exec';
+
+    const poll = async () => {
+      try {
+        const res  = await fetch(APPS_URL + '?action=checkSubscription&id=' + encodeURIComponent(token));
+        const data = await res.json();
+        const elapsed = Date.now() - started;
+
+        // Paiement confirmé : statut actif ou trialing avec carte
+        if (data.status === 'active' || (data.status === 'trialing' && data.card_registered)) {
+          updateProgress('Synchronisation terminée !', 100);
+          setTimeout(() => {
+            window.location.href = 'dashboard.html?id=' + token + '&just_paid=1';
+          }, 800);
+          return;
         }
+
+        // Timeout atteint → rediriger quand même avec just_paid pour éviter le blocage
+        if (elapsed >= maxWait) {
+          updateProgress('Redirection…', 100);
+          setTimeout(() => {
+            window.location.href = 'dashboard.html?id=' + token + '&just_paid=1';
+          }, 500);
+          return;
+        }
+
+        // Pas encore mis à jour → attendre et réessayer
+        const pct = Math.min(40 + Math.round((elapsed / maxWait) * 55), 95);
+        updateProgress('Synchronisation en cours… (' + Math.round(elapsed/1000) + 's)', pct);
+        setTimeout(poll, interval);
+
       } catch(e) {
-        if (attempts >= 6) { 
-          clearInterval(syncInterval); 
-          window.location.href = 'dashboard.html?id=' + token; 
+        // Erreur réseau → rediriger après timeout
+        if (Date.now() - started >= maxWait) {
+          window.location.href = 'dashboard.html?id=' + token;
+        } else {
+          setTimeout(poll, interval);
         }
       }
-    }, 2000);
+    };
+
+    // Démarrer le polling après 2s (laisser le temps au webhook d'arriver)
+    setTimeout(poll, 2000);
     return;
   }
 
-  // ── CAS B : NOUVEAU CLIENT (Installation Complète) ──
   startAnimation();
-  const email = url.get('email') || '';
 
+  // ── Cas : nouveau client ──
   const params = {
     action:     'registerTrial',
     session_id: sessionId,
-    install_id: installId,
     nom:        url.get('nom')        || '',
-    email:      email,
+    email:      url.get('email')      || '',
     restaurant: url.get('restaurant') || '',
+    tel:        url.get('tel')        || '',
     devise:     url.get('devise')     || 'CHF',
     plan:       url.get('plan')       || 'starter',
   };
 
   try {
-    // Délai de 45s car la création des dossiers Drive, Sheet et Workflows n8n prend du temps
-    const resp = await fetchAPI(params, 45000); 
-    
-    if (resp && (resp.dashboard_url || resp.alreadyExists)) {
-      showFinal(email, resp.dashboard_url);
+    const resp = await installClient(params);
+
+    if (resp && resp.timeout) {
+      showFinal(params.email, null);
+      return;
+    }
+
+    if (resp && resp.success) {
+      const dashUrl = resp.dashboard_url || null;
+      showFinal(params.email, dashUrl);
     } else {
-      showFinal(email, null, "Installation en cours de finalisation...");
+      showFinal(params.email, null);
     }
   } catch(e) {
-    // Si Apps Script part en Timeout côté navigateur, le webhook Stripe l'a probablement géré côté serveur.
-    showFinal(email, null, "Presque terminé !");
+    showFinal(params.email, null);
   }
 }
 
