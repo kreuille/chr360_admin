@@ -708,7 +708,7 @@
       <div class="logo-mark">🍽</div>
       <div>
         <div class="header-title">CHR 360°</div>
-        <div class="header-subtitle">Le Bistrot du Marché — Tableau de Bord de Pilotage</div>
+        <div class="header-subtitle" id="header-restaurant-name">Tableau de Bord de Pilotage</div>
       </div>
     </div>
     <div class="header-right">
@@ -992,6 +992,12 @@ async function loadData() {
       throw new Error(data.error);
     }
     
+    // Mettre à jour le nom du restaurant dans le header
+    if (data.nom_restaurant) {
+      const el = document.getElementById('header-restaurant-name');
+      if (el) el.textContent = data.nom_restaurant + ' — Tableau de Bord de Pilotage';
+    }
+
     // Mettre à jour DATA avec les données du Sheet
     DATA.mois = {
       achats: data.mois?.achats || [],  // ✅ Lire depuis data.mois
@@ -1775,18 +1781,6 @@ function uploadFile(file, type) {
   var pct = 10;
   var ticker = setInterval(function() { pct = Math.min(pct + Math.random() * 15, 85); fill.style.width = pct + '%'; }, 300);
 
-  // En mode démo : simuler l'upload
-  if (typeof IS_DEMO_MODE !== 'undefined' && IS_DEMO_MODE) {
-    setTimeout(function() {
-      clearInterval(ticker); fill.style.width = '100%';
-      item.className = 'file-item ok';
-      document.getElementById('status-' + itemId).className = 'file-item-status ok';
-      document.getElementById('status-' + itemId).textContent = '✓ Simulé';
-      showUploadToast('success', '✓ [DÉMO] ' + file.name + ' — simulation d\'envoi');
-    }, 1200 + Math.random() * 800);
-    return;
-  }
-
   var reader = new FileReader();
   reader.onload = function(e) {
     var base64Data = e.target.result.split(',')[1];
@@ -2088,279 +2082,13 @@ async function clearSimulation() {
   btn.textContent = '🗑 Effacer';
   btn.disabled = false;
 }
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => startAutoRefresh());
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- MODAL DÉMO — mot de passe                                  -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<div id="demoModal" class="modal-overlay show" style="z-index:9999;backdrop-filter:blur(12px)">
-  <div class="modal-content" style="max-width:420px;padding:0">
-    <div style="background:linear-gradient(135deg,#0d1533,#0a1225);border:1px solid #1e2a50;border-radius:20px;overflow:hidden">
-
-      <!-- Header coloré -->
-      <div style="background:linear-gradient(135deg,#00E5FF18,#A78BFA12);border-bottom:1px solid #1e2a5060;padding:32px 32px 24px">
-        <div style="font-size:40px;text-align:center;margin-bottom:12px">🍽</div>
-        <h2 style="font-family:'DM Serif Display',serif;font-size:26px;color:#E8EFF8;text-align:center;margin:0 0 6px">CHR 360°</h2>
-        <p style="font-size:13px;color:#8899bb;text-align:center;margin:0">Tableau de bord — Mode de démonstration</p>
-      </div>
-
-      <!-- Corps -->
-      <div style="padding:28px 32px">
-        <div id="demoError" style="display:none;background:#F8717120;border:1px solid #F8717140;border-radius:10px;padding:10px 14px;font-size:13px;color:#F87171;margin-bottom:16px;text-align:center">
-          ❌ Mot de passe incorrect
-        </div>
-
-        <div style="margin-bottom:20px">
-          <label style="font-size:12px;font-weight:600;color:#ccd6f6;display:block;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Mot de passe démo</label>
-          <div style="position:relative">
-            <input type="password" id="demoPasswordInput"
-              placeholder="••••••••"
-              autocomplete="off"
-              onkeydown="if(event.key==='Enter')checkDemoPassword()"
-              style="width:100%;box-sizing:border-box;background:#070a1a;border:1.5px solid #1e2a50;border-radius:10px;padding:12px 44px 12px 16px;font-size:15px;color:#E8EFF8;outline:none;transition:border-color .2s"
-              onfocus="this.style.borderColor='#00E5FF50'"
-              onblur="this.style.borderColor='#1e2a50'">
-            <span onclick="toggleDemoPwd()" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;user-select:none" id="demoEye">👁</span>
-          </div>
-          <div style="font-size:11px;color:#5a6a8a;margin-top:8px">Contacter votre administrateur CHR 360° si vous n'avez pas le mot de passe.</div>
-        </div>
-
-        <button onclick="checkDemoPassword()"
-          style="width:100%;padding:13px;background:linear-gradient(135deg,#00B4CC,#00E5FF);border:none;border-radius:10px;font-size:14px;font-weight:700;color:#080C1F;cursor:pointer;letter-spacing:.3px;transition:opacity .2s"
-          onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-          🚀 Accéder à la démo
-        </button>
-
-        <div style="margin-top:20px;padding-top:20px;border-top:1px solid #1e2a50;text-align:center">
-          <div style="font-size:11px;color:#5a6a8a;line-height:1.8">
-            Vous êtes un client CHR 360° ?<br>
-            Accédez à votre tableau de bord via le <strong style="color:#8899bb">lien reçu dans votre email de bienvenue</strong>.
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- Bannière MODE DÉMO -->
-<div id="demoBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:1000;background:linear-gradient(90deg,#F59E0B,#F97316);padding:7px 20px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:13px;font-weight:700;color:#080C1F">
-  <span>🎭 MODE DÉMO</span>
-  <span style="font-weight:400;opacity:.8">— Données fictives · Bistrot des Alpes</span>
-  <button onclick="exitDemo()" style="margin-left:16px;background:#00000025;border:1px solid #00000030;border-radius:6px;padding:3px 10px;font-size:12px;color:#080C1F;cursor:pointer;font-weight:600">✕ Quitter</button>
-</div>
-
-<script>
-// ═══════════════════════════════════════════════════════════
-// MODE DÉMO
-// ═══════════════════════════════════════════════════════════
-
-// Clé hashée du mot de passe "chr360demo"
-// Simple check côté client (suffisant pour demo, pas pour sécurité critique)
-const DEMO_PWD_HASH = 'chr360demo';
-let IS_DEMO_MODE = false;
-
-function toggleDemoPwd() {
-  const inp = document.getElementById('demoPasswordInput');
-  const eye = document.getElementById('demoEye');
-  if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '🔒'; }
-  else { inp.type = 'password'; eye.textContent = '👁'; }
-}
-
-function checkDemoPassword() {
-  const val = document.getElementById('demoPasswordInput').value.trim();
-  const err = document.getElementById('demoError');
-  if (val === DEMO_PWD_HASH) {
-    err.style.display = 'none';
-    launchDemoMode();
-  } else {
-    err.style.display = 'block';
-    const inp = document.getElementById('demoPasswordInput');
-    inp.style.borderColor = '#F8717155';
-    inp.value = '';
-    setTimeout(() => { inp.style.borderColor = '#1e2a50'; }, 1500);
-  }
-}
-
-function launchDemoMode() {
-  IS_DEMO_MODE = true;
-  // Fermer la modal
-  document.getElementById('demoModal').classList.remove('show');
-  document.getElementById('demoModal').style.display = 'none';
-  // Afficher la bannière
-  document.getElementById('demoBanner').style.display = 'flex';
-  // Pousser le contenu vers le bas pour éviter que la bannière masque le header
-  document.querySelector('.app').style.paddingTop = '38px';
-  // Injecter les données démo
-  injectDemoData();
-}
-
-function exitDemo() {
-  IS_DEMO_MODE = false;
-  document.getElementById('demoBanner').style.display = 'none';
-  document.querySelector('.app').style.paddingTop = '';
-  // Remettre l'état initial (tirets)
-  DATA = { mois: { achats: [], ventes: [] } };
-  render('mois');
-  const badge = document.querySelector('.badge-live');
-  if (badge) { badge.innerHTML = '<div class="dot"></div>DÉCONNECTÉ'; badge.style.background = 'rgba(100,100,100,.12)'; }
-  // Ré-afficher la modal
-  document.getElementById('demoModal').style.display = '';
-  document.getElementById('demoModal').classList.add('show');
-  document.getElementById('demoPasswordInput').value = '';
-}
-
-// ─ Génération des données démo ───────────────────────────────────────────────
-function injectDemoData() {
-  const today = new Date();
-  const fmt = d => d.toISOString().split('T')[0];
-
-  // ── Ventes (30 jours) ──
-  const ventes = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(today); d.setDate(d.getDate() - i);
-    const dow = d.getDay();
-    const coeff = [0.75, 0.88, 0.92, 0.96, 1.0, 1.32, 1.18][dow];
-    const seed = Math.sin(i * 7.3) * 0.5 + 0.5; // déterministe
-    const couverts = Math.round((40 + seed * 16) * coeff);
-    const caTotal  = couverts * (33.5 + seed * 6.5);
-    ventes.push({
-      date:     fmt(d),
-      service:  dow >= 5 ? 'week-end' : 'semaine',
-      caTTC:    Math.round(caTotal * 100) / 100,
-      caHT:     Math.round(caTotal / 1.077 * 100) / 100,
-      caBar:    Math.round(caTotal * 0.19 * 100) / 100,
-      couverts: couverts,
-      annuls:   seed > 0.88 ? 1 : 0,
-    });
-  }
-
-  // ── Achats fournisseurs ──
-  const fournisseursDef = [
-    { nom: 'Metro Suisse SA',        cat: 'ALIMENTAIRE', baseHT: 1820, count: 5 },
-    { nom: 'Transgourmet SA',        cat: 'ALIMENTAIRE', baseHT: 1380, count: 4 },
-    { nom: 'Pistor SA',              cat: 'ALIMENTAIRE', baseHT:  560, count: 4 },
-    { nom: 'Boucherie Bovard & Fils',cat: 'ALIMENTAIRE', baseHT:  840, count: 3 },
-    { nom: 'Maison Weiss & Co',      cat: 'BOISSONS',    baseHT: 1090, count: 3 },
-    { nom: 'Provins Valais',         cat: 'BOISSONS',    baseHT:  645, count: 2 },
-    { nom: 'Feldschlösschen',        cat: 'BOISSONS',    baseHT:  490, count: 3 },
-    { nom: 'Henniez Eaux Minérales', cat: 'BOISSONS',    baseHT:  205, count: 2 },
-    { nom: 'Nettoyage Pro Vaud',     cat: 'ENTRETIEN',   baseHT:  195, count: 2 },
-    { nom: 'JohnsonControls SA',     cat: 'ENTRETIEN',   baseHT:  148, count: 1 },
-  ];
-
-  const achats = [];
-  let numFact = 2001;
-  fournisseursDef.forEach((f, fi) => {
-    for (let j = 0; j < f.count; j++) {
-      const seed2 = Math.sin((fi * 13 + j * 7) * 1.7) * 0.5 + 0.5;
-      const dOffset = Math.round(seed2 * 27);
-      const d = new Date(today); d.setDate(d.getDate() - dOffset);
-      const ht  = Math.round(f.baseHT * (0.88 + seed2 * 0.25) * 100) / 100;
-      const ttc = Math.round(ht * 1.077 * 100) / 100;
-      const ech = new Date(d); ech.setDate(ech.getDate() + 30);
-      achats.push({
-        date:       fmt(d),
-        fournisseur: f.nom,
-        numero:     'F-' + numFact++,
-        ht, ttc,
-        cat:        f.cat,
-        echeance:   fmt(ech),
-        statut:     seed2 > 0.42 ? 'PAYE' : 'EN ATTENTE',
-      });
-    }
-  });
-
-  // ── Injection dans DATA ──
-  DATA.mois = { achats, ventes };
-
-  // Ajouter semaine et trimestre (dérivés du mois)
-  DATA.semaine = {
-    ventes: ventes.slice(-7),
-    achats: achats.filter(a => {
-      const d = new Date(a.date);
-      const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 7);
-      return d >= cutoff;
-    })
-  };
-  DATA.trimestre = {
-    ventes: [...ventes, ...ventes.map(v => ({
-      ...v,
-      caTTC: Math.round(v.caTTC * (0.92 + Math.sin(Math.random()) * 0.12) * 100) / 100,
-      caHT:  Math.round(v.caHT  * (0.92 + Math.sin(Math.random()) * 0.12) * 100) / 100,
-    })), ...ventes.map(v => ({
-      ...v,
-      caTTC: Math.round(v.caTTC * (0.88 + Math.sin(Math.random()) * 0.15) * 100) / 100,
-      caHT:  Math.round(v.caHT  * (0.88 + Math.sin(Math.random()) * 0.15) * 100) / 100,
-    }))],
-    achats: [...achats, ...achats.map(a => ({...a, ht: Math.round(a.ht * 0.96 * 100)/100, ttc: Math.round(a.ttc * 0.96 * 100)/100})),
-             ...achats.map(a => ({...a, ht: Math.round(a.ht * 0.91 * 100)/100, ttc: Math.round(a.ttc * 0.91 * 100)/100}))]
-  };
-
-  // ── Config démo ──
-  CFG = {
-    objectifFoodCost:    0.30,
-    objectifBevCost:     0.20,
-    objectifTicketMoyen: 32.00,
-    alerteTresorerie:    8000,
-    tauxChargesFixes:    0.35,
-    tauxPersonnel:       0.30,
-    alertEmail:          'demo@lebistrotdesalpes.ch',
-    telegramChatId:      '',
-    notifEmail:          true,
-    notifTelegram:       false,
-  };
-
-  // ── Mise à jour du header ──
-  const subtitle = document.querySelector('.header-subtitle');
-  if (subtitle) subtitle.textContent = 'Le Bistrot des Alpes — Tableau de Bord de Pilotage';
-
-  // ── Render ──
-  const badge = document.querySelector('.badge-live');
-  if (badge) { badge.innerHTML = '<div class="dot"></div>DÉMO LIVE'; badge.style.background = ''; badge.style.borderColor = ''; badge.style.color = ''; }
-  render('mois');
-}
-
-// ─ Surcharger saveSettings en mode démo ─────────────────────────────────────
-const _originalSaveSettings = saveSettings;
-window.saveSettings = async function(event) {
-  if (IS_DEMO_MODE) {
-    event.preventDefault();
-    // Mise à jour locale uniquement (pas d'appel API)
-    CFG = {
-      objectifFoodCost:    parseFloat(document.getElementById('objectifFoodCost').value) / 100,
-      objectifBevCost:     parseFloat(document.getElementById('objectifBevCost').value) / 100,
-      objectifTicketMoyen: parseFloat(document.getElementById('objectifTicketMoyen').value),
-      alerteTresorerie:    parseFloat(document.getElementById('alerteTresorerie').value),
-      tauxChargesFixes:    CFG.tauxChargesFixes,
-      tauxPersonnel:       CFG.tauxPersonnel,
-      alertEmail:          document.getElementById('alertEmail').value.trim(),
-      telegramChatId:      document.getElementById('telegramChatId').value.trim(),
-      notifEmail:          document.getElementById('notifEmail').checked,
-      notifTelegram:       document.getElementById('notifTelegram').checked,
-    };
-    closeSettingsModal();
-    render('mois');
-    const ind = document.getElementById('saveIndicator');
-    if (ind) { ind.classList.add('show'); setTimeout(() => ind.classList.remove('show'), 3000); }
-    return;
-  }
-  return _originalSaveSettings.call(this, event);
-};
-
-// ─ Au chargement : afficher la modal démo si pas de token ────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  const token = new URLSearchParams(window.location.search).get('id');
-  if (!token || token === 'DEMO') {
-    // Afficher la modal demo, ne pas lancer loadData
-    document.getElementById('demoModal').classList.add('show');
-  } else {
-    // Token présent → lancer normalement
-    document.getElementById('demoModal').style.display = 'none';
-    startAutoRefresh();
-  }
-});
-</script>
 
 </body>
 </html>
