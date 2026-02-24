@@ -425,4 +425,17 @@ function renderGeneric() {
   document.getElementById('loadingScreen').classList.add('hidden');
   document.getElementById('mainCard').style.display = '';
   document.getElementById('btnReactivate').href = 'inscription.html';
-  document.getElementById('inf
+  document.getElementById('infoGrid') && (document.getElementById('infoGrid').style.display = 'none');
+}
+
+function translateStatus(s) {
+  const map = { trialing:'Essai gratuit', active:'Actif', past_due:'Paiement en attente',
+                canceled:'Annulé', trial_expired:'Essai expiré', unpaid:'Impayé', paused:'En pause' };
+  return map[s] || s;
+}
+
+// ── Démarrer ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
