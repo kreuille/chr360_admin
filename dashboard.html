@@ -1085,19 +1085,18 @@ function startAutoRefresh() {
 // VÉRIFICATION ABONNEMENT
 // ═══════════════════════════════════════════════════════════
 function openSubscriptionPortal() {
-  const btn = document.querySelector('[onclick="openSubscriptionPortal()"]');
+  const btn     = document.querySelector('[onclick="openSubscriptionPortal()"]');
+  const status  = _subData ? _subData.status : '';
+  const hasCard = _subData && (_subData.card_registered === true || _subData.card_registered === 'true');
 
-  // Détecter si carte déjà enregistrée ET abonnement actif/trialing
-  const banner  = document.getElementById('trialBanner');
-  const hasCard = banner && banner.innerHTML.includes('Premier prélèvement');
-
-  if (hasCard) {
-    // Abonnement actif avec carte → ouvrir le portal Stripe directement
+  // Abonnement actif avec carte → portal Stripe (gérer/annuler)
+  if (hasCard && (status === 'active' || status === 'trialing')) {
     openStripePortalDirect(btn);
-  } else {
-    // Pas de carte ou annulé → sélection du plan
-    showPlanModal(btn);
+    return;
   }
+
+  // Tout autre cas (sans carte, expiré, annulé, past_due) → sélection plan → nouveau Checkout
+  showPlanModal(btn);
 }
 
 async function openStripePortalDirect(btn) {
@@ -1214,14 +1213,19 @@ async function confirmPlanAndCheckout() {
 }
 
 
+// Statut abonnement global (rempli par checkSubscriptionStatus)
+let _subData = null;
+
 async function checkSubscriptionStatus() {
-  if (!CLIENT_TOKEN) return true; // pas de token = pas de vérification
+  if (!CLIENT_TOKEN) return true;
 
   try {
     const url = APPS_SCRIPT_URL + '?action=checkSubscription&id=' + encodeURIComponent(CLIENT_TOKEN);
     const response = await fetch(url);
-    if (!response.ok) return true; // erreur réseau → ne pas bloquer
+    if (!response.ok) return true;
     const data = await response.json();
+
+    _subData = data; // ✅ stocker globalement
 
     // Statuts bloquants → rediriger vers paywall
     if (data.isBlocked) {
@@ -1229,7 +1233,7 @@ async function checkSubscriptionStatus() {
       return false;
     }
 
-    // Essai en cours → afficher bandeau selon état carte
+    // Essai en cours → afficher bandeau
     if (data.status === 'trialing' && data.daysRemaining !== null) {
       showTrialBanner(data.daysRemaining, data.trialEnd, data.card_registered === true || data.card_registered === 'true');
     }
@@ -1237,7 +1241,7 @@ async function checkSubscriptionStatus() {
     return true;
   } catch(e) {
     console.warn('⚠️ Vérification abonnement ignorée:', e.message);
-    return true; // en cas d'erreur → ne pas bloquer
+    return true;
   }
 }
 
