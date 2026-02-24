@@ -102,6 +102,11 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
 .stripe-note{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;font-size:11px;color:var(--muted)}
 .badge-soon{padding:2px 8px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:4px;color:#818CF8;font-size:10px;font-weight:700}
 
+/* PLAN CARDS */
+.plan-card{padding:14px;background:rgba(255,255,255,.03);border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s}
+.plan-card:hover{border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.04)}
+.plan-card.active{border-color:var(--cyan);background:rgba(0,229,255,.07);box-shadow:0 0 0 3px rgba(0,229,255,.1)}
+
 /* MESSAGES */
 .msg{padding:11px 15px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
 .msg.error{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--error);display:block}
@@ -193,19 +198,35 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
 
       <!-- ÉTAPE 1 -->
       <div class="form-panel active" id="panel1">
-        <div class="row2">
-          <div class="field"><label>Nom du restaurant *</label><input type="text" id="f-restaurant" placeholder="Le Petit Bistrot"></div>
-          <div class="field"><label>Devise</label>
-            <select id="f-devise">
-              <option value="EUR">€ Euro</option>
-              <option value="CHF">CHF Franc</option>
-              <option value="USD">$ Dollar</option>
-            </select>
+        <!-- Sélecteur de plan -->
+        <div class="field" style="margin-bottom:20px">
+          <label>Formule *</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px" id="planSelector">
+
+            <div class="plan-card active" onclick="selectPlan('starter', this)" id="plan-starter">
+              <div style="font-weight:700;font-size:14px;margin-bottom:4px">STARTER</div>
+              <div id="price-starter" style="font-size:20px;font-weight:800;color:var(--cyan)">89 CHF<span style="font-size:12px;font-weight:400;color:var(--muted)">/mois</span></div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">50 docs/mois · 1 caisse<br>Email alerts · Self-service</div>
+            </div>
+
+            <div class="plan-card" onclick="selectPlan('pro', this)" id="plan-pro">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                <span style="font-weight:700;font-size:14px">PRO</span>
+                <span style="font-size:10px;background:var(--cyan);color:#080C1F;padding:1px 6px;border-radius:20px;font-weight:700">⭐ RECOMMANDÉ</span>
+              </div>
+              <div id="price-pro" style="font-size:20px;font-weight:800;color:var(--cyan)">149 CHF<span style="font-size:12px;font-weight:400;color:var(--muted)">/mois</span></div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5">IA illimitée · 8 caisses<br>Email + Telegram · Prioritaire</div>
+            </div>
+
           </div>
+          <input type="hidden" id="f-plan" value="starter">
+          <input type="hidden" id="f-devise" value="CHF">
         </div>
+
+        <div class="field"><label>Nom du restaurant *</label><input type="text" id="f-restaurant" placeholder="Le Petit Bistrot"></div>
         <div class="field"><label>Votre prénom et nom *</label><input type="text" id="f-nom" placeholder="Jean Dupont"></div>
         <div class="field"><label>Email professionnel *</label><input type="email" id="f-email" placeholder="jean@restaurant.fr"></div>
-        <div class="field"><label>Téléphone <span style="color:var(--muted);font-weight:400">(optionnel)</span></label><input type="tel" id="f-tel" placeholder="+33 6 00 00 00 00"></div>
+        <div class="field"><label>Téléphone <span style="color:var(--muted);font-weight:400">(optionnel)</span></label><input type="tel" id="f-tel" placeholder="+41 79 000 00 00"></div>
         <button class="btn-primary" onclick="goToStep2()">Continuer →</button>
       </div>
 
@@ -213,12 +234,12 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
       <div class="form-panel" id="panel2">
         <div class="plan-box">
           <div class="plan-box-head">
-            <div class="plan-box-name">CHR 360° Pro</div>
-            <div class="plan-box-price">49<span id="deviseSymbol">€</span><span>/mois</span></div>
+            <div class="plan-box-name" id="recap-plan-name">CHR 360° Pro</div>
+            <div class="plan-box-price"><span id="recap-price">89</span> CHF<span>/mois</span></div>
           </div>
-          <div class="plan-box-items">
+          <div class="plan-box-items" id="recap-plan-features">
             <span class="tick">✓</span> IA illimitée &nbsp;·&nbsp; <span class="tick">✓</span> Dashboard temps réel<br>
-            <span class="tick">✓</span> 8 caisses &nbsp;·&nbsp; <span class="tick">✓</span> Alertes Email + Telegram &nbsp;·&nbsp; <span class="tick">✓</span> Support
+            <span class="tick">✓</span> 8 caisses &nbsp;·&nbsp; <span class="tick">✓</span> Alertes Email + Telegram &nbsp;·&nbsp; <span class="tick">✓</span> Support prioritaire
           </div>
         </div>
 
@@ -264,6 +285,31 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgOWc09nli4MU1_dEqVx9MlHmGGcrpK-rpite1maoyMEaH24k9zvneDqb6W2XfOAgAbA/exec';
 
+// ── Tarifs par devise ─────────────────────────────────────────
+const PLANS = {
+  starter: { CHF: { price: 89,  label: '89 CHF'  }, EUR: { price: 83,  label: '83 €'   }, USD: { price: 89,  label: '89 $'   } },
+  pro:     { CHF: { price: 149, label: '149 CHF' }, EUR: { price: 138, label: '138 €'  }, USD: { price: 149, label: '149 $'  } },
+};
+const PLAN_FEATURES = {
+  starter: '<span class="tick">✓</span> 50 docs/mois &nbsp;·&nbsp; <span class="tick">✓</span> 1 caisse<br><span class="tick">✓</span> Dashboard Food Cost + Trésorerie &nbsp;·&nbsp; <span class="tick">✓</span> Email alerts',
+  pro:     '<span class="tick">✓</span> IA illimitée &nbsp;·&nbsp; <span class="tick">✓</span> 8 caisses<br><span class="tick">✓</span> Tous KPIs &nbsp;·&nbsp; <span class="tick">✓</span> Email + Telegram &nbsp;·&nbsp; <span class="tick">✓</span> Support prioritaire',
+};
+
+function selectPlan(plan, el) {
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('f-plan').value = plan;
+}
+
+function updatePlanPrices() {
+  const devise = document.getElementById('f-devise').value;
+  Object.keys(PLANS).forEach(plan => {
+    const info = PLANS[plan][devise] || PLANS[plan]['CHF'];
+    const el   = document.getElementById('price-' + plan);
+    if (el) el.innerHTML = info.label + '<span style="font-size:12px;font-weight:400;color:var(--muted)">/mois</span>';
+  });
+}
+
 // ── Navigation étapes ────────────────────────────────────────
 function goToStep(n) {
   document.querySelectorAll('.form-panel').forEach((p,i) => p.classList.toggle('active', i===n-1));
@@ -282,8 +328,12 @@ function goToStep2() {
   if(!restaurant||!nom||!email){showMsg('Veuillez remplir tous les champs obligatoires.','error');return}
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMsg('Adresse email invalide.','error');return}
 
-  const deviseMap = {EUR:'€',CHF:' CHF',USD:' $'};
-  document.getElementById('deviseSymbol').textContent = deviseMap[document.getElementById('f-devise').value]||'€';
+  const plan    = document.getElementById('f-plan').value || 'starter';
+  const prices  = { starter: 89, pro: 149 };
+
+  document.getElementById('recap-plan-name').textContent    = 'CHR 360° ' + plan.charAt(0).toUpperCase() + plan.slice(1);
+  document.getElementById('recap-price').textContent        = prices[plan];
+  document.getElementById('recap-plan-features').innerHTML  = PLAN_FEATURES[plan] || '';
 
   const end    = new Date(Date.now()+14*864e5);
   const endStr = end.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
@@ -307,6 +357,7 @@ async function goToStripe() {
     restaurant: document.getElementById('f-restaurant').value.trim(),
     tel:        document.getElementById('f-tel').value.trim(),
     devise:     document.getElementById('f-devise').value,
+    plan:       document.getElementById('f-plan').value || 'starter',
   };
 
   try {
