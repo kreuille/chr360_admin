@@ -716,6 +716,8 @@
       <button id="btnSimulation" class="btn-settings" onclick="openSimulationGuard()" title="Injecter données de test"
               style="background:rgba(255,165,0,0.12);border-color:rgba(255,165,0,0.3)">🧪</button>
       <button id="btnSettings" class="btn-settings" onclick="openSettingsModal()" title="Paramètres">⚙️</button>
+      <button class="btn-settings" onclick="openSubscriptionPortal()" title="Gérer mon abonnement"
+              style="font-size:11px;padding:0 10px;width:auto;letter-spacing:.02em">💳 Abonnement</button>
       <div class="badge-live"><div class="dot"></div>LIVE</div>
       <div class="date-chip" id="dateChip">—</div>
     </div>
@@ -1076,7 +1078,28 @@ function startAutoRefresh() {
 // ═══════════════════════════════════════════════════════════
 // VÉRIFICATION ABONNEMENT
 // ═══════════════════════════════════════════════════════════
-async function checkSubscriptionStatus() {
+async function openSubscriptionPortal() {
+  try {
+    const btn = document.querySelector('[onclick="openSubscriptionPortal()"]');
+    if (btn) { btn.textContent = '⏳…'; btn.disabled = true; }
+
+    const url = APPS_SCRIPT_URL + '?action=getPortalSession&id=' + encodeURIComponent(CLIENT_TOKEN);
+    const resp = await fetch(url).then(r => r.json());
+
+    if (resp && resp.url) {
+      window.open(resp.url, '_blank');
+    } else {
+      alert('Impossible d\'ouvrir le portail. Contactez le support.');
+    }
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  } finally {
+    const btn = document.querySelector('[onclick="openSubscriptionPortal()"]');
+    if (btn) { btn.textContent = '💳 Abonnement'; btn.disabled = false; }
+  }
+}
+
+
   if (!CLIENT_TOKEN) return true; // pas de token = pas de vérification
 
   try {
