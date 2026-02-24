@@ -219,6 +219,8 @@ async function init() {
   const url       = new URLSearchParams(window.location.search);
   const sessionId = url.get('session_id');
   const canceled  = url.get('canceled');
+  const activated = url.get('activated'); // client existant qui active son abonnement
+  const token     = url.get('token');     // token dashboard du client existant
 
   if (canceled) {
     window.location.href = 'inscription.html?canceled=1';
@@ -230,10 +232,19 @@ async function init() {
     return;
   }
 
+  // ── Cas : client existant qui ajoute sa carte ──
+  if (activated === '1' && token) {
+    startAnimation();
+    // Laisser 3s pour que le webhook Stripe mette à jour le statut
+    setTimeout(() => {
+      window.location.href = 'dashboard.html?id=' + token;
+    }, 3000);
+    return;
+  }
+
   startAnimation();
 
-  // Appeler registerTrial avec le session_id Stripe
-  // Le webhook Stripe a déjà pu installer le client, registerTrial est idempotent
+  // ── Cas : nouveau client ──
   const params = {
     action:     'registerTrial',
     session_id: sessionId,
@@ -241,14 +252,14 @@ async function init() {
     email:      url.get('email')      || '',
     restaurant: url.get('restaurant') || '',
     tel:        url.get('tel')        || '',
-    devise:     url.get('devise')     || 'EUR',
+    devise:     url.get('devise')     || 'CHF',
+    plan:       url.get('plan')       || 'starter',
   };
 
   try {
     const resp = await installClient(params);
 
     if (resp && resp.timeout) {
-      // L'installation tourne en arrière-plan, l'email a déjà été envoyé
       showFinal(params.email, null);
       return;
     }
@@ -257,7 +268,6 @@ async function init() {
       const dashUrl = resp.dashboard_url || null;
       showFinal(params.email, dashUrl);
     } else {
-      // Installer depuis le webhook → montrer le message email
       showFinal(params.email, null);
     }
   } catch(e) {
