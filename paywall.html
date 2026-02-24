@@ -258,20 +258,41 @@
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgOWc09nli4MU1_dEqVx9MlHmGGcrpK-rpite1maoyMEaH24k9zvneDqb6W2XfOAgAbA/exec';
 
-// ── JSONP ──────────────────────────────────────────────────
-window._chr360_cb = null;
+// ── JSONP avec timeout ────────────────────────────────────────
 function apiFetch(url) {
   return new Promise((resolve) => {
     const cbName = '_chr360_pw_' + Date.now();
-    window[cbName] = (data) => { delete window[cbName]; resolve(data); };
+    let done = false;
+
+    window[cbName] = (data) => {
+      if (done) return;
+      done = true;
+      delete window[cbName];
+      resolve(data);
+    };
+
     const s = document.createElement('script');
     s.src = url + '&callback=' + cbName;
-    s.onerror = () => { delete window[cbName]; resolve({}); };
+    s.onerror = () => {
+      if (done) return;
+      done = true;
+      delete window[cbName];
+      s.remove();
+      resolve({});
+    };
     document.head.appendChild(s);
-    setTimeout(() => s.remove(), 15000);
+
+    // Timeout 12s → ne jamais bloquer l'affichage
+    setTimeout(() => {
+      if (done) return;
+      done = true;
+      delete window[cbName];
+      s.remove();
+      resolve({});
+    }, 12000);
   });
 }
 
@@ -339,13 +360,14 @@ async function init() {
 
 function render(data, token) {
   const status = data.status || 'canceled';
-  const cfg    = statusConfig[status] || statusConfig.canceled;
 
-  // Si abonnement actif → rediriger vers dashboard
-  if (!data.isBlocked && data.status !== 'trial_expired') {
+  // ── Abonnement actif ou essai en cours → retour dashboard ──
+  if (!data.isBlocked) {
     window.location.href = 'dashboard.html?id=' + token;
     return;
   }
+
+  const cfg = statusConfig[status] || statusConfig.canceled;
 
   // Badge
   const badge = document.getElementById('statusBadge');
