@@ -713,6 +713,8 @@
     </div>
     <div class="header-right">
       <button class="btn-settings btn-upload" onclick="openUploadModal()" title="Déposer des fichiers">📤</button>
+      <button id="btnSimulation" class="btn-settings" onclick="openSimulationGuard()" title="Injecter données de test"
+              style="background:rgba(255,165,0,0.12);border-color:rgba(255,165,0,0.3)">🧪</button>
       <button id="btnSettings" class="btn-settings" onclick="openSettingsModal()" title="Paramètres">⚙️</button>
       <div class="badge-live"><div class="dot"></div>LIVE</div>
       <div class="date-chip" id="dateChip">—</div>
@@ -1829,6 +1831,262 @@ function showUploadToast(type, msg) {
   toast.textContent = msg; toast.className = 'upload-toast show ' + type;
   if (_toastTimer) clearTimeout(_toastTimer);
   _toastTimer = setTimeout(function() { toast.className = 'upload-toast'; }, 4000);
+}
+</script>
+
+<!-- Modal Simulation — styles -->
+<style>
+  .sim-scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0; }
+  .sim-scenario-card {
+    border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px 10px;
+    text-align: center; cursor: pointer; transition: all 0.2s; background: #070a1a;
+  }
+  .sim-scenario-card:hover { border-color: var(--accent); background: rgba(0,229,255,0.05); }
+  .sim-scenario-card.selected { border-color: var(--accent); background: rgba(0,229,255,0.1); }
+  .sim-scenario-card .sim-emoji { font-size: 28px; display: block; margin-bottom: 6px; }
+  .sim-scenario-card .sim-label { font-size: 12px; font-weight: 600; color: #E8EFF8; }
+  .sim-scenario-card .sim-desc { font-size: 10px; color: var(--dim); margin-top: 4px; line-height: 1.5; }
+  .sim-days-grid { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+  .sim-day-btn {
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+    padding: 7px 14px; font-size: 12px; cursor: pointer;
+    background: transparent; color: var(--muted); transition: all 0.2s;
+  }
+  .sim-day-btn:hover { border-color: var(--accent); color: #fff; }
+  .sim-day-btn.selected { border-color: var(--accent); background: rgba(0,229,255,0.1); color: var(--accent); font-weight: 600; }
+  .sim-result { margin-top: 14px; padding: 14px; border-radius: 10px; font-size: 13px; display: none; line-height:1.6; }
+  .sim-result.success { background: rgba(0,200,100,0.1); border: 1px solid rgba(0,200,100,0.3); color: #00c864; }
+  .sim-result.error   { background: rgba(231,76,60,0.1);  border: 1px solid rgba(231,76,60,0.3);  color: #e74c3c; }
+  .sim-warning { background: rgba(255,165,0,0.1); border: 1px solid rgba(255,165,0,0.3);
+                 border-radius: 8px; padding: 10px 12px; font-size: 11px; color: #ffa500; margin-top: 12px; }
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- MODAL MOT DE PASSE — accès simulation                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="simGuardModal" class="modal-overlay">
+  <div class="modal-content" style="max-width:380px;padding:0">
+    <div style="background:#0a1225;border:1px solid #1e2a50;border-radius:16px;overflow:hidden">
+      <div style="padding:24px 28px 20px;border-bottom:1px solid #1e2a5040">
+        <div style="font-size:28px;text-align:center;margin-bottom:10px">🧪</div>
+        <h2 style="font-size:17px;font-weight:700;color:#E8EFF8;text-align:center;margin:0 0 4px">Zone Développeur</h2>
+        <p style="font-size:12px;color:#8899bb;text-align:center;margin:0">Injection de données de test</p>
+      </div>
+      <div style="padding:22px 28px">
+        <div id="simGuardError" style="display:none;background:#F8717120;border:1px solid #F8717140;border-radius:8px;padding:8px 12px;font-size:12px;color:#F87171;margin-bottom:14px;text-align:center">
+          ❌ Mot de passe incorrect
+        </div>
+        <label style="font-size:11px;font-weight:700;color:#ccd6f6;display:block;margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px">Mot de passe</label>
+        <div style="position:relative;margin-bottom:16px">
+          <input type="password" id="simGuardInput" placeholder="••••••••"
+            autocomplete="off"
+            onkeydown="if(event.key==='Enter')checkSimPassword()"
+            style="width:100%;box-sizing:border-box;background:#070a1a;border:1.5px solid #1e2a50;border-radius:9px;padding:11px 40px 11px 14px;font-size:14px;color:#E8EFF8;outline:none"
+            onfocus="this.style.borderColor='#00E5FF50'"
+            onblur="this.style.borderColor='#1e2a50'">
+          <span onclick="this.previousElementSibling.type=this.previousElementSibling.type==='password'?'text':'password'"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:14px;user-select:none">👁</span>
+        </div>
+        <button onclick="checkSimPassword()"
+          style="width:100%;padding:11px;background:linear-gradient(135deg,#F59E0B,#F97316);border:none;border-radius:9px;font-size:13px;font-weight:700;color:#080C1F;cursor:pointer">
+          🔓 Accéder
+        </button>
+        <button onclick="closeSimGuard()"
+          style="width:100%;padding:9px;background:transparent;border:1px solid #1e2a50;border-radius:9px;font-size:12px;color:#8899bb;cursor:pointer;margin-top:8px">
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- MODAL SIMULATION CAISSE                                    -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="simulationModal" class="modal-overlay">
+  <div class="modal-content" style="max-width:520px">
+
+    <div class="modal-header">
+      <h2 class="modal-title">🧪 Injecter des Données de Test</h2>
+      <button class="modal-close" onclick="closeSimulationModal()">×</button>
+    </div>
+
+    <p style="font-size:13px;color:var(--dim);margin-bottom:20px;line-height:1.6">
+      Génère des données réalistes de <strong style="color:#E8EFF8">ventes</strong> et 
+      <strong style="color:#E8EFF8">achats fournisseurs</strong> directement dans votre 
+      Google Sheet — pour tester le dashboard sans avoir de vraie caisse connectée.
+    </p>
+
+    <!-- Scénario -->
+    <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Scénario</div>
+    <div class="sim-scenario-grid">
+      <div class="sim-scenario-card selected" onclick="selectScenario('normal', this)">
+        <span class="sim-emoji">📊</span>
+        <div class="sim-label">Normal</div>
+        <div class="sim-desc">CA ~1 800 CHF/j<br>Food cost ~28%</div>
+      </div>
+      <div class="sim-scenario-card" onclick="selectScenario('boom', this)">
+        <span class="sim-emoji">🚀</span>
+        <div class="sim-label">Boom</div>
+        <div class="sim-desc">CA ~3 200 CHF/j<br>Food cost ~24%</div>
+      </div>
+      <div class="sim-scenario-card" onclick="selectScenario('crise', this)">
+        <span class="sim-emoji">📉</span>
+        <div class="sim-label">Crise</div>
+        <div class="sim-desc">CA ~900 CHF/j<br>Food cost ~38%</div>
+      </div>
+    </div>
+
+    <!-- Période -->
+    <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin:18px 0 8px">Période</div>
+    <div class="sim-days-grid">
+      <button class="sim-day-btn" onclick="selectDays(7, this)">7 jours</button>
+      <button class="sim-day-btn selected" onclick="selectDays(30, this)">30 jours</button>
+      <button class="sim-day-btn" onclick="selectDays(60, this)">60 jours</button>
+      <button class="sim-day-btn" onclick="selectDays(90, this)">90 jours</button>
+    </div>
+
+    <div class="sim-warning">
+      ⚠️ Cette action <strong>remplace toutes les données</strong> existantes dans DATA_VENTES et DATA_ACHATS du Google Sheet.
+    </div>
+
+    <div id="simResult" class="sim-result"></div>
+
+    <div class="modal-actions" style="margin-top:20px">
+      <button type="button" class="btn btn-secondary" onclick="closeSimulationModal()">Annuler</button>
+      <button type="button" class="btn" id="btnSimClear"
+              style="flex:0.7;background:rgba(231,76,60,0.12);color:#F87171;border:1px solid rgba(231,76,60,0.3)"
+              onclick="clearSimulation()">🗑 Effacer</button>
+      <button type="button" class="btn btn-primary" id="btnSimRun" onclick="runSimulation()">
+        ▶ Générer
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SIMULATION — MOT DE PASSE
+// ═══════════════════════════════════════════════════════════
+const SIM_PWD = 'chr360admin';
+
+function openSimulationGuard() {
+  document.getElementById('simGuardModal').classList.add('show');
+  setTimeout(() => document.getElementById('simGuardInput').focus(), 100);
+}
+function closeSimGuard() {
+  document.getElementById('simGuardModal').classList.remove('show');
+  document.getElementById('simGuardInput').value = '';
+  document.getElementById('simGuardError').style.display = 'none';
+}
+function checkSimPassword() {
+  const val = document.getElementById('simGuardInput').value;
+  const err = document.getElementById('simGuardError');
+  if (val === SIM_PWD) {
+    closeSimGuard();
+    openSimulationModal();
+  } else {
+    err.style.display = 'block';
+    document.getElementById('simGuardInput').value = '';
+    setTimeout(() => { err.style.display = 'none'; }, 2000);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SIMULATION — MODAL & LOGIQUE
+// ═══════════════════════════════════════════════════════════
+let simScenario = 'normal';
+let simDays = 30;
+
+function openSimulationModal() {
+  document.getElementById('simResult').style.display = 'none';
+  document.getElementById('simulationModal').classList.add('show');
+}
+function closeSimulationModal() {
+  document.getElementById('simulationModal').classList.remove('show');
+}
+
+// Fermer en cliquant overlay
+document.getElementById('simulationModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSimulationModal();
+});
+document.getElementById('simGuardModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSimGuard();
+});
+
+function selectScenario(val, el) {
+  simScenario = val;
+  document.querySelectorAll('.sim-scenario-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function selectDays(val, el) {
+  simDays = val;
+  document.querySelectorAll('.sim-day-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function runSimulation() {
+  const btn = document.getElementById('btnSimRun');
+  const res = document.getElementById('simResult');
+  btn.textContent = '⏳ Génération...';
+  btn.disabled = true;
+  res.style.display = 'none';
+
+  try {
+    const token = typeof CLIENT_TOKEN !== 'undefined' ? CLIENT_TOKEN : '';
+    if (!token) throw new Error('Token client manquant — ouvrez le dashboard via votre lien personnalisé');
+
+    const url = APPS_SCRIPT_URL + '?action=simulateCaisse&id=' + encodeURIComponent(token) +
+      '&jours=' + simDays + '&scenario=' + simScenario;
+    const data = await apiFetch(url);
+
+    res.className = 'sim-result ' + (data.success ? 'success' : 'error');
+    res.style.display = 'block';
+
+    if (data.success) {
+      res.innerHTML = '✅ <strong>' + data.nb_ventes + ' lignes de ventes</strong> et ' +
+        '<strong>' + data.nb_achats + ' factures achats</strong> générées<br>' +
+        'CA total simulé : <strong>' + parseFloat(data.ca_total).toLocaleString('fr-CH') + ' CHF</strong><br>' +
+        'Scénario : <strong>' + simScenario + '</strong> — Période : <strong>' + simDays + ' jours</strong>';
+      setTimeout(() => {
+        loadData();
+        closeSimulationModal();
+      }, 2500);
+    } else {
+      res.textContent = '❌ ' + (data.error || 'Erreur inconnue');
+    }
+  } catch(e) {
+    res.className = 'sim-result error';
+    res.style.display = 'block';
+    res.textContent = '❌ Erreur : ' + e.message;
+  }
+
+  btn.textContent = '▶ Générer';
+  btn.disabled = false;
+}
+
+async function clearSimulation() {
+  if (!confirm('⚠️ Supprimer toutes les données de simulation (DATA_VENTES + DATA_ACHATS) ?')) return;
+  const btn = document.getElementById('btnSimClear');
+  btn.textContent = '⏳...';
+  btn.disabled = true;
+
+  try {
+    const token = typeof CLIENT_TOKEN !== 'undefined' ? CLIENT_TOKEN : '';
+    const url = APPS_SCRIPT_URL + '?action=clearSimulation&id=' + encodeURIComponent(token);
+    const data = await apiFetch(url);
+    const res = document.getElementById('simResult');
+    res.className = 'sim-result ' + (data.success ? 'success' : 'error');
+    res.style.display = 'block';
+    res.textContent = data.success ? '✅ Données effacées avec succès' : '❌ ' + data.error;
+    if (data.success) setTimeout(() => { loadData(); closeSimulationModal(); }, 1500);
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+
+  btn.textContent = '🗑 Effacer';
+  btn.disabled = false;
 }
 </script>
 
