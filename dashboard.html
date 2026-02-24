@@ -1064,11 +1064,71 @@ async function loadData() {
 // AUTO-REFRESH TOUTES LES 15 MINUTES
 // ═══════════════════════════════════════════════════════════
 function startAutoRefresh() {
-  // Charger immédiatement
-  loadData();
-  
-  // Puis recharger toutes les 15 minutes
-  setInterval(loadData, 15 * 60 * 1000);
+  // Vérifier l'abonnement avant de charger les données
+  checkSubscriptionStatus().then(ok => {
+    if (ok) {
+      loadData();
+      setInterval(loadData, 15 * 60 * 1000);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// VÉRIFICATION ABONNEMENT
+// ═══════════════════════════════════════════════════════════
+async function checkSubscriptionStatus() {
+  if (!CLIENT_TOKEN) return true; // pas de token = pas de vérification
+
+  try {
+    const url = APPS_SCRIPT_URL + '?action=checkSubscription&id=' + encodeURIComponent(CLIENT_TOKEN);
+    const response = await fetch(url);
+    if (!response.ok) return true; // erreur réseau → ne pas bloquer
+    const data = await response.json();
+
+    // Statuts bloquants → rediriger vers paywall
+    if (data.isBlocked) {
+      window.location.href = 'https://kreuille.github.io/chr360_admin/paywall.html?id=' + CLIENT_TOKEN;
+      return false;
+    }
+
+    // Essai en cours → afficher bandeau
+    if (data.status === 'trialing' && data.daysRemaining !== null) {
+      showTrialBanner(data.daysRemaining, data.trialEnd);
+    }
+
+    return true;
+  } catch(e) {
+    console.warn('⚠️ Vérification abonnement ignorée:', e.message);
+    return true; // en cas d'erreur → ne pas bloquer
+  }
+}
+
+function showTrialBanner(daysRemaining, trialEnd) {
+  if (document.getElementById('trialBanner')) return; // déjà affiché
+  const urgency = daysRemaining <= 3 ? '#EF4444' : daysRemaining <= 7 ? '#F59E0B' : '#00C864';
+  const msg = daysRemaining === 0
+    ? 'Votre essai se termine aujourd\'hui'
+    : daysRemaining === 1
+    ? '1 jour restant dans votre essai gratuit'
+    : `${daysRemaining} jours restants dans votre essai gratuit`;
+
+  const banner = document.createElement('div');
+  banner.id = 'trialBanner';
+  banner.style.cssText = `position:fixed;top:0;left:0;right:0;z-index:999;
+    background:${urgency}18;border-bottom:1px solid ${urgency}40;
+    padding:8px 20px;display:flex;align-items:center;justify-content:center;
+    gap:16px;font-size:12px;color:${urgency};`;
+  banner.innerHTML = `
+    <span>🎁 ${msg}</span>
+    <a href="https://kreuille.github.io/chr360_admin/paywall.html?id=${CLIENT_TOKEN}"
+       style="padding:4px 12px;background:${urgency}22;border:1px solid ${urgency}44;
+              border-radius:6px;color:${urgency};text-decoration:none;font-weight:600;font-size:11px">
+      Activer mon abonnement →
+    </a>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:${urgency};cursor:pointer;font-size:16px;line-height:1">×</button>
+  `;
+  document.body.prepend(banner);
+  document.querySelector('.app').style.paddingTop = '38px';
 }
 
 // ═══════════════════════════════════════════════════════════
