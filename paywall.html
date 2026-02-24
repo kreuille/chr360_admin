@@ -247,18 +247,18 @@
     <a class="btn-outline" href="inscription.html">
       🔄 Créer un nouveau compte
     </a>
-    <a class="btn-outline" id="btnContact" href="mailto:contact@chr360.fr">
+    <a class="btn-outline" id="btnContact" href="/cdn-cgi/l/email-protection#72111d1c0613110632111a004144425c1400">
       📧 Contacter le support
     </a>
   </div>
 
   <div class="footer">
-    En cas de problème, écrivez à <a href="mailto:contact@chr360.fr">contact@chr360.fr</a><br>
+    En cas de problème, écrivez à <a href="/cdn-cgi/l/email-protection#2a4945445e4b495e6a494258191c1a044c58"><span class="__cf_email__" data-cfemail="7e1d11100a1f1d0a3e1d160c4d484e50180c">[email&#160;protected]</span></a><br>
     Vos données sont conservées pendant <strong>30 jours</strong> après la suspension.
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgOWc09nli4MU1_dEqVx9MlHmGGcrpK-rpite1maoyMEaH24k9zvneDqb6W2XfOAgAbA/exec';
 
 // ── JSONP ──────────────────────────────────────────────────
@@ -357,12 +357,35 @@ function render(data, token) {
   document.getElementById('paywallTitle').textContent = cfg.title;
   document.getElementById('paywallDesc').innerHTML    = cfg.desc;
 
-  // Bouton principal
-  document.getElementById('btnReactivate').textContent = cfg.btnLabel;
+  // Bouton principal → Stripe Portal ou inscription
+  const btn = document.getElementById('btnReactivate');
+  btn.textContent = cfg.btnLabel;
+
+  // Si le client a un stripe_customer_id → ouvrir le portail Stripe
+  // Sinon → page inscription
   if (data.portal_url) {
-    document.getElementById('btnReactivate').href = data.portal_url;
+    btn.href = data.portal_url;
+  } else if (status === 'canceled' || status === 'trial_expired') {
+    // Pas de portal_url → générer via getPortalSession
+    btn.href = '#';
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      btn.textContent = '⏳ Connexion au portail…';
+      btn.style.pointerEvents = 'none';
+      try {
+        const resp = await apiFetch(`${APPS_SCRIPT_URL}?action=getPortalSession&id=${token}`);
+        if (resp && resp.url) {
+          window.location.href = resp.url;
+        } else {
+          // Fallback → inscription
+          window.location.href = 'inscription.html';
+        }
+      } catch(e) {
+        window.location.href = 'inscription.html';
+      }
+    });
   } else {
-    document.getElementById('btnReactivate').href = 'inscription.html';
+    btn.href = 'inscription.html';
   }
 
   // Info grid
@@ -380,20 +403,4 @@ function renderGeneric() {
   document.getElementById('loadingScreen').classList.add('hidden');
   document.getElementById('mainCard').style.display = '';
   document.getElementById('btnReactivate').href = 'inscription.html';
-  document.getElementById('infoGrid').style.display = 'none';
-}
-
-function translateStatus(s) {
-  const map = {
-    past_due:     'Paiement en attente',
-    canceled:     'Annulé',
-    trial_expired:'Essai expiré',
-    unpaid:       'Impayé',
-  };
-  return map[s] || s;
-}
-
-init();
-</script>
-</body>
-</html>
+  document.getElementById('inf
