@@ -1081,6 +1081,9 @@ function startAutoRefresh() {
   });
 }
 
+/ Statut abonnement global (rempli par checkSubscriptionStatus)
+let _subData = null;
+
 // ═══════════════════════════════════════════════════════════
 // VÉRIFICATION ABONNEMENT
 // ═══════════════════════════════════════════════════════════
@@ -1089,13 +1092,14 @@ function openSubscriptionPortal() {
   const status  = _subData ? _subData.status : '';
   const hasCard = _subData && (_subData.card_registered === true || _subData.card_registered === 'true');
 
-  // Abonnement actif avec carte → portal Stripe (gérer/annuler)
-  if (hasCard && (status === 'active' || status === 'trialing')) {
+  // 🟢 LOGIQUE CORRIGÉE : Si le client a une carte, OU si Stripe a bloqué son paiement (past_due / unpaid)
+  // Il DOIT aller sur le portail Stripe pour gérer ça. On ne recrée jamais de Checkout.
+  if (hasCard || status === 'past_due' || status === 'unpaid') {
     openStripePortalDirect(btn);
     return;
   }
 
-  // Tout autre cas (sans carte, expiré, annulé, past_due) → sélection plan → nouveau Checkout
+  // S'il n'a pas de carte (il est en essai gratuit pur) ou annulé complètement ➔ On lui propose le choix du plan.
   showPlanModal(btn);
 }
 
@@ -1225,10 +1229,6 @@ async function confirmPlanAndCheckout() {
   }
 }
 
-
-// Statut abonnement global (rempli par checkSubscriptionStatus)
-let _subData = null;
-
 async function checkSubscriptionStatus() {
   if (!CLIENT_TOKEN) return true;
 
@@ -1238,7 +1238,7 @@ async function checkSubscriptionStatus() {
     if (!response.ok) return true;
     const data = await response.json();
 
-    _subData = data; // ✅ stocker globalement
+    _subData = data; // ✅ On le stocke pour openSubscriptionPortal()
 
     // Statuts bloquants → rediriger vers paywall
     if (data.isBlocked) {
