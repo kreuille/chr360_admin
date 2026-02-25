@@ -1088,15 +1088,71 @@ function openSubscriptionPortal() {
   const btn     = document.querySelector('[onclick="openSubscriptionPortal()"]');
   const status  = _subData ? _subData.status : '';
   const hasCard = _subData && (_subData.card_registered === true || _subData.card_registered === 'true');
+  const isCanceled = ['canceled','trial_expired','unpaid','paused'].includes(status);
 
-  // Abonnement actif avec carte → portal Stripe (gérer/annuler)
+  // Abonnement actif avec carte → modal avec 3 options
   if (hasCard && (status === 'active' || status === 'trialing')) {
-    openStripePortalDirect(btn);
+    showActiveSubscriptionModal(btn);
     return;
   }
 
-  // Tout autre cas (sans carte, expiré, annulé, past_due) → sélection plan → nouveau Checkout
+  // Annulé/expiré → réactiver avec sélection plan
   showPlanModal(btn);
+}
+
+function showActiveSubscriptionModal(btn) {
+  if (document.getElementById('activeSubModal')) return;
+  const currentPlan = (_subData && _subData.plan) ? _subData.plan : 'starter';
+  const otherPlan   = currentPlan === 'starter' ? 'pro' : 'starter';
+  const otherLabel  = currentPlan === 'starter' ? 'Pro (149 CHF/mois)' : 'Starter (89 CHF/mois)';
+
+  const modal = document.createElement('div');
+  modal.id = 'activeSubModal';
+  modal.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center`;
+  modal.innerHTML = `
+    <div style="background:#1a1f35;border:1px solid rgba(0,229,255,.2);border-radius:16px;padding:32px;width:360px;color:#e5e7eb">
+      <h3 style="margin:0 0 8px;color:#00E5FF;font-size:16px">Gérer mon abonnement</h3>
+      <p style="font-size:12px;color:#9CA3AF;margin:0 0 24px">Plan actuel : <strong style="color:#e5e7eb;text-transform:capitalize">${currentPlan}</strong></p>
+
+      <button onclick="changePlanAction('${otherPlan}')"
+        style="width:100%;padding:12px;margin-bottom:10px;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);border-radius:8px;color:#00E5FF;cursor:pointer;font-size:13px">
+        🔄 Passer au plan ${otherLabel}
+      </button>
+
+      <button onclick="openStripePortalDirect(null)"
+        style="width:100%;padding:12px;margin-bottom:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#e5e7eb;cursor:pointer;font-size:13px">
+        💳 Gérer / Annuler mon abonnement
+      </button>
+
+      <button onclick="document.getElementById('activeSubModal').remove()"
+        style="width:100%;padding:10px;background:none;border:none;color:#6B7280;cursor:pointer;font-size:12px">
+        Fermer
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function changePlanAction(newPlan) {
+  const modal = document.getElementById('activeSubModal');
+  if (modal) modal.remove();
+
+  const confirmed = confirm('Changer vers le plan ' + newPlan + ' ? La différence sera facturée ou créditée immédiatement.');
+  if (!confirmed) return;
+
+  try {
+    const url  = APPS_SCRIPT_URL + '?action=changePlan&id=' + encodeURIComponent(CLIENT_TOKEN) + '&plan=' + newPlan;
+    const resp = await fetch(url).then(r => r.json());
+    if (resp && resp.status === 'ok') {
+      alert('✅ Plan changé vers ' + newPlan + ' avec succès !');
+      location.reload();
+    } else {
+      alert('❌ ' + (resp.error || 'Erreur lors du changement de plan'));
+    }
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
 }
 
 async function openStripePortalDirect(btn) {
