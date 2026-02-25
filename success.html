@@ -298,34 +298,58 @@ async function init() {
   startAnimation();
 
   // ── Cas : nouveau client ──
-  const params = {
-    action:     'registerTrial',
-    session_id: sessionId,
-    nom:        url.get('nom')        || '',
-    email:      url.get('email')      || '',
-    restaurant: url.get('restaurant') || '',
-    tel:        url.get('tel')        || '',
-    devise:     url.get('devise')     || 'CHF',
-    plan:       url.get('plan')       || 'starter',
+  // n8n installe le client via le webhook Stripe.
+  // On attend ici que l'installation soit terminée (polling checkInstall).
+  const email     = url.get('email')      || '';
+  const nom       = url.get('nom')        || '';
+  const installId = url.get('install_id') || '';
+
+  updateProgress('Stripe confirme votre paiement…', 20);
+
+  const maxWait = 90000; // 90s max
+  const interval = 3000;
+  const started  = Date.now();
+
+  const pollInstall = async () => {
+    try {
+      const qs = 'action=checkInstall&email=' + encodeURIComponent(email) +
+                 (installId ? '&install_id=' + encodeURIComponent(installId) : '');
+      const res  = await fetch(APPS_SCRIPT_URL + '?' + qs, { redirect: 'follow' });
+      const data = await res.json();
+      const elapsed = Date.now() - started;
+
+      if (data.ready && data.dashboard_url) {
+        updateProgress('Votre espace est prêt !', 100);
+        setTimeout(() => showFinal(email, data.dashboard_url), 800);
+        return;
+      }
+
+      if (elapsed >= maxWait) {
+        // Timeout : l'installation continue en arrière-plan, l'email sera envoyé
+        showFinal(email, null);
+        return;
+      }
+
+      // Mise à jour progression visuelle
+      const pct = Math.min(20 + Math.round((elapsed / maxWait) * 75), 90);
+      const secs = Math.round(elapsed / 1000);
+      if (secs < 15)      updateProgress('Installation en cours…', pct);
+      else if (secs < 40) updateProgress('Création de votre espace restaurant…', pct);
+      else                updateProgress('Finalisation…', pct);
+
+      setTimeout(pollInstall, interval);
+
+    } catch(e) {
+      if (Date.now() - started >= maxWait) {
+        showFinal(email, null);
+      } else {
+        setTimeout(pollInstall, interval);
+      }
+    }
   };
 
-  try {
-    const resp = await installClient(params);
-
-    if (resp && resp.timeout) {
-      showFinal(params.email, null);
-      return;
-    }
-
-    if (resp && resp.success) {
-      const dashUrl = resp.dashboard_url || null;
-      showFinal(params.email, dashUrl);
-    } else {
-      showFinal(params.email, null);
-    }
-  } catch(e) {
-    showFinal(params.email, null);
-  }
+  // Attendre 5s avant de commencer à poller (laisser le temps au webhook Stripe + n8n)
+  setTimeout(pollInstall, 5000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
