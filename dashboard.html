@@ -1138,32 +1138,77 @@ async function changePlanAction(newPlan) {
   const modal = document.getElementById('activeSubModal');
   if (modal) modal.remove();
 
-  const confirmed = confirm('Changer vers le plan ' + newPlan + ' ? La différence sera facturée ou créditée immédiatement.');
-  if (!confirmed) return;
+  // Modal de confirmation inline (pas de confirm() bloqué par le navigateur)
+  const confirmModal = document.createElement('div');
+  confirmModal.id = 'confirmPlanModal';
+  confirmModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:10000;display:flex;align-items:center;justify-content:center';
+  const planLabel = newPlan === 'pro' ? 'Pro — 149 CHF/mois' : 'Starter — 89 CHF/mois';
+  confirmModal.innerHTML = `
+    <div style="background:#1a1f35;border:1px solid rgba(0,229,255,.2);border-radius:16px;padding:32px;width:340px;color:#e5e7eb;text-align:center">
+      <div style="font-size:24px;margin-bottom:12px">🔄</div>
+      <h3 style="margin:0 0 8px;color:#fff;font-size:15px">Changer de plan</h3>
+      <p style="font-size:12px;color:#9CA3AF;margin:0 0 20px">Passage vers <strong style="color:#00E5FF">${planLabel}</strong><br>La différence sera facturée ou créditée immédiatement.</p>
+      <button id="confirmPlanYes" style="width:100%;padding:12px;margin-bottom:8px;background:#00C864;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:13px;font-weight:600">
+        ✅ Confirmer le changement
+      </button>
+      <button onclick="document.getElementById('confirmPlanModal').remove()" style="width:100%;padding:10px;background:none;border:none;color:#6B7280;cursor:pointer;font-size:12px">
+        Annuler
+      </button>
+    </div>
+  `;
+  document.body.appendChild(confirmModal);
 
-  try {
-    const url  = APPS_SCRIPT_URL + '?action=changePlan&id=' + encodeURIComponent(CLIENT_TOKEN) + '&plan=' + newPlan;
-    const resp = await fetch(url).then(r => r.json());
-    if (resp && resp.status === 'ok') {
-      alert('✅ Plan changé vers ' + newPlan + ' avec succès !');
-      location.reload();
-    } else {
-      alert('❌ ' + (resp.error || 'Erreur lors du changement de plan'));
+  document.getElementById('confirmPlanYes').onclick = async () => {
+    confirmModal.remove();
+    const loadingDiv = document.createElement('div');
+    loadingDiv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px';
+    loadingDiv.textContent = '⏳ Changement en cours…';
+    document.body.appendChild(loadingDiv);
+
+    try {
+      const url  = APPS_SCRIPT_URL + '?action=changePlan&id=' + encodeURIComponent(CLIENT_TOKEN) + '&plan=' + newPlan;
+      const resp = await fetch(url).then(r => r.json());
+      loadingDiv.remove();
+      if (resp && resp.status === 'ok') {
+        showToast('✅ Plan changé vers ' + newPlan + ' avec succès !', 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast('❌ ' + (resp.error || 'Erreur lors du changement de plan'), 'error');
+      }
+    } catch(e) {
+      loadingDiv.remove();
+      showToast('Erreur : ' + e.message, 'error');
     }
-  } catch(e) {
-    alert('Erreur : ' + e.message);
-  }
+  };
+}
+
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  const bg = type === 'success' ? '#00C864' : '#EF4444';
+  t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:' + bg + ';color:#fff;padding:12px 24px;border-radius:8px;z-index:10001;font-size:13px;font-weight:600';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
 }
 
 async function openStripePortalDirect(btn) {
+  // Ouvrir la fenêtre AVANT le fetch (sinon bloqué par le navigateur)
+  const win = window.open('', '_blank');
+  win.document.write('<p style="font-family:sans-serif;padding:40px;color:#555">⏳ Connexion au portail Stripe…</p>');
+
   try {
     if (btn) { btn.textContent = '⏳…'; btn.disabled = true; }
     const url  = APPS_SCRIPT_URL + '?action=getPortalSession&id=' + encodeURIComponent(CLIENT_TOKEN);
     const resp = await fetch(url).then(r => r.json());
-    if (resp && resp.url) window.open(resp.url, '_blank');
-    else alert('❌ ' + (resp.error || 'Impossible d\'ouvrir le portail.'));
+    if (resp && resp.url) {
+      win.location.href = resp.url;  // Redirige la fenêtre déjà ouverte
+    } else {
+      win.close();
+      showToast('❌ ' + (resp.error || 'Impossible d\'ouvrir le portail.'), 'error');
+    }
   } catch(e) {
-    alert('Erreur : ' + e.message);
+    win.close();
+    showToast('Erreur : ' + e.message, 'error');
   } finally {
     if (btn) { btn.textContent = '💳 Abonnement'; btn.disabled = false; }
   }
