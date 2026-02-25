@@ -1289,9 +1289,13 @@ function showTrialBanner(daysRemaining, trialEnd, cardRegistered) {
   if (cardRegistered) {
     // Carte enregistrée — essai actif, prélèvement prévu
     const dateStr = trialEnd ? new Date(trialEnd).toLocaleDateString('fr-FR', {day:'numeric', month:'long'}) : '';
-    msg = daysRemaining <= 1
-      ? '💳 Votre abonnement commence demain — aucune action requise'
-      : `💳 Essai actif · Premier prélèvement le ${dateStr}`;
+    if (daysRemaining <= 0) {
+      msg = '💳 Votre abonnement démarre aujourd\'hui — aucune action requise';
+    } else if (daysRemaining === 1) {
+      msg = '💳 Votre abonnement commence demain — aucune action requise';
+    } else {
+      msg = `💳 Essai gratuit — ${daysRemaining} jours restants · Premier prélèvement le ${dateStr}`;
+    }
     actionBtn = `<a href="#" onclick="openSubscriptionPortal();return false"
        style="padding:4px 12px;background:${urgency}22;border:1px solid ${urgency}44;
               border-radius:6px;color:${urgency};text-decoration:none;font-weight:600;font-size:11px">
@@ -1299,11 +1303,13 @@ function showTrialBanner(daysRemaining, trialEnd, cardRegistered) {
     </a>`;
   } else {
     // Pas de carte — inciter à activer
-    msg = daysRemaining === 0
-      ? '⚠️ Votre essai se termine aujourd\'hui'
-      : daysRemaining === 1
-      ? '🎁 1 jour restant — activez votre abonnement'
-      : `🎁 ${daysRemaining} jours d'essai restants`;
+    if (daysRemaining <= 0) {
+      msg = '⚠️ Votre essai se termine aujourd\'hui';
+    } else if (daysRemaining === 1) {
+      msg = '🎁 1 jour restant — activez votre abonnement';
+    } else {
+      msg = `🎁 ${daysRemaining} jours d'essai gratuit restants`;
+    }
     actionBtn = `<a href="#" onclick="openSubscriptionPortal();return false"
        style="padding:4px 12px;background:${urgency}22;border:1px solid ${urgency}44;
               border-radius:6px;color:${urgency};text-decoration:none;font-weight:600;font-size:11px">
