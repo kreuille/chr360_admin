@@ -1102,7 +1102,7 @@ function openSubscriptionPortal() {
 async function openStripePortalDirect(btn) {
   try {
     if (btn) { btn.textContent = '⏳…'; btn.disabled = true; }
-    const url  = APPS_SCRIPT_URL + '?action=getPortalSession&id=' + encodeURIComponent(CLIENT_TOKEN) + '&plan=current';
+    const url  = APPS_SCRIPT_URL + '?action=getPortalSession&id=' + encodeURIComponent(CLIENT_TOKEN);
     const resp = await fetch(url).then(r => r.json());
     if (resp && resp.url) window.open(resp.url, '_blank');
     else alert('❌ ' + (resp.error || 'Impossible d\'ouvrir le portail.'));
