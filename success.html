@@ -235,25 +235,33 @@ async function init() {
     return;
   }
 
+  if (!sessionId) {
+    window.location.href = 'inscription.html';
+    return;
+  }
+
   // ── Cas : client existant qui active son abonnement ──
   // IMPORTANT : avant sessionId — le retour Stripe après réabo n'a pas de session_id
   if (activated === '1' && token) {
     startAnimation();
-    updateProgress('Validation du paiement en cours…', 40);
+    updateProgress('Synchronisation du paiement…', 30);
 
-    // Poller checkSubscription jusqu'à ce que le webhook Stripe ait mis à jour le statut
-    // Le webhook peut prendre 5-20s selon la charge Apps Script
+    // Synchroniser le nouveau sub_id depuis la session Stripe IMMÉDIATEMENT
+    if (sessionId) {
+      try {
+        updateProgress('Mise à jour de l\'abonnement…', 50);
+        await fetch(`${APPS_SCRIPT_URL}?action=syncSession&id=${encodeURIComponent(token)}&sessionId=${encodeURIComponent(sessionId)}`);
+      } catch(e) {
+        console.warn('syncSession error:', e);
+      }
+    }
+
+    updateProgress('Validation du paiement en cours…', 60);
+
     const maxWait    = 30000; // 30s max
-    const interval   = 2000;  // vérification toutes les 2s
+    const interval   = 2000;
     const started    = Date.now();
-    const APPS_URL   = APPS_SCRIPT_URL; // ← utiliser la constante existante
-    // Synchroniser le nouveau sub_id depuis la session Stripe
-const sessionId = url.get('session_id');
-if (sessionId) {
-  try {
-    await fetch(`${APPS_SCRIPT_URL}?action=syncSession&id=${token}&sessionId=${sessionId}`);
-  } catch(e) {}
-}
+
     const poll = async () => {
       try {
         const res  = await fetch(APPS_URL + '?action=checkSubscription&id=' + encodeURIComponent(token));
@@ -298,12 +306,6 @@ if (sessionId) {
   }
 
   startAnimation();
-
-  // sessionId requis uniquement pour nouveau client
-  if (!sessionId) {
-    window.location.href = 'inscription.html';
-    return;
-  }
 
   // ── Cas : nouveau client ──
   // n8n installe le client via le webhook Stripe.
