@@ -395,7 +395,8 @@ function render(data, token) {
       btn.textContent = '⏳ Connexion au portail…';
       btn.style.pointerEvents = 'none';
       try {
-        const resp = await apiFetch(`${APPS_SCRIPT_URL}?action=getPortalSession&id=${token}`);
+        const resp = await fetch(`${APPS_SCRIPT_URL}?action=getPortalSession&id=${token}`)
+          .then(r => r.json());
         if (resp && resp.url) {
           window.location.href = resp.url;
         } else {
