@@ -247,7 +247,13 @@ async function init() {
     const interval   = 2000;  // vérification toutes les 2s
     const started    = Date.now();
     const APPS_URL   = APPS_SCRIPT_URL; // ← utiliser la constante existante
-
+    // Synchroniser le nouveau sub_id depuis la session Stripe
+const sessionId = url.get('session_id');
+if (sessionId) {
+  try {
+    await fetch(`${APPS_SCRIPT_URL}?action=syncSession&id=${token}&sessionId=${sessionId}`);
+  } catch(e) {}
+}
     const poll = async () => {
       try {
         const res  = await fetch(APPS_URL + '?action=checkSubscription&id=' + encodeURIComponent(token));
