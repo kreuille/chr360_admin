@@ -1026,8 +1026,6 @@ let CFG = {
 async function loadData() {
   const badgeLive = document.querySelector('.badge-live');
   const errorBanner = document.getElementById('errorBanner');
-  const errorTitle = document.getElementById('errorTitle');
-  const errorMessage = document.getElementById('errorMessage');
   
   // Masquer l'erreur précédente
   if (errorBanner) errorBanner.style.display = 'none';
@@ -1134,11 +1132,13 @@ async function loadData() {
     }
     
     // Message visible selon le type d'erreur
+    const isNetwork = !navigator.onLine || error.message === 'Failed to fetch' || error.name === 'TypeError';
+    
     if (error.name === 'AbortError') {
       showError('Délai dépassé', 'Le serveur met trop de temps à répondre.<br>Vérifiez votre connexion internet et réessayez dans quelques instants.');
-    } else if (!navigator.onLine) {
-      showError('Pas de connexion', 'Impossible de charger les données — vérifiez votre connexion internet.');
-    } else if (!errorBanner || errorBanner.style.display === 'none') {
+    } else if (isNetwork) {
+      showError('Pas de connexion', 'Impossible de charger les données.<br>Vérifiez votre connexion internet et réessayez.');
+    } else {
       showError('Erreur de chargement', error.message || 'Impossible de récupérer les données. Réessayez en rafraîchissant la page.');
     }
   }
