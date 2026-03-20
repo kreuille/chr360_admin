@@ -556,6 +556,9 @@
     z-index: 10000;
     animation: slideInRight 0.3s ease;
   }
+  .save-indicator.show {
+    display: block;
+  }
   @keyframes slideInRight {
     from { opacity: 0; transform: translateX(100px); }
     to { opacity: 1; transform: translateX(0); }
@@ -722,6 +725,17 @@
       <div class="date-chip" id="dateChip">—</div>
     </div>
   </header>
+
+  <!-- ═══ ERROR BANNER ═══ -->
+  <div id="errorBanner" style="display:none;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:12px;padding:18px 24px;margin-bottom:20px;animation:fadeUp 0.4s ease both">
+    <div style="display:flex;align-items:flex-start;gap:14px">
+      <span style="font-size:22px;flex-shrink:0">⚠️</span>
+      <div>
+        <div style="font-weight:600;font-size:14px;color:var(--red);margin-bottom:4px" id="errorTitle">Erreur</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6" id="errorMessage"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══ PERIOD TABS ═══ -->
   <div class="period-tabs">
@@ -963,6 +977,7 @@ let CFG = {
   telegramChatId:      '',
   notifEmail:          true,
   notifTelegram:       false,
+  devise:              'CHF',
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -970,11 +985,18 @@ let CFG = {
 // ═══════════════════════════════════════════════════════════
 async function loadData() {
   const badgeLive = document.querySelector('.badge-live');
+  const errorBanner = document.getElementById('errorBanner');
+  const errorTitle = document.getElementById('errorTitle');
+  const errorMessage = document.getElementById('errorMessage');
+  
+  // Masquer l'erreur précédente
+  if (errorBanner) errorBanner.style.display = 'none';
   
   try {
     // Vérifier que le token existe
     if (!CLIENT_TOKEN) {
-      throw new Error('Token client manquant dans l\'URL. Utilisez : ?id=VOTRE_TOKEN');
+      showError('Token manquant', 'Aucun identifiant client trouvé dans l\'URL.<br>Utilisez le lien fourni dans votre email de bienvenue : <code>dashboard.html?id=VOTRE_TOKEN</code>');
+      return;
     }
     
     // Afficher le chargement
@@ -982,16 +1004,26 @@ async function loadData() {
       badgeLive.innerHTML = '<span class="dot"></span> CHARGEMENT...';
     }
     
-    // Appeler l'API avec le token
+    // Appeler l'API avec timeout de 25 secondes
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    
     const apiUrl = `${APPS_SCRIPT_URL}?action=dashboard&id=${CLIENT_TOKEN}`;
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
     if (!response.ok) throw new Error('Erreur API: ' + response.status);
     
     const data = await response.json();
     
     // Vérifier si erreur dans la réponse
     if (data.error) {
-      throw new Error(data.error);
+      if (data.error === 'Token invalide') {
+        showError('Accès non autorisé', 'Ce lien n\'est pas valide ou a expiré.<br>Vérifiez que vous utilisez bien le lien fourni dans votre email de bienvenue.');
+      } else {
+        showError('Erreur serveur', data.error);
+      }
+      return;
     }
     
     // Mettre à jour le nom du restaurant dans le header
@@ -1025,7 +1057,9 @@ async function loadData() {
         telegramChatId:      data.config.telegram_chat_id  || '',
         notifEmail:          data.config.notif_email    !== 'false',
         notifTelegram:       data.config.notif_telegram === 'true',
+        devise:              data.config.devise || 'CHF',
       };
+      DEVISE = CFG.devise;
       console.log('⚙️ Configuration chargée:', CFG);
     }
     
@@ -1059,12 +1093,25 @@ async function loadData() {
       badgeLive.style.color = 'var(--red)';
     }
     
-    // Message d'erreur dans la console
-    console.log('');
-    console.log('🔧 CONFIGURATION REQUISE :');
-    console.log('1. Déployez votre Apps Script comme Web App');
-    console.log('2. Remplacez API_URL dans ce fichier par l\'URL de déploiement');
-    console.log('3. Assurez-vous que "Qui a accès" = "Tout le monde"');
+    // Message visible selon le type d'erreur
+    if (error.name === 'AbortError') {
+      showError('Délai dépassé', 'Le serveur met trop de temps à répondre.<br>Vérifiez votre connexion internet et réessayez dans quelques instants.');
+    } else if (!navigator.onLine) {
+      showError('Pas de connexion', 'Impossible de charger les données — vérifiez votre connexion internet.');
+    } else if (!errorBanner || errorBanner.style.display === 'none') {
+      showError('Erreur de chargement', error.message || 'Impossible de récupérer les données. Réessayez en rafraîchissant la page.');
+    }
+  }
+}
+
+function showError(title, message) {
+  const banner = document.getElementById('errorBanner');
+  const titleEl = document.getElementById('errorTitle');
+  const msgEl = document.getElementById('errorMessage');
+  if (banner && titleEl && msgEl) {
+    titleEl.textContent = title;
+    msgEl.innerHTML = message;
+    banner.style.display = 'block';
   }
 }
 
@@ -1436,8 +1483,9 @@ function showTrialBanner(daysRemaining, trialEnd, cardRegistered) {
 // ═══════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════
-const fmt  = v => new Intl.NumberFormat('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v) + ' €';
-const fmtK = v => v >= 1000 ? (v/1000).toFixed(1).replace('.',',') + 'k €' : fmt(v);
+let DEVISE = 'CHF'; // par défaut, mis à jour depuis config
+const fmt  = v => new Intl.NumberFormat('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v) + ' ' + DEVISE;
+const fmtK = v => v >= 1000 ? (v/1000).toFixed(1).replace('.',',') + 'k ' + DEVISE : fmt(v);
 const fmtP = v => (v*100).toFixed(1).replace('.',',') + '%';
 const fmtI = v => Math.round(v).toLocaleString('fr-FR');
 const qs   = s => document.querySelector(s);
@@ -1472,8 +1520,9 @@ function compute(data) {
   const f30 = new Date(now); f30.setDate(f30.getDate()+30);
   const f60 = new Date(now); f60.setDate(f60.getDate()+60);
 
-  const ech30 = a.filter(x=> { const d=new Date(x.echeance); return d>=now && d<=f30 && x.statut!=='PAYE'; });
-  const ech60 = a.filter(x=> { const d=new Date(x.echeance); return d>f30  && d<=f60 && x.statut!=='PAYE'; });
+  const isPaid = s => ['PAYE','PAYÉ','PAID'].includes((s||'').toUpperCase().trim());
+  const ech30 = a.filter(x=> { const d=new Date(x.echeance); return d>=now && d<=f30 && !isPaid(x.statut); });
+  const ech60 = a.filter(x=> { const d=new Date(x.echeance); return d>f30  && d<=f60 && !isPaid(x.statut); });
   const tot30 = ech30.reduce((s,x)=>s+x.ttc,0);
   const tot60 = ech60.reduce((s,x)=>s+x.ttc,0);
 
@@ -1825,6 +1874,7 @@ function openSettingsModal() {
   document.getElementById('objectifBevCost').value     = (CFG.objectifBevCost * 100).toFixed(1);
   document.getElementById('objectifTicketMoyen').value = CFG.objectifTicketMoyen.toFixed(2);
   document.getElementById('alerteTresorerie').value    = CFG.alerteTresorerie;
+  document.getElementById('settingsDevise').value       = CFG.devise || DEVISE || 'CHF';
   document.getElementById('alertEmail').value          = CFG.alertEmail;
   document.getElementById('telegramChatId').value      = CFG.telegramChatId;
   document.getElementById('notifEmail').checked        = CFG.notifEmail;
@@ -1861,6 +1911,7 @@ async function saveSettings(event) {
       alerte_tresorerie:     parseFloat(document.getElementById('alerteTresorerie').value),
       taux_charges_fixes:    CFG.tauxChargesFixes,
       taux_personnel:        CFG.tauxPersonnel,
+      devise:                document.getElementById('settingsDevise').value || 'CHF',
       alert_email:           document.getElementById('alertEmail').value.trim(),
       telegram_chat_id:      document.getElementById('telegramChatId').value.trim(),
       notif_email:           document.getElementById('notifEmail').checked ? 'true' : 'false',
@@ -1889,6 +1940,7 @@ async function saveSettings(event) {
         alerteTresorerie:    config.alerte_tresorerie,
         tauxChargesFixes:    config.taux_charges_fixes,
         tauxPersonnel:       config.taux_personnel,
+        devise:              config.devise || 'CHF',
         alertEmail:          config.alert_email,
         telegramChatId:      config.telegram_chat_id,
         notifEmail:          config.notif_email === 'true',
@@ -1897,6 +1949,9 @@ async function saveSettings(event) {
       
       // Fermer la modal
       closeSettingsModal();
+      
+      // Mettre à jour la devise globale
+      DEVISE = CFG.devise;
       
       // Afficher l'indicateur de succès
       const indicator = document.getElementById('saveIndicator');
@@ -1983,6 +2038,17 @@ document.addEventListener('click', (e) => {
               <input type="number" id="alerteTresorerie" class="form-input"
                      step="1" min="0" required>
               <div class="form-hint">Alerte si trésorerie passe sous ce seuil</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">💱 Devise</label>
+              <select id="settingsDevise" class="form-input">
+                <option value="CHF">CHF (Franc suisse)</option>
+                <option value="EUR">EUR (Euro)</option>
+                <option value="USD">USD (Dollar US)</option>
+                <option value="GBP">GBP (Livre sterling)</option>
+              </select>
+              <div class="form-hint">Devise affichée dans le dashboard</div>
             </div>
           </div>
 
