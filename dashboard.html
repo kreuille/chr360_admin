@@ -343,6 +343,27 @@
     .header { flex-direction: column; gap: 14px; align-items: flex-start; }
     .header-right { flex-wrap: wrap; }
   }
+  /* ── RESPONSIVE SMARTPHONE ── */
+  @media (max-width: 420px) {
+    .app { padding: 16px 12px 40px; }
+    .grid-4 { grid-template-columns: 1fr; gap: 12px; }
+    .grid-3 { grid-template-columns: 1fr; gap: 12px; }
+    .grid-2 { grid-template-columns: 1fr; gap: 12px; }
+    .card { padding: 18px 16px; }
+    .card-value { font-size: 22px; }
+    .card-value.lg { font-size: 28px; }
+    .header { padding: 14px 16px; }
+    .header-title { font-size: 20px; }
+    .header-right { gap: 8px; }
+    .header-right .btn-settings { padding: 6px 10px; font-size: 16px; }
+    .period-tabs { width: 100%; justify-content: center; }
+    .tab { padding: 7px 14px; font-size: 11px; }
+    .gauge-svg { width: 110px; height: 64px; }
+    .settings-grid { grid-template-columns: 1fr; }
+    .upload-cols { grid-template-columns: 1fr; }
+    .table-wrap { font-size: 11px; }
+    th, td { padding: 8px 10px; }
+  }
 
   /* ── SCROLL CUSTOM ── */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
