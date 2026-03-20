@@ -376,19 +376,25 @@
   /* PARAMÈTRES - BOUTON & MODAL */
   /* ══════════════════════════════════════════════════════════ */
   .btn-settings {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 8px;
-    padding: 8px 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 9px 11px;
     font-size: 18px;
     cursor: pointer;
     transition: all 0.3s;
-    color: #fff;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .btn-settings:hover {
-    background: rgba(255,255,255,0.15);
-    transform: translateY(-2px);
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(0,229,255,0.3);
+    color: var(--accent);
+    transform: translateY(-1px);
   }
+  .btn-settings svg { display: block; }
 
   .modal-overlay {
     display: none;
@@ -590,11 +596,13 @@
   /* UPLOAD MODAL                                              */
   /* ══════════════════════════════════════════════════════════ */
   .btn-upload {
-    background: linear-gradient(135deg, rgba(0,229,255,0.12), rgba(0,229,255,0.05));
-    border-color: rgba(0,229,255,0.4) !important;
+    background: rgba(0,229,255,0.08);
+    border-color: rgba(0,229,255,0.25) !important;
+    color: var(--accent) !important;
   }
   .btn-upload:hover {
-    background: linear-gradient(135deg, rgba(0,229,255,0.25), rgba(167,139,250,0.15)) !important;
+    background: rgba(0,229,255,0.15) !important;
+    border-color: rgba(0,229,255,0.4) !important;
   }
 
   .upload-modal-content {
@@ -738,12 +746,21 @@
       </div>
     </div>
     <div class="header-right">
-      <button class="btn-settings btn-upload" onclick="openUploadModal()" title="Déposer des fichiers">📤</button>
+      <button class="btn-settings btn-upload" onclick="openUploadModal()" title="Déposer des fichiers">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </button>
       <button id="btnSimulation" class="btn-settings" onclick="openSimulationGuard()" title="Injecter données de test"
-              style="background:rgba(255,165,0,0.12);border-color:rgba(255,165,0,0.3)">🧪</button>
-      <button id="btnSettings" class="btn-settings" onclick="openSettingsModal()" title="Paramètres">⚙️</button>
+              style="background:rgba(255,165,0,0.12);border-color:rgba(255,165,0,0.3);color:#F59E0B">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l1 7-4 2-4-2 1-7z"/><path d="M8 10c-1 1-2 3-2 5a6 6 0 0 0 12 0c0-2-1-4-2-5"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
+      </button>
+      <button id="btnSettings" class="btn-settings" onclick="openSettingsModal()" title="Paramètres">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
       <button class="btn-settings" onclick="openSubscriptionPortal()" title="Gérer mon abonnement"
-              style="font-size:11px;padding:0 10px;width:auto;letter-spacing:.02em">💳 Abonnement</button>
+              style="font-size:11px;padding:6px 14px;width:auto;letter-spacing:.02em;display:flex;align-items:center;gap:6px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Abonnement
+      </button>
       <div class="badge-live"><div class="dot"></div>LIVE</div>
       <div class="date-chip" id="dateChip">—</div>
     </div>
@@ -1262,16 +1279,16 @@ function showToast(msg, type) {
 }
 
 async function openStripePortalDirect(btn) {
-  // Ouvrir la fenêtre AVANT le fetch (sinon bloqué par le navigateur)
   const win = window.open('', '_blank');
   win.document.write('<p style="font-family:sans-serif;padding:40px;color:#555">⏳ Connexion au portail Stripe…</p>');
+  const origHTML = btn ? btn.innerHTML : '';
 
   try {
     if (btn) { btn.textContent = '⏳…'; btn.disabled = true; }
     const url  = APPS_SCRIPT_URL + '?action=getPortalSession&id=' + encodeURIComponent(CLIENT_TOKEN);
     const resp = await fetch(url).then(r => r.json());
     if (resp && resp.url) {
-      win.location.href = resp.url;  // Redirige la fenêtre déjà ouverte
+      win.location.href = resp.url;
     } else {
       win.close();
       showToast('❌ ' + (resp.error || 'Impossible d\'ouvrir le portail.'), 'error');
@@ -1280,7 +1297,7 @@ async function openStripePortalDirect(btn) {
     win.close();
     showToast('Erreur : ' + e.message, 'error');
   } finally {
-    if (btn) { btn.textContent = '💳 Abonnement'; btn.disabled = false; }
+    if (btn) { btn.innerHTML = origHTML; btn.disabled = false; }
   }
 }
 
