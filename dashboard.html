@@ -727,6 +727,9 @@
   .upload-toast.success { background: #10b981; color: #fff; }
   .upload-toast.error   { background: var(--red); color: #fff; }
 
+
+.icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;vertical-align:middle;margin-right:6px;flex-shrink:0}
+.icon svg{width:18px;height:18px;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
 </style>
 </head>
 <body>
@@ -739,7 +742,7 @@
   <!-- ═══ HEADER ═══ -->
   <header class="header">
     <div class="header-left">
-      <div class="logo-mark">🍽</div>
+      <div class="logo-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg></div>
       <div>
         <div class="header-title">CHR 360°</div>
         <div class="header-subtitle" id="header-restaurant-name">Tableau de Bord de Pilotage</div>
@@ -789,7 +792,7 @@
   <div class="grid-4" id="kpiGrid">
 
     <div class="card">
-      <div class="card-label">📈 CA Total TTC</div>
+      <div class="card-label"><span class="icon" style="color:#6366f1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>CA Total TTC</div>
       <div class="card-value lg" id="kpi-ca">—</div>
       <div class="card-sub">Chiffre d'affaires du mois</div>
       <div class="card-delta delta-up" id="kpi-ca-delta">—</div>
@@ -797,7 +800,7 @@
     </div>
 
     <div class="card">
-      <div class="card-label">👥 Couverts</div>
+      <div class="card-label"><span class="icon" style="color:#8b5cf6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Couverts</div>
       <div class="card-value lg" id="kpi-couverts">—</div>
       <div class="card-sub">Ticket moyen : <span id="kpi-ticket" style="color:var(--text);font-weight:600">—</span></div>
       <div class="card-delta" id="kpi-ticket-delta">—</div>
@@ -805,7 +808,7 @@
     </div>
 
     <div class="card">
-      <div class="card-label">💰 Food Cost</div>
+      <div class="card-label"><span class="icon" style="color:#f59e0b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg></span>Food Cost</div>
       <div class="card-value lg" id="kpi-fc">—</div>
       <div class="card-sub">Objectif : <span id="kpi-fc-obj" style="color:var(--muted)">28,0%</span></div>
       <div class="card-delta" id="kpi-fc-delta">—</div>
@@ -813,7 +816,7 @@
     </div>
 
     <div class="card">
-      <div class="card-label">💳 Échéances 30j</div>
+      <div class="card-label"><span class="icon" style="color:#ef4444"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>Échéances 30j</div>
       <div class="card-value lg" id="kpi-ech">—</div>
       <div class="card-sub">À régler dans 30 jours</div>
       <div class="card-delta" id="kpi-ech-delta">—</div>
@@ -828,7 +831,7 @@
 
     <!-- JAUGE FOOD COST -->
     <div class="card">
-      <div class="card-label">🥩 Food Cost vs Objectif</div>
+      <div class="card-label"><span class="icon" style="color:#ef4444"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></span>Food Cost vs Objectif</div>
       <div class="gauge-wrap">
         <svg class="gauge-svg" viewBox="0 0 140 80">
           <path class="gauge-track" d="M15,75 A55,55 0 0,1 125,75" />
@@ -843,7 +846,7 @@
 
     <!-- JAUGE BEVERAGE COST -->
     <div class="card">
-      <div class="card-label">🍺 Beverage Cost vs Objectif</div>
+      <div class="card-label"><span class="icon" style="color:#8b5cf6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l4 10H4L8 2Z"/><path d="M12 12v6"/><path d="M8 22h8"/><path d="M12 18h.01"/></svg></span>Beverage Cost vs Objectif</div>
       <div class="gauge-wrap">
         <svg class="gauge-svg" viewBox="0 0 140 80">
           <path class="gauge-track" d="M15,75 A55,55 0 0,1 125,75" />
@@ -858,7 +861,7 @@
 
     <!-- SPARKLINE CA -->
     <div class="card">
-      <div class="card-label">📊 Tendance CA journalier (TTC)</div>
+      <div class="card-label"><span class="icon" style="color:#6366f1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>Tendance CA journalier (TTC)</div>
       <svg class="sparkline" id="sparkline" viewBox="0 0 300 50" preserveAspectRatio="none">
         <defs>
           <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
@@ -884,7 +887,7 @@
 
     <!-- BARCHART ACHATS PAR CATÉGORIE -->
     <div class="card">
-      <div class="card-label">🛒 Répartition achats par catégorie (HT)</div>
+      <div class="card-label"><span class="icon" style="color:#059669"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>Répartition achats par catégorie (HT)</div>
       <div class="chart-area" id="achats-chart">
         <!-- Généré par JS -->
       </div>
@@ -892,7 +895,7 @@
 
     <!-- MARGE ESTIMÉE -->
     <div class="card">
-      <div class="card-label">📐 Compte de résultat simplifié</div>
+      <div class="card-label"><span class="icon" style="color:#0891b2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></span>Compte de résultat simplifié</div>
       <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px" id="pnl-block">
         <!-- Généré par JS -->
       </div>
@@ -905,14 +908,14 @@
   <div class="grid-2">
 
     <div class="card" style="padding:20px">
-      <div class="card-label">🔴 Échéances urgentes — 0 à 30 jours</div>
+      <div class="card-label"><span class="icon"><svg viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="6"/></svg></span>Échéances urgentes — 0 à 30 jours</div>
       <div class="timeline" id="timeline-30">
         <!-- Généré par JS -->
       </div>
     </div>
 
     <div class="card" style="padding:20px">
-      <div class="card-label">🟡 Échéances à planifier — 31 à 60 jours</div>
+      <div class="card-label"><span class="icon"><svg viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="6"/></svg></span>Échéances à planifier — 31 à 60 jours</div>
       <div class="timeline" id="timeline-60">
         <!-- Généré par JS -->
       </div>
@@ -975,7 +978,7 @@
 
   <!-- FOOTER -->
   <footer class="footer">
-    <div class="footer-left">Propulsé par <strong>n8n</strong> + <strong>GPT-4o Vision</strong> + <strong>Google Sheets</strong></div>
+    <div class="footer-left">Propulsé par <strong>IA</strong> + <strong>Google Sheets</strong></div>
     <div class="footer-right">
       <span class="footer-tag">CHR 360° v1.0</span>
       <span class="footer-tag">AUTO-REFRESH 15min</span>
@@ -1482,7 +1485,7 @@ function showTrialBanner(daysRemaining, trialEnd, cardRegistered) {
     } else if (daysRemaining === 1) {
       msg = '💳 Votre abonnement commence demain — aucune action requise';
     } else {
-      msg = `💳 Essai gratuit — ${daysRemaining} jours restants · Premier prélèvement le ${dateStr}`;
+      msg = `<span class="icon" style="color:#6366f1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>Essai gratuit — ${daysRemaining} jours restants · Premier prélèvement le ${dateStr}`;
     }
     actionBtn = `<a href="#" onclick="openSubscriptionPortal();return false"
        style="padding:4px 12px;background:${urgency}22;border:1px solid ${urgency}44;
@@ -2036,7 +2039,7 @@ document.addEventListener('click', (e) => {
     <div class="modal-header-sticky">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div>
-          <h2 class="modal-title">⚙️ Paramètres</h2>
+          <h2 class="modal-title"><span class="icon" style="color:#6366f1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>Paramètres</h2>
           <div style="font-size:12px;color:#8899bb;margin-top:3px">Objectifs KPIs et canaux de notification</div>
         </div>
         <button class="modal-close" onclick="closeSettingsModal()">×</button>
@@ -2050,38 +2053,38 @@ document.addEventListener('click', (e) => {
 
           <!-- ── COLONNE GAUCHE : KPIs ── -->
           <div>
-            <div class="settings-col-title">🎯 Objectifs & Seuils</div>
+            <div class="settings-col-title"><span class="icon" style="color:#ef4444"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>Objectifs & Seuils</div>
 
             <div class="form-group">
-              <label class="form-label">🍽️ Food Cost maximum (%)</label>
+              <label class="form-label"><span class="icon" style="color:#f59e0b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg></span>Food Cost maximum (%)</label>
               <input type="number" id="objectifFoodCost" class="form-input"
                      step="0.1" min="0" max="100" required>
               <div class="form-hint">Alerte déclenchée si dépassé</div>
             </div>
 
             <div class="form-group">
-              <label class="form-label">🍷 Beverage Cost maximum (%)</label>
+              <label class="form-label"><span class="icon" style="color:#8b5cf6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l4 10H4L8 2Z"/><path d="M12 12v6"/><path d="M8 22h8"/></svg></span>Beverage Cost maximum (%)</label>
               <input type="number" id="objectifBevCost" class="form-input"
                      step="0.1" min="0" max="100" required>
               <div class="form-hint">Coût boissons maximum</div>
             </div>
 
             <div class="form-group">
-              <label class="form-label">🧾 Ticket Moyen minimum</label>
+              <label class="form-label"><span class="icon" style="color:#059669"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></span>Ticket Moyen minimum</label>
               <input type="number" id="objectifTicketMoyen" class="form-input"
                      step="0.01" min="0" required>
               <div class="form-hint">Alerte si ticket moyen tombe en dessous</div>
             </div>
 
             <div class="form-group">
-              <label class="form-label">💰 Alerte Trésorerie (minimum)</label>
+              <label class="form-label"><span class="icon" style="color:#ef4444"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg></span>Alerte Trésorerie (minimum)</label>
               <input type="number" id="alerteTresorerie" class="form-input"
                      step="1" min="0" required>
               <div class="form-hint">Alerte si trésorerie passe sous ce seuil</div>
             </div>
 
             <div class="form-group">
-              <label class="form-label">💱 Devise</label>
+              <label class="form-label"><span class="icon" style="color:#0891b2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><line x1="3" x2="6" y1="3" y2="6"/><line x1="21" x2="18" y1="3" y2="6"/><line x1="3" x2="6" y1="21" y2="18"/><line x1="21" x2="18" y1="21" y2="18"/></svg></span>Devise</label>
               <select id="settingsDevise" class="form-input">
                 <option value="CHF">CHF (Franc suisse)</option>
                 <option value="EUR">EUR (Euro)</option>
@@ -2094,7 +2097,7 @@ document.addEventListener('click', (e) => {
 
           <!-- ── COLONNE DROITE : NOTIFICATIONS ── -->
           <div>
-            <div class="settings-col-title">🔔 Notifications</div>
+            <div class="settings-col-title"><span class="icon" style="color:#f59e0b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>Notifications</div>
 
             <!-- Email -->
             <div style="background:#070a1a;border:1px solid #1e2a50;border-radius:12px;padding:16px;margin-bottom:14px">
@@ -2178,7 +2181,7 @@ document.addEventListener('click', (e) => {
   <div class="upload-modal-content">
 
     <div class="modal-header">
-      <h2 class="modal-title">📤 Déposer des fichiers</h2>
+      <h2 class="modal-title"><span class="icon" style="color:#6366f1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg></span>Déposer des fichiers</h2>
       <button class="modal-close" onclick="closeUploadModal()">×</button>
     </div>
 
@@ -2186,7 +2189,7 @@ document.addEventListener('click', (e) => {
 
       <!-- ── ACHATS ── -->
       <div>
-        <div class="upload-col-label achats">🧾 Factures Achats</div>
+        <div class="upload-col-label achats"><span class="icon" style="color:#059669"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>Factures Achats</div>
         <div class="drop-zone achats" id="dropAchats">
           <input type="file" id="inputAchats" multiple accept=".pdf,.jpg,.jpeg,.png,.webp"
                  onchange="handleFiles(this.files, 'achats')" />
@@ -2199,7 +2202,7 @@ document.addEventListener('click', (e) => {
 
       <!-- ── VENTES ── -->
       <div>
-        <div class="upload-col-label ventes">📊 Tickets Z de Caisse</div>
+        <div class="upload-col-label ventes"><span class="icon" style="color:#6366f1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>Tickets Z de Caisse</div>
         <div class="drop-zone ventes" id="dropVentes">
           <input type="file" id="inputVentes" multiple accept=".pdf,.jpg,.jpeg,.png,.webp"
                  onchange="handleFiles(this.files, 'ventes')" />
@@ -2214,8 +2217,8 @@ document.addEventListener('click', (e) => {
 
     <div class="upload-info">
       <strong>Comment ça marche ?</strong> Les fichiers sont envoyés directement dans ton Google Drive
-      (dossier <strong>ACHATS</strong> ou <strong>VENTES</strong>). n8n les récupère automatiquement toutes
-      les 15 minutes, les passe en OCR si nécessaire, et les ajoute au Google Sheet.
+      (dossier <strong>ACHATS</strong> ou <strong>VENTES</strong>). CHR 360° les récupère automatiquement toutes
+      les 15 minutes, les passe en OCR si nécessaire, et les ajoute à votre tableau de bord.
     </div>
 
     <div class="modal-actions" style="margin-top:20px">
@@ -2384,7 +2387,7 @@ function showUploadToast(type, msg) {
   <div class="modal-content" style="max-width:520px">
 
     <div class="modal-header">
-      <h2 class="modal-title">🧪 Injecter des Données de Test</h2>
+      <h2 class="modal-title"><span class="icon" style="color:#8b5cf6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16.5h10"/></svg></span>Injecter des Données de Test</h2>
       <button class="modal-close" onclick="closeSimulationModal()">×</button>
     </div>
 
