@@ -321,6 +321,7 @@ async function init() {
 
   const email     = params.get('email')      || '';
   const installId = params.get('install_id') || '';
+  const tel       = params.get('tel')        || '';
 
   updateProgress('Stripe confirme votre paiement…', 20);
 
@@ -330,9 +331,11 @@ async function init() {
 
   const pollInstall = async () => {
     try {
+      // tel passé pour écraser celui (potentiellement périmé) du customer Stripe pré-existant
       const qs = 'action=checkInstall'
                + '&email='      + encodeURIComponent(email)
-               + (installId ? '&install_id=' + encodeURIComponent(installId) : '');
+               + (installId ? '&install_id=' + encodeURIComponent(installId) : '')
+               + (tel ? '&tel=' + encodeURIComponent(tel) : '');
 
       const res  = await fetch(APPS_SCRIPT_URL + '?' + qs, { redirect: 'follow' });
       const data = await res.json();
