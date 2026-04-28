@@ -1461,7 +1461,7 @@ async function checkSubscriptionStatus() {
     _subRetry = 0; // réinitialiser si non bloqué
 
     if (data.status === 'trialing' && data.daysRemaining !== null) {
-      showTrialBanner(data.daysRemaining, data.trialEnd, data.card_registered === true || data.card_registered === 'true');
+      showTrialBanner(data.daysRemaining, data.trialEnd, data.card_registered === true || data.card_registered === 'true', data.cancel_at || '');
     }
 
     return true;
@@ -1471,13 +1471,24 @@ async function checkSubscriptionStatus() {
   }
 }
 
-function showTrialBanner(daysRemaining, trialEnd, cardRegistered) {
+function showTrialBanner(daysRemaining, trialEnd, cardRegistered, cancelAt) {
   if (document.getElementById('trialBanner')) return;
-  const urgency = daysRemaining <= 3 ? '#EF4444' : daysRemaining <= 7 ? '#F59E0B' : '#00C864';
+  // Stripe API 2026 : cancel_at (timestamp) est la source de vérité, pas cancel_at_period_end (toujours false en API 2026)
+  const isCancelScheduled = !!cancelAt;
+  const urgency = isCancelScheduled ? '#F59E0B' : daysRemaining <= 3 ? '#EF4444' : daysRemaining <= 7 ? '#F59E0B' : '#00C864';
 
   let msg, actionBtn;
 
-  if (cardRegistered) {
+  if (isCancelScheduled) {
+    // Annulation programmée — accès maintenu jusqu'à cancel_at, puis arrêt automatique
+    const cancelStr = new Date(cancelAt).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
+    msg = `<span class="icon" style="color:#F59E0B">⚠️</span>Annulation programmée le ${cancelStr} — accès maintenu jusqu'à cette date`;
+    actionBtn = `<a href="#" onclick="openSubscriptionPortal();return false"
+       style="padding:4px 12px;background:${urgency}22;border:1px solid ${urgency}44;
+              border-radius:6px;color:${urgency};text-decoration:none;font-weight:600;font-size:11px">
+      Réactiver mon abonnement →
+    </a>`;
+  } else if (cardRegistered) {
     // Carte enregistrée — essai actif, prélèvement prévu
     const dateStr = trialEnd ? new Date(trialEnd).toLocaleDateString('fr-FR', {day:'numeric', month:'long'}) : '';
     if (daysRemaining <= 0) {
