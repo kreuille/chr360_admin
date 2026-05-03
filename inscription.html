@@ -283,7 +283,10 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwXXS_hqdG6BNdl70EnJw844IhmyKzWMhKbRF496MD6RvpHPk_oG8oxsX8bktehVRzTOA/exec';
+// P0.1 T6.3 — detection environnement : staging.chr360.ch utilise un deploiement Apps Script separe
+const APPS_SCRIPT_URL = location.host.startsWith('staging.')
+  ? 'https://script.google.com/macros/s/AKfycbze4eDyCGsVo_kO3C8pkordsJ9kvPpHJaqTJH7VwIrDbGr3i9dSSmL1i5oklbo7yzO5/exec'
+  : 'https://script.google.com/macros/s/AKfycbwXXS_hqdG6BNdl70EnJw844IhmyKzWMhKbRF496MD6RvpHPk_oG8oxsX8bktehVRzTOA/exec';
 
 // ── Tarifs par devise ─────────────────────────────────────────
 const PLANS = {
