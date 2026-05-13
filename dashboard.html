@@ -906,6 +906,56 @@
 
   </div>
 
+  <!-- ═══ FOOD COST PAR PLAT (Module 10) ═══ -->
+  <div class="section-label" style="margin-top:28px">
+    Food Cost &amp; Marges par plat
+    <a href="/recettes.html" id="link-recettes" style="font-size:11px;color:#4f46e5;text-decoration:none;margin-left:12px;font-weight:500;">🍳 Gérer mes recettes →</a>
+  </div>
+  <div class="card" id="foodcost-card" style="padding:20px">
+    <div id="foodcost-empty" style="display:none;text-align:center;padding:30px 10px;color:#6b7280">
+      <div style="font-size:32px;margin-bottom:8px">🍽️</div>
+      <div style="font-weight:600;margin-bottom:4px">Aucune recette pour l'instant</div>
+      <div style="font-size:13px;margin-bottom:14px">Saisis tes 10 plats principaux pour suivre la marge en temps réel.</div>
+      <a href="/recettes.html" id="link-recettes-empty" style="display:inline-block;background:#4f46e5;color:white;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500">+ Ajouter ma première recette</a>
+    </div>
+    <div id="foodcost-content" style="display:none">
+      <!-- Stats globales -->
+      <div style="display:flex;flex-wrap:wrap;gap:20px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <div>
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Recettes actives</div>
+          <div style="font-size:20px;font-weight:600" id="fc-stat-nb">—</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Marge moyenne</div>
+          <div style="font-size:20px;font-weight:600" id="fc-stat-marge-moy">—</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Marge médiane</div>
+          <div style="font-size:20px;font-weight:600" id="fc-stat-marge-med">—</div>
+        </div>
+        <div id="fc-matching-en-attente-wrap" style="display:none">
+          <div style="font-size:11px;color:#f59e0b;text-transform:uppercase;letter-spacing:.05em;font-weight:600">⚠ Matching en attente</div>
+          <div style="font-size:20px;font-weight:600;color:#f59e0b" id="fc-stat-matching">—</div>
+        </div>
+      </div>
+      <!-- Tableau top 10 -->
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.08)">
+            <th style="text-align:left;padding:8px 4px;font-weight:600;color:#9ca3af;font-size:11px;text-transform:uppercase">Plat</th>
+            <th style="text-align:right;padding:8px 4px;font-weight:600;color:#9ca3af;font-size:11px;text-transform:uppercase">Prix TTC</th>
+            <th style="text-align:right;padding:8px 4px;font-weight:600;color:#9ca3af;font-size:11px;text-transform:uppercase">Coût portion</th>
+            <th style="text-align:right;padding:8px 4px;font-weight:600;color:#9ca3af;font-size:11px;text-transform:uppercase">Marge %</th>
+            <th style="text-align:right;padding:8px 4px;font-weight:600;color:#9ca3af;font-size:11px;text-transform:uppercase">Marge CHF</th>
+            <th style="text-align:center;padding:8px 4px;font-weight:600;color:#9ca3af;font-size:11px;text-transform:uppercase">Catégorie</th>
+          </tr>
+        </thead>
+        <tbody id="foodcost-tbody"></tbody>
+      </table>
+    </div>
+    <div id="foodcost-loading" style="text-align:center;padding:20px;color:#6b7280;font-size:13px">⏳ Chargement…</div>
+  </div>
+
   <!-- ═══ TRÉSORERIE PRÉVISIONNELLE ═══ -->
   <div class="section-label" style="margin-top:28px">Trésorerie Prévisionnelle — 60 jours</div>
   <div class="grid-2">
@@ -1123,7 +1173,10 @@ async function loadData() {
     
     // Re-render le dashboard avec les nouvelles données
     render('mois');
-    
+
+    // Module 10 Food Cost — section optionnelle (best-effort, non bloquant)
+    loadFoodCost();
+
     // Badge de succès
     if (badgeLive) {
       badgeLive.innerHTML = '<span class="dot"></span> LIVE';
@@ -2617,6 +2670,88 @@ async function clearSimulation() {
 
   btn.textContent = '🗑 Effacer';
   btn.disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODULE 10 FOOD COST — Section Top 10 plats par marge
+// ═══════════════════════════════════════════════════════════
+async function loadFoodCost() {
+  // Update lien "Gérer mes recettes" avec le token
+  const linkBase = '/recettes.html?id=' + CLIENT_TOKEN;
+  const l1 = document.getElementById('link-recettes'); if (l1) l1.href = linkBase;
+  const l2 = document.getElementById('link-recettes-empty'); if (l2) l2.href = linkBase;
+
+  const loading = document.getElementById('foodcost-loading');
+  const empty   = document.getElementById('foodcost-empty');
+  const content = document.getElementById('foodcost-content');
+  const tbody   = document.getElementById('foodcost-tbody');
+
+  try {
+    const url = APPS_SCRIPT_URL + '?action=foodCostDashboard&id=' + encodeURIComponent(CLIENT_TOKEN);
+    const r = await fetch(url);
+    const data = await r.json();
+    if (loading) loading.style.display = 'none';
+    if (data.error) {
+      // Best-effort : si erreur, cache la section silencieusement
+      if (empty)   empty.style.display = 'none';
+      if (content) content.style.display = 'none';
+      console.warn('[foodcost] Erreur API:', data.error);
+      return;
+    }
+    const stats = data.stats || {};
+    const top10 = data.top10_par_marge || [];
+
+    if (top10.length === 0 || stats.nb_recettes_actives === 0) {
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+
+    // Affichage
+    if (content) content.style.display = 'block';
+    document.getElementById('fc-stat-nb').textContent       = stats.nb_recettes_actives || 0;
+    document.getElementById('fc-stat-marge-moy').textContent = (stats.marge_pct_moyenne || 0).toFixed(1) + ' %';
+    document.getElementById('fc-stat-marge-med').textContent = (stats.marge_pct_mediane || 0).toFixed(1) + ' %';
+
+    if (data.matching_en_attente_count > 0) {
+      const wrap = document.getElementById('fc-matching-en-attente-wrap');
+      if (wrap) wrap.style.display = 'block';
+      document.getElementById('fc-stat-matching').textContent = data.matching_en_attente_count;
+    }
+
+    // Calcul médiane pour classement menu engineering (par marge seulement, V1)
+    const margesActives = top10.map(r => parseFloat(r.marge_pct) || 0).sort((a, b) => a - b);
+    const medianeMarge = margesActives.length > 0 ? margesActives[Math.floor(margesActives.length / 2)] : 0;
+
+    // Render tableau
+    if (tbody) {
+      tbody.innerHTML = top10.map(rec => {
+        const marge   = parseFloat(rec.marge_pct) || 0;
+        const margeCHF = parseFloat(rec.marge_chf) || 0;
+        const prix    = parseFloat(rec.prix_vente_ttc) || 0;
+        const cout    = parseFloat(rec.cout_portion_chf) || 0;
+        const isHaut  = marge >= medianeMarge;
+        // V1 sans ventes : Star = marge haute, Dog = marge basse
+        const classement = isHaut ? '⭐ Star' : '🐶 Dog';
+        const classementCol = isHaut ? '#10b981' : '#f59e0b';
+        const margeCol = marge >= 60 ? '#10b981' : marge >= 30 ? '#f59e0b' : '#ef4444';
+        return `
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+            <td style="padding:10px 4px;font-weight:500">${rec.nom_plat || '—'}<div style="font-size:11px;color:#6b7280;margin-top:2px">${rec.categorie || ''}</div></td>
+            <td style="text-align:right;padding:10px 4px">${prix.toFixed(2)}</td>
+            <td style="text-align:right;padding:10px 4px;color:#9ca3af">${cout.toFixed(2)}</td>
+            <td style="text-align:right;padding:10px 4px;font-weight:600;color:${margeCol}">${marge.toFixed(1)}%</td>
+            <td style="text-align:right;padding:10px 4px">${margeCHF.toFixed(2)}</td>
+            <td style="text-align:center;padding:10px 4px;color:${classementCol};font-weight:500;font-size:11px">${classement}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  } catch(e) {
+    if (loading) loading.style.display = 'none';
+    if (empty)   empty.style.display = 'none';
+    if (content) content.style.display = 'none';
+    console.warn('[foodcost] Exception:', e);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
