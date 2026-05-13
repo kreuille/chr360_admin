@@ -370,6 +370,14 @@ function attachListeners() {
   });
 }
 
+// Conversion d'unité miroir du backend (g↔kg, ml↔L). Si conversion impossible : 0.
+function convertToReferenceUnit(qte, src, ref) {
+  if (!src || !ref || src === ref) return qte;
+  const map = { 'g_kg': 0.001, 'kg_g': 1000, 'ml_L': 0.001, 'L_ml': 1000, 'ml_l': 0.001, 'l_ml': 1000 };
+  const f = map[src + '_' + ref];
+  return f !== undefined ? qte * f : 0;
+}
+
 // ─── Calcul preview côté client (approximatif) ──────────────
 function updatePreview() {
   const rows = document.querySelectorAll('#ingredients-tbody tr');
@@ -380,11 +388,16 @@ function updatePreview() {
   rows.forEach(r => {
     const nom = (r.querySelector('.ing-nom').value || '').toLowerCase().trim();
     const qte = parseFloat(r.querySelector('.ing-qte').value) || 0;
+    const unite = r.querySelector('.ing-unite').value || 'g';
     const perte = parseFloat(r.querySelector('.ing-perte').value) || 0;
     const cachedKey = Object.keys(cachedCatalogue).find(k => cachedCatalogue[k].nom.toLowerCase() === nom);
     if (cachedKey) {
-      const cout = cachedCatalogue[cachedKey].cout || 0;
-      totalCout += qte * (1 - perte / 100) * cout;
+      const cached = cachedCatalogue[cachedKey];
+      const cout = cached.cout || 0;
+      // Conversion vers l'unité de référence du catalogue (g→kg, ml→L)
+      const uniteRef = cached.unite_ref || unite;
+      const qteRef = convertToReferenceUnit(qte, unite, uniteRef);
+      totalCout += qteRef * (1 - perte / 100) * cout;
     } else if (nom) {
       allMatched = false;
     }
@@ -548,9 +561,22 @@ async function loadRecettes() {
       ul.appendChild(li);
     });
     // Cache catalogue depuis les recettes pour preview
+    // Inférence unite_ref (miroir backend unitRefFromIA) : g→kg, ml→L, sinon tel quel
+    function inferUniteRef(u) {
+      const x = String(u || '').toLowerCase();
+      if (x === 'g') return 'kg';
+      if (x === 'ml') return 'L';
+      if (x === 'l') return 'L';
+      if (x === 'kg' || x === 'pce') return x;
+      return 'kg';
+    }
     recettes.forEach(rec => (rec.ingredients || []).forEach(ing => {
       if (ing.ingredient_id && ing.cout_unitaire_chf > 0) {
-        cachedCatalogue[ing.ingredient_id] = { nom: ing.ingredient_nom, cout: parseFloat(ing.cout_unitaire_chf) || 0 };
+        cachedCatalogue[ing.ingredient_id] = {
+          nom: ing.ingredient_nom,
+          cout: parseFloat(ing.cout_unitaire_chf) || 0,
+          unite_ref: inferUniteRef(ing.unite)
+        };
       }
     }));
   } catch(e) {
