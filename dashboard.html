@@ -906,6 +906,26 @@
 
   </div>
 
+  <!-- ═══ T10 — MES MODULES (Pivot tarifaire — Add-ons à la carte) ═══ -->
+  <div class="section-label" style="margin-top:28px">
+    Mes modules
+    <span id="my-modules-plan" style="font-size:11px;color:#6b7280;margin-left:12px;font-weight:400">Plan : <span id="my-modules-plan-name">—</span></span>
+  </div>
+  <div class="card" style="padding:20px">
+    <div id="my-modules-loading" style="text-align:center;padding:20px;color:#6b7280;font-size:13px">⏳ Chargement…</div>
+    <div id="my-modules-error" style="display:none;padding:14px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:8px;color:#F87171;font-size:13px"></div>
+    <div id="my-modules-content" style="display:none">
+      <div id="my-modules-bundle-banner" style="display:none;padding:14px;background:linear-gradient(135deg,rgba(167,139,250,0.12),rgba(0,229,255,0.08));border:1px solid rgba(167,139,250,0.3);border-radius:10px;margin-bottom:16px">
+        <div style="font-weight:700;font-size:14px;color:#A78BFA;margin-bottom:4px">✨ Bundle Suite Pro actif</div>
+        <div style="font-size:12px;color:#9CA3AF">Vous bénéficiez de Food Cost + CFO IA + Coach IA + Réceptionniste IA pour 499 CHF/mois.</div>
+      </div>
+      <div id="my-modules-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;color:#6b7280">
+        Le compteur Personnel se met à jour automatiquement le 1er de chaque mois sur la base des employés actifs.
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ FOOD COST PAR PLAT (Module 10) ═══ -->
   <div class="section-label" style="margin-top:28px">
     Food Cost &amp; Marges par plat
@@ -1176,6 +1196,9 @@ async function loadData() {
 
     // Module 10 Food Cost — section optionnelle (best-effort, non bloquant)
     loadFoodCost();
+
+    // T10 — Section "Mes modules" (pivot tarifaire add-ons)
+    loadMyModules();
 
     // Badge de succès
     if (badgeLive) {
@@ -2690,6 +2713,134 @@ async function clearSimulation() {
 
   btn.textContent = '🗑 Effacer';
   btn.disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════
+// T10 — Section "Mes modules" (pivot tarifaire add-ons)
+// ═══════════════════════════════════════════════════════════
+async function loadMyModules() {
+  const loading = document.getElementById('my-modules-loading');
+  const errorBox = document.getElementById('my-modules-error');
+  const content = document.getElementById('my-modules-content');
+  const listEl = document.getElementById('my-modules-list');
+  const bundleBanner = document.getElementById('my-modules-bundle-banner');
+  const planNameEl = document.getElementById('my-modules-plan-name');
+
+  function showError(msg) {
+    if (loading) loading.style.display = 'none';
+    if (content) content.style.display = 'none';
+    if (errorBox) { errorBox.style.display = 'block'; errorBox.textContent = msg; }
+  }
+
+  try {
+    // Fetch catalogue + état client en parallèle (2 routes T5)
+    const [catalogRes, clientRes] = await Promise.all([
+      fetch(`${APPS_SCRIPT_URL}?action=listAddons`).then(r => r.text()),
+      fetch(`${APPS_SCRIPT_URL}?action=getClientAddons&id=${encodeURIComponent(CLIENT_TOKEN)}`).then(r => r.text())
+    ]);
+
+    const catalog = JSON.parse(catalogRes);
+    const clientData = JSON.parse(clientRes);
+
+    if (!catalog.ok) { showError('Impossible de charger le catalogue add-ons.'); return; }
+    if (!clientData.ok) { showError('Impossible de charger vos modules : ' + (clientData.error || 'erreur inconnue')); return; }
+
+    const plan = (clientData.plan || '').toLowerCase();
+    const activeAddons = clientData.addons || [];
+    const isBundle = !!clientData.bundle_suite_pro;
+    const activeIds = new Set(activeAddons.map(a => a.addon_id));
+
+    if (planNameEl) planNameEl.textContent = (plan || '—').charAt(0).toUpperCase() + plan.slice(1);
+    if (bundleBanner) bundleBanner.style.display = isBundle ? 'block' : 'none';
+
+    // Icônes par addon
+    const icons = { foodcost:'🍽️', cfoia:'🧠', personnel:'👥', concierge:'🤝', coach_ia:'🎓', receptionniste_ia:'📞' };
+
+    // Build liste add-ons
+    let html = '';
+    for (const addon of catalog.catalog) {
+      const isActive = activeIds.has(addon.id);
+      const compatible = (addon.plans_compatible || []).indexOf(plan) >= 0;
+      const includedInBundle = isBundle && (catalog.bundle.includes_addons || []).indexOf(addon.id) >= 0;
+      const activeAddon = activeAddons.find(a => a.addon_id === addon.id) || {};
+
+      const statusBadge = includedInBundle
+        ? '<span style="padding:2px 8px;background:rgba(167,139,250,0.15);color:#A78BFA;font-size:11px;font-weight:600;border-radius:4px">INCLUS BUNDLE</span>'
+        : isActive
+          ? '<span style="padding:2px 8px;background:rgba(0,200,100,0.15);color:#00C864;font-size:11px;font-weight:600;border-radius:4px">ACTIF</span>'
+          : (compatible
+              ? '<span style="padding:2px 8px;background:rgba(255,255,255,0.06);color:#9CA3AF;font-size:11px;font-weight:600;border-radius:4px">INACTIF</span>'
+              : '<span style="padding:2px 8px;background:rgba(248,113,113,0.1);color:#F87171;font-size:11px;font-weight:600;border-radius:4px">PLAN INCOMPATIBLE</span>');
+
+      const qtySuffix = (addon.model === 'per_employee' && isActive && activeAddon.quantity)
+        ? ` × ${activeAddon.quantity} employés`
+        : '';
+
+      const action = includedInBundle
+        ? '<span style="font-size:12px;color:#6B7280">Géré par bundle</span>'
+        : isActive
+          ? `<button onclick="toggleAddon('${addon.id}', 'remove', '${addon.name.replace(/'/g, "\\'")}')" style="padding:6px 14px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#F87171;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer">Désactiver</button>`
+          : (compatible
+              ? `<button onclick="toggleAddon('${addon.id}', 'add', '${addon.name.replace(/'/g, "\\'")}')" style="padding:6px 14px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);color:#00E5FF;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer">Activer</button>`
+              : '<span style="font-size:12px;color:#6B7280">Upgrade Pro requis</span>');
+
+      html += `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px">
+          <div style="display:flex;align-items:center;gap:14px;flex:1">
+            <div style="font-size:22px">${icons[addon.id] || '📦'}</div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">
+                <div style="font-weight:600;font-size:14px">${addon.name}</div>
+                ${statusBadge}
+              </div>
+              <div style="font-size:12px;color:#9CA3AF">${addon.price_chf} CHF/mois${addon.model === 'per_employee' ? '/employé' : ''}${qtySuffix} — ${addon.description || ''}</div>
+            </div>
+          </div>
+          <div style="margin-left:14px">${action}</div>
+        </div>
+      `;
+    }
+
+    if (listEl) listEl.innerHTML = html;
+    if (loading) loading.style.display = 'none';
+    if (content) content.style.display = 'block';
+
+  } catch (e) {
+    console.error('[T10 loadMyModules]', e);
+    showError('Erreur de chargement : ' + e.message);
+  }
+}
+
+async function toggleAddon(addonId, action, addonName) {
+  const verb = action === 'add' ? 'activer' : 'désactiver';
+  const priceInfo = action === 'add' ? '\n\nVous serez facturé(e) à partir du prochain cycle Stripe.' : '';
+  if (!confirm(`Confirmer : ${verb} l'add-on "${addonName}" ?${priceInfo}`)) return;
+
+  const apiAction = action === 'add' ? 'addAddon' : 'removeAddon';
+  try {
+    const body = { id: CLIENT_TOKEN, addon_id: addonId };
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=${apiAction}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert(`✅ Add-on ${addonName} ${action === 'add' ? 'activé' : 'désactivé'} avec succès.`);
+      loadMyModules(); // refresh
+    } else {
+      const errorMap = {
+        plan_incompatible: `Cet add-on n'est pas compatible avec votre plan actuel.`,
+        addon_already_active: `Cet add-on est déjà actif.`,
+        addon_not_active: `Cet add-on n'est pas actif.`,
+        no_stripe_subscription: `Aucune subscription Stripe trouvée pour votre compte.`,
+        invalid_token: `Session expirée — recharger la page.`
+      };
+      alert(`❌ ${errorMap[data.error] || data.error || 'Erreur inconnue'}`);
+    }
+  } catch (e) {
+    alert(`❌ Erreur réseau : ${e.message}`);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
