@@ -933,8 +933,8 @@
           <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Marge médiane</div>
           <div style="font-size:20px;font-weight:600" id="fc-stat-marge-med">—</div>
         </div>
-        <div id="fc-matching-en-attente-wrap" style="display:none">
-          <div style="font-size:11px;color:#f59e0b;text-transform:uppercase;letter-spacing:.05em;font-weight:600">⚠ Matching en attente</div>
+        <div id="fc-matching-en-attente-wrap" style="display:none;cursor:pointer" onclick="openMatchingModal()" title="Cliquer pour valider">
+          <div style="font-size:11px;color:#f59e0b;text-transform:uppercase;letter-spacing:.05em;font-weight:600">⚠ Matching en attente →</div>
           <div style="font-size:20px;font-weight:600;color:#f59e0b" id="fc-stat-matching">—</div>
         </div>
       </div>
@@ -2515,6 +2515,26 @@ function showUploadToast(type, msg) {
   </div>
 </div>
 
+<!-- ═══ MODALE MATCHING EN ATTENTE (Module 10) ═══ -->
+<div id="matchingModal" class="modal-overlay">
+  <div class="modal-content" style="max-width:780px">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <span class="icon" style="color:#f59e0b">⚠</span>
+        Matching ingrédients à valider
+      </h2>
+      <button class="modal-close" onclick="closeMatchingModal()">×</button>
+    </div>
+    <div style="padding:14px 20px;color:#9ca3af;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      Ces libellés de factures n'ont pas pu être matchés automatiquement à un ingrédient connu.
+      Valide ou rejette chaque ligne pour enrichir ton catalogue.
+    </div>
+    <div id="matching-list" style="max-height:60vh;overflow-y:auto;padding:14px 20px">
+      <div style="text-align:center;color:#6b7280;padding:30px 0">⏳ Chargement…</div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════════
 // SIMULATION — MOT DE PASSE (validé côté serveur)
@@ -2751,6 +2771,128 @@ async function loadFoodCost() {
     if (empty)   empty.style.display = 'none';
     if (content) content.style.display = 'none';
     console.warn('[foodcost] Exception:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODULE 10 — Modale matching en attente
+// ═══════════════════════════════════════════════════════════
+let MATCHING_CACHE = []; // lignes pending
+let CATALOGUE_CACHE = []; // ingrédients pour dropdown
+
+async function openMatchingModal() {
+  const modal = document.getElementById('matchingModal');
+  const list = document.getElementById('matching-list');
+  if (!modal) return;
+  modal.classList.add('show');
+  list.innerHTML = '<div style="text-align:center;color:#6b7280;padding:30px 0">⏳ Chargement…</div>';
+
+  try {
+    // Récupère les pendings + le catalogue en parallèle
+    const [pendings, catalogue] = await Promise.all([
+      fetch(APPS_SCRIPT_URL + '?action=listMatchingEnAttente&id=' + CLIENT_TOKEN).then(r => r.json()),
+      fetch(APPS_SCRIPT_URL + '?action=listRecettes&id=' + CLIENT_TOKEN).then(r => r.json())
+    ]);
+    MATCHING_CACHE = pendings.lignes || [];
+    // Construit catalogue depuis les recettes (workaround : pas d'endpoint catalogue dédié pour l'instant)
+    const seen = new Set();
+    CATALOGUE_CACHE = [];
+    (catalogue.recettes || []).forEach(rec => (rec.ingredients || []).forEach(ing => {
+      if (ing.ingredient_id && !seen.has(ing.ingredient_id)) {
+        seen.add(ing.ingredient_id);
+        CATALOGUE_CACHE.push({ id: ing.ingredient_id, nom: ing.ingredient_nom });
+      }
+    }));
+    CATALOGUE_CACHE.sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+    renderMatchingList();
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;color:#ef4444;padding:30px 0">Erreur : ' + e.message + '</div>';
+  }
+}
+
+function closeMatchingModal() {
+  const modal = document.getElementById('matchingModal');
+  if (modal) modal.classList.remove('show');
+}
+
+function renderMatchingList() {
+  const list = document.getElementById('matching-list');
+  if (!list) return;
+  if (MATCHING_CACHE.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:8px">✅</div><div style="color:#10b981;font-weight:600">Plus aucun matching en attente !</div></div>';
+    return;
+  }
+
+  list.innerHTML = MATCHING_CACHE.map((m, idx) => {
+    const dropdownOpts = CATALOGUE_CACHE.map(c => `<option value="${c.id}">${c.nom}</option>`).join('');
+    return `
+      <div id="matching-row-${idx}" style="border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px 14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px;color:#e5e7eb;margin-bottom:2px">${m.libelle_facture || '(sans libellé)'}</div>
+            <div style="font-size:12px;color:#9ca3af">
+              ${m.fournisseur || 'fournisseur inconnu'} · ${m.quantite || 0} ${m.unite || ''} · ${parseFloat(m.prix_ht || 0).toFixed(2)} CHF HT
+            </div>
+            ${m.suggestion_ingredient_id ? '<div style="font-size:12px;color:#4f46e5;margin-top:4px">💡 Suggestion : ' + m.suggestion_ingredient_id + '</div>' : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:200px">
+            <select id="match-sel-${idx}" style="background:#0a1225;border:1px solid #1e2a50;color:#e5e7eb;padding:6px 8px;border-radius:6px;font-size:12px">
+              <option value="">— Choisir ingrédient —</option>
+              ${dropdownOpts}
+            </select>
+            <div style="display:flex;gap:6px">
+              <button onclick="confirmMatching(${idx})" style="flex:1;background:#10b981;color:white;border:none;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">✅ Confirmer</button>
+              <button onclick="rejectMatching(${idx})" style="background:white;color:#ef4444;border:1px solid #ef4444;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">🚫 Rejeter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function confirmMatching(idx) {
+  const m = MATCHING_CACHE[idx];
+  const sel = document.getElementById('match-sel-' + idx);
+  const ingredientId = sel ? sel.value : '';
+  if (!ingredientId) {
+    alert('Choisis un ingrédient dans la liste avant de confirmer.');
+    return;
+  }
+  try {
+    const r = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'confirmMatching', id: CLIENT_TOKEN, matching_id: m.id, ingredient_id: ingredientId })
+    });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    // Retire la ligne du cache + re-render
+    MATCHING_CACHE.splice(idx, 1);
+    renderMatchingList();
+    // Force re-load Food Cost pour MAJ pastille
+    if (typeof loadFoodCost === 'function') loadFoodCost();
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+}
+
+async function rejectMatching(idx) {
+  const m = MATCHING_CACHE[idx];
+  if (!confirm('Rejeter ce libellé ? Il sera marqué comme ignoré (pas d\'ajout catalogue).')) return;
+  try {
+    const r = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'confirmMatching', id: CLIENT_TOKEN, matching_id: m.id, action_type: 'reject' })
+    });
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    MATCHING_CACHE.splice(idx, 1);
+    renderMatchingList();
+    if (typeof loadFoodCost === 'function') loadFoodCost();
+  } catch(e) {
+    alert('Erreur : ' + e.message);
   }
 }
 
