@@ -230,7 +230,7 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
         <button class="btn-primary" onclick="goToStep2()">Continuer →</button>
       </div>
 
-      <!-- ÉTAPE 2 — Récap + Stripe -->
+      <!-- ÉTAPE 2 — Add-ons + Récap + Stripe -->
       <div class="form-panel" id="panel2">
         <div class="plan-box">
           <div class="plan-box-head">
@@ -240,6 +240,29 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
           <div class="plan-box-items" id="recap-plan-features">
             <span class="tick">✓</span> IA illimitée &nbsp;·&nbsp; <span class="tick">✓</span> Dashboard temps réel<br>
             <span class="tick">✓</span> 8 caisses &nbsp;·&nbsp; <span class="tick">✓</span> Alertes Email + Telegram &nbsp;·&nbsp; <span class="tick">✓</span> Support prioritaire
+          </div>
+        </div>
+
+        <!-- T9-V2 — Sélection add-ons modulaires (pivot tarifaire) -->
+        <div style="margin:18px 0 10px;padding:14px;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.18);border-radius:11px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="font-size:18px">✨</div>
+            <div>
+              <div style="font-weight:700;font-size:14px;color:#00E5FF">Ajoute tes modules (optionnel)</div>
+              <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Aucun prélèvement pendant les 14 jours d'essai. Désactivables en 1 clic.</div>
+            </div>
+          </div>
+          <div id="addonsList" style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:12px;color:var(--muted);text-align:center;padding:14px">⏳ Chargement des modules…</div>
+          </div>
+          <div id="bundleOffer" style="display:none;margin-top:12px;padding:12px;background:linear-gradient(135deg,rgba(167,139,250,0.10),rgba(0,229,255,0.06));border:1px dashed rgba(167,139,250,0.35);border-radius:9px">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+              <input type="checkbox" id="bundleCheck" onchange="updateAddonsRecap()" style="width:16px;height:16px;accent-color:#A78BFA">
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:13px;color:#A78BFA">💎 Bundle Suite Pro — 499 CHF/mois</div>
+                <div style="font-size:11px;color:var(--muted)">Inclut Pro + Food Cost + CFO IA + Coach IA + Réceptionniste IA. Économie 26 CHF/mois vs somme à la carte.</div>
+              </div>
+            </label>
           </div>
         </div>
 
@@ -418,12 +441,142 @@ function goToStep2() {
   document.getElementById('recap-price').textContent        = prices[plan];
   document.getElementById('recap-plan-features').innerHTML  = PLAN_FEATURES[plan] || '';
 
-  const end    = new Date(Date.now()+14*864e5);
-  const endStr = end.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-  document.getElementById('recapBox').innerHTML =
-    `🏪 <strong>${restaurant}</strong><br>👤 ${nom}<br>📧 ${email}<br>🗓️ Essai gratuit jusqu'au <strong style="color:var(--green)">${endStr}</strong>`;
+  // T9-V2 — Charge le catalogue add-ons compatibles avec le plan choisi
+  loadAddonsForFunnel(plan);
+
+  // Recap initial (sans add-ons)
+  updateAddonsRecap();
 
   goToStep(2);
+}
+
+// ── T9-V2 : Catalogue add-ons + sélecteur funnel ────────────────────────
+const ADDONS_FUNNEL_STATE = {
+  catalog: null,    // { catalog:[{id,name,price_chf,model,plans_compatible}], bundle:{...} }
+  selected: {},     // { foodcost: true, personnel: true }
+  personnelQty: 1
+};
+
+async function loadAddonsForFunnel(plan) {
+  const listEl = document.getElementById('addonsList');
+  const bundleEl = document.getElementById('bundleOffer');
+  if (!listEl) return;
+
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=listAddons`);
+    const txt = await res.text();
+    const data = JSON.parse(txt);
+    if (!data.ok || !Array.isArray(data.catalog)) {
+      listEl.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:10px">⚠ Modules indisponibles — tu pourras les activer depuis ton dashboard.</div>';
+      return;
+    }
+    ADDONS_FUNNEL_STATE.catalog = data;
+    ADDONS_FUNNEL_STATE.selected = {};
+    ADDONS_FUNNEL_STATE.personnelQty = 1;
+
+    const icons = { foodcost:'🍽️', cfoia:'🧠', personnel:'👥', concierge:'🤝', coach_ia:'🎓', receptionniste_ia:'📞' };
+
+    let html = '';
+    for (const addon of data.catalog) {
+      const compatible = (addon.plans_compatible || []).indexOf(plan) >= 0;
+      if (!compatible) continue; // Cache les add-ons incompatibles plutôt que les griser
+
+      const priceLabel = addon.model === 'per_employee'
+        ? `${addon.price_chf} CHF/mois/employé`
+        : `${addon.price_chf} CHF/mois`;
+
+      html += `
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='rgba(0,229,255,0.25)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
+          <input type="checkbox" data-addon-id="${addon.id}" onchange="onAddonToggle('${addon.id}', this.checked)" style="width:16px;height:16px;margin-top:2px;accent-color:#00E5FF;flex-shrink:0">
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+              <div style="font-weight:600;font-size:13px">${icons[addon.id] || '📦'} ${addon.name}</div>
+              <div style="font-size:12px;font-weight:700;color:#00E5FF;white-space:nowrap">+ ${priceLabel}</div>
+            </div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.4">${addon.description || ''}</div>
+            ${addon.id === 'personnel' ? `<div id="personnelQtyWrap" style="display:none;margin-top:8px"><label style="font-size:11.5px;color:var(--muted)">Nombre d'employés actifs : </label><input type="number" id="personnelQtyInput" min="1" max="200" value="1" onchange="onPersonnelQty(this.value)" onclick="event.stopPropagation();event.preventDefault()" style="width:60px;padding:3px 6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:5px;font-size:12px;margin-left:6px"></div>` : ''}
+          </div>
+        </label>
+      `;
+    }
+
+    if (!html) {
+      listEl.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:10px">Aucun add-on disponible pour le plan ' + plan + '. Upgrade Pro pour accéder à Food Cost, CFO IA, etc.</div>';
+      if (bundleEl) bundleEl.style.display = 'none';
+      return;
+    }
+
+    listEl.innerHTML = html;
+    if (bundleEl) bundleEl.style.display = (plan === 'pro' || plan === 'groupe') ? 'block' : 'none';
+  } catch (e) {
+    console.error('[T9-V2 loadAddons]', e);
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:10px">⚠ Erreur chargement modules. Tu pourras les activer plus tard.</div>';
+  }
+}
+
+function onAddonToggle(addonId, isChecked) {
+  ADDONS_FUNNEL_STATE.selected[addonId] = isChecked;
+  if (addonId === 'personnel') {
+    const wrap = document.getElementById('personnelQtyWrap');
+    if (wrap) wrap.style.display = isChecked ? 'block' : 'none';
+  }
+  // Si bundle coché → désélectionne et désactive les add-ons inclus dans le bundle
+  updateAddonsRecap();
+}
+
+function onPersonnelQty(val) {
+  ADDONS_FUNNEL_STATE.personnelQty = Math.max(parseInt(val, 10) || 1, 1);
+  updateAddonsRecap();
+}
+
+function updateAddonsRecap() {
+  const restaurant = document.getElementById('f-restaurant').value.trim();
+  const nom        = document.getElementById('f-nom').value.trim();
+  const email      = document.getElementById('f-email').value.trim();
+  const plan       = document.getElementById('f-plan').value || 'starter';
+  const planPrices = { starter: 89, pro: 149 };
+  const bundleChecked = !!(document.getElementById('bundleCheck') && document.getElementById('bundleCheck').checked);
+
+  let total = planPrices[plan] || 0;
+  const itemsHtml = ['<div style="font-size:13px;color:var(--white);font-weight:600;margin-bottom:6px">Récap :</div>'];
+  itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span>Plan ${plan.charAt(0).toUpperCase() + plan.slice(1)}</span><span style="font-weight:600">${planPrices[plan]} CHF</span></div>`);
+
+  if (bundleChecked && (plan === 'pro' || plan === 'groupe')) {
+    total += 499;
+    itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;color:#A78BFA"><span>💎 Bundle Suite Pro</span><span style="font-weight:600">+ 499 CHF</span></div>`);
+    // Liste les add-ons sélectionnés HORS bundle
+    const bundleIncluded = ['foodcost', 'cfoia', 'coach_ia', 'receptionniste_ia'];
+    Object.keys(ADDONS_FUNNEL_STATE.selected).forEach(id => {
+      if (ADDONS_FUNNEL_STATE.selected[id] && bundleIncluded.indexOf(id) < 0) {
+        const def = (ADDONS_FUNNEL_STATE.catalog && ADDONS_FUNNEL_STATE.catalog.catalog || []).find(a => a.id === id);
+        if (!def) return;
+        const qty = (def.model === 'per_employee') ? ADDONS_FUNNEL_STATE.personnelQty : 1;
+        const sub = def.price_chf * qty;
+        total += sub;
+        itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span>${def.name}${qty > 1 ? ' × ' + qty : ''}</span><span style="font-weight:600">+ ${sub} CHF</span></div>`);
+      }
+    });
+  } else {
+    Object.keys(ADDONS_FUNNEL_STATE.selected).forEach(id => {
+      if (!ADDONS_FUNNEL_STATE.selected[id]) return;
+      const def = (ADDONS_FUNNEL_STATE.catalog && ADDONS_FUNNEL_STATE.catalog.catalog || []).find(a => a.id === id);
+      if (!def) return;
+      const qty = (def.model === 'per_employee') ? ADDONS_FUNNEL_STATE.personnelQty : 1;
+      const sub = def.price_chf * qty;
+      total += sub;
+      itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span>${def.name}${qty > 1 ? ' × ' + qty : ''}</span><span style="font-weight:600">+ ${sub} CHF</span></div>`);
+    });
+  }
+
+  itemsHtml.push('<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:8px;padding-top:6px;display:flex;justify-content:space-between;font-size:14px;font-weight:700"><span>Total mensuel</span><span style="color:#00E5FF">' + total + ' CHF</span></div>');
+
+  const end = new Date(Date.now() + 14 * 864e5);
+  const endStr = end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  document.getElementById('recapBox').innerHTML =
+    `🏪 <strong>${restaurant || '—'}</strong> &nbsp;·&nbsp; 👤 ${nom || '—'} &nbsp;·&nbsp; 📧 ${email || '—'}<br>` +
+    `🗓️ Essai gratuit jusqu'au <strong style="color:var(--green)">${endStr}</strong><br><br>` +
+    itemsHtml.join('');
 }
 
 // ── Redirection vers Stripe Checkout ─────────────────────────
@@ -433,6 +586,17 @@ async function goToStripe() {
   btn.disabled = true;
   clearMsg();
 
+  // T9-V2 — collecte add-ons sélectionnés
+  const planCurrent = document.getElementById('f-plan').value || 'starter';
+  const bundleChecked = !!(document.getElementById('bundleCheck') && document.getElementById('bundleCheck').checked);
+  const bundleIncluded = ['foodcost','cfoia','coach_ia','receptionniste_ia'];
+  const selectedAddons = Object.keys(ADDONS_FUNNEL_STATE.selected || {})
+    .filter(id => ADDONS_FUNNEL_STATE.selected[id])
+    .filter(id => !(bundleChecked && bundleIncluded.indexOf(id) >= 0)); // bundle wins
+  const personnelQty = (ADDONS_FUNNEL_STATE.selected && ADDONS_FUNNEL_STATE.selected.personnel)
+    ? (ADDONS_FUNNEL_STATE.personnelQty || 1)
+    : 0;
+
   const params = {
     action:     'createCheckout',
     nom:        document.getElementById('f-nom').value.trim(),
@@ -440,7 +604,10 @@ async function goToStripe() {
     restaurant: document.getElementById('f-restaurant').value.trim(),
     tel:        document.getElementById('f-tel').value.trim(),
     devise:     document.getElementById('f-devise').value,
-    plan:       document.getElementById('f-plan').value || 'starter',
+    plan:       planCurrent,
+    addons:     selectedAddons.join(','),
+    personnel_qty: String(personnelQty),
+    bundle_suite_pro: bundleChecked ? 'true' : 'false'
   };
 
   try {
