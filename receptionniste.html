@@ -44,8 +44,19 @@
     <a href="#" id="link-dashboard" class="btn btn-secondary">← Dashboard</a>
   </header>
 
-  <div class="info-banner">
-    ⚠️ <strong>Early access</strong> — Module 12 en développement. La configuration ci-dessous prépare l'agent. Les appels seront actifs dès la mise en service de notre partenaire vocal (Vapi.ai). Tu seras notifié·e par email.
+  <div class="info-banner" id="earlyAccessBanner">
+    ⚠️ <strong>Early access</strong> — Module 12 en développement. La configuration ci-dessous prépare l'agent. Les appels seront actifs dès que l'admin aura provisionné les clés Vapi.ai. Tu seras notifié·e par email.
+  </div>
+
+  <!-- ═══ STATUT AGENT (Phase 1 Vapi) ═══ -->
+  <div class="card" id="agentStatusCard" style="border-left:4px solid #6b7280">
+    <h2>⚙️ État de l'agent vocal</h2>
+    <div id="agentStatusContent" style="font-size:13px;color:var(--text-muted)">⏳ Chargement…</div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="provisionAgent()" id="btnProvision">🚀 Créer / synchroniser l'agent Vapi</button>
+      <button class="btn btn-secondary" onclick="refreshStatus()">↻ Rafraîchir</button>
+    </div>
+    <div id="provisionResult" style="margin-top:10px;font-size:13px"></div>
   </div>
 
   <div class="tabs">
@@ -217,7 +228,86 @@ async function saveConfig() {
   } catch (e) { alert('Erreur : ' + e.message); }
 }
 
+async function refreshStatus() {
+  const div = document.getElementById('agentStatusContent');
+  const card = document.getElementById('agentStatusCard');
+  const banner = document.getElementById('earlyAccessBanner');
+  div.textContent = '⏳ Chargement…';
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=getAgentStatus&id=${encodeURIComponent(CLIENT_TOKEN)}`);
+    const d = await r.json();
+    if (!d.ok) { div.textContent = 'Erreur : ' + (d.error || 'inconnue'); return; }
+    if (!d.vapi_available) {
+      card.style.borderLeftColor = '#6b7280';
+      div.innerHTML = '🟡 <strong>Vapi non configuré côté admin</strong><br>'
+        + '<span style="color:#6b7280;font-size:12px">L\'agent ne peut pas encore prendre d\'appels. Configuration en cours.</span>';
+    } else if (!d.provisioned) {
+      card.style.borderLeftColor = '#f59e0b';
+      div.innerHTML = '🟠 <strong>Agent pas encore créé</strong><br>'
+        + '<span style="color:#6b7280;font-size:12px">Clique sur "Créer / synchroniser l\'agent Vapi" ci-dessous pour le provisionner avec ta config actuelle.</span>';
+    } else {
+      card.style.borderLeftColor = '#10b981';
+      if (banner) banner.style.display = 'none';
+      div.innerHTML = '✅ <strong>Agent provisionné</strong><br>'
+        + '<span style="font-size:12px;color:#6b7280">'
+        + 'Vapi assistant ID : <code>' + (d.assistant_id || '—') + '</code><br>'
+        + 'Provisionné le : ' + (d.provisioned_at ? new Date(d.provisioned_at).toLocaleString('fr-CH') : '—') + '<br>'
+        + (d.phone_number ? 'Numéro : <code>' + d.phone_number + '</code>' : 'Aucun numéro assigné — à faire côté admin Vapi/Twilio')
+        + '</span>';
+    }
+  } catch (e) { div.textContent = 'Erreur réseau : ' + e.message; }
+}
+
+async function provisionAgent() {
+  const btn = document.getElementById('btnProvision');
+  const result = document.getElementById('provisionResult');
+  btn.disabled = true; btn.textContent = '⏳ Provisionnement en cours...';
+  result.textContent = '';
+  try {
+    // Sauvegarde la config avant de provisionner
+    await saveConfigSilent();
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=provisionVapiAgent`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ id: CLIENT_TOKEN })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      result.innerHTML = '✅ Agent ' + (d.isUpdate ? 'mis à jour' : 'créé') + ' : <code>' + d.assistant_id + '</code>';
+      result.style.color = '#10b981';
+      refreshStatus();
+    } else if (d.error === 'vapi_api_key_missing') {
+      result.innerHTML = '🟡 Vapi pas encore configuré côté admin CHR 360°.<br>' + (d.hint || '');
+      result.style.color = '#f59e0b';
+    } else {
+      result.innerHTML = '❌ Erreur : ' + (d.error || 'inconnue');
+      result.style.color = '#ef4444';
+      if (d.details) result.innerHTML += '<br><code style="font-size:11px">' + JSON.stringify(d.details).substring(0, 300) + '</code>';
+    }
+  } catch (e) {
+    result.textContent = 'Erreur : ' + e.message;
+    result.style.color = '#ef4444';
+  } finally {
+    btn.disabled = false; btn.textContent = '🚀 Créer / synchroniser l\'agent Vapi';
+  }
+}
+
+async function saveConfigSilent() {
+  const updates = {};
+  KEYS.forEach(k => {
+    const el = document.getElementById('cfg-' + k);
+    if (!el) return;
+    updates[k] = el.type === 'checkbox' ? String(el.checked) : el.value;
+  });
+  try {
+    await fetch(`${APPS_SCRIPT_URL}?action=updateAgentConfig`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ id: CLIENT_TOKEN, config: updates })
+    });
+  } catch(e){}
+}
+
 loadConfig();
+refreshStatus();
 </script>
 </body>
 </html>
