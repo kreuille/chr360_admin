@@ -1016,7 +1016,7 @@ function dismissWelcomeBanner() {
     <div class="card" id="receptionniste-card" style="padding:20px">
       <div id="receptionniste-loading" style="text-align:center;padding:20px;color:#6b7280;font-size:13px">⏳ Chargement…</div>
       <div id="receptionniste-content" style="display:none">
-        <div style="display:flex;flex-wrap:wrap;gap:24px;margin-bottom:8px">
+        <div style="display:flex;flex-wrap:wrap;gap:24px;margin-bottom:14px">
           <div>
             <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Résa aujourd'hui</div>
             <div style="font-size:22px;font-weight:600" id="recep-stat-resa-today">—</div>
@@ -1034,6 +1034,19 @@ function dismissWelcomeBanner() {
             <div style="font-size:22px;font-weight:600;color:#10b981" id="recep-stat-ca">— CHF</div>
           </div>
         </div>
+
+        <!-- Phase 2 : tables résa + commandes du jour -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px" id="recep-tables-grid">
+          <div>
+            <div style="font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">📅 Réservations du jour</div>
+            <div id="recep-resa-list" style="display:flex;flex-direction:column;gap:6px;font-size:13px"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">🥡 Commandes du jour</div>
+            <div id="recep-cmd-list" style="display:flex;flex-direction:column;gap:6px;font-size:13px"></div>
+          </div>
+        </div>
+
         <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;color:#6b7280">
           Données synchronisées en temps réel depuis votre agent vocal. Numéro de réception configurable depuis l'écran agent.
         </div>
@@ -3288,10 +3301,54 @@ async function loadReceptionniste() {
     document.getElementById('recep-stat-couverts').textContent   = totalCouverts;
     document.getElementById('recep-stat-cmd').textContent        = cmds.length;
     document.getElementById('recep-stat-ca').textContent         = (caCmds + caResas).toFixed(0) + ' CHF';
+
+    // Phase 2 : render tables résa + commandes
+    const resaList = document.getElementById('recep-resa-list');
+    if (resaList) {
+      if (resas.length === 0) {
+        resaList.innerHTML = '<div style="color:#6b7280;font-size:12px;padding:8px">Aucune résa aujourd\'hui.</div>';
+      } else {
+        resaList.innerHTML = resas.slice(0, 8).map(r => {
+          const tel = r.client_tel || '';
+          const src = r.source === 'agent_ia' ? '<span title="Pris par l\'agent IA">🤖</span>' : '';
+          const stColor = r.statut === 'annulee' ? '#ef4444' : (r.statut === 'confirmee' ? '#10b981' : '#f59e0b');
+          return `<div style="padding:8px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;color:#e5e7eb">${r.heure || '—'} · ${r.nb_couverts || 0}p · ${escapeHtml2(r.client_nom || '')} ${src}</div>
+              <div style="font-size:11px;color:#6b7280">${escapeHtml2(tel)} ${r.notes ? '· ' + escapeHtml2(r.notes) : ''}</div>
+            </div>
+            <span style="font-size:10px;color:${stColor};font-weight:600;text-transform:uppercase">${r.statut || ''}</span>
+          </div>`;
+        }).join('');
+      }
+    }
+    const cmdList = document.getElementById('recep-cmd-list');
+    if (cmdList) {
+      if (cmds.length === 0) {
+        cmdList.innerHTML = '<div style="color:#6b7280;font-size:12px;padding:8px">Aucune commande aujourd\'hui.</div>';
+      } else {
+        cmdList.innerHTML = cmds.slice(0, 8).map(c => {
+          const nbItems = (c.items || []).length;
+          const src = c.agent_call_id ? '<span title="Pris par l\'agent IA">🤖</span>' : '';
+          const payCol = c.payment_status === 'paid' ? '#10b981' : '#f59e0b';
+          return `<div style="padding:8px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;color:#e5e7eb">${c.heure_pickup || '—'} · ${nbItems} item${nbItems>1?'s':''} · ${escapeHtml2(c.client_nom || '')} ${src}</div>
+              <div style="font-size:11px;color:#6b7280">${parseFloat(c.total_chf || 0).toFixed(2)} CHF · ${c.mode_paiement || 'sur_place'}</div>
+            </div>
+            <span style="font-size:10px;color:${payCol};font-weight:600;text-transform:uppercase">${c.payment_status || c.statut || ''}</span>
+          </div>`;
+        }).join('');
+      }
+    }
   } catch(e) {
     if (loading) loading.style.display = 'none';
     console.warn('[receptionniste] load failed', e);
   }
+}
+
+function escapeHtml2(s) {
+  return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 // ═══════════════════════════════════════════════════════════
