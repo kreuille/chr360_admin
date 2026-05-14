@@ -733,6 +733,32 @@
 </style>
 </head>
 <body>
+<script>
+// 2026-05-14 : Affichage devise selon TLD (.ch=CHF / .fr=EUR, parité 1:1)
+// Stripe Adaptive Pricing convertit au checkout selon pays customer.
+(function() {
+  if (!location.host.endsWith('.fr')) { window.SITE_DEVISE = 'CHF'; return; }
+  window.SITE_DEVISE = 'EUR';
+  function replaceInNode(node) {
+    if (node.nodeType === 3) {
+      if (node.nodeValue.indexOf('CHF') >= 0) node.nodeValue = node.nodeValue.replace(/\bCHF\b/g, 'EUR');
+    } else if (node.nodeType === 1 && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+      for (const c of node.childNodes) replaceInNode(c);
+    }
+  }
+  function init() {
+    replaceInNode(document.body);
+    new MutationObserver(function(ms) {
+      ms.forEach(function(m) {
+        m.addedNodes.forEach(replaceInNode);
+        if (m.type === 'characterData') replaceInNode(m.target);
+      });
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
 
 <div class="bg-glow bg-glow-1"></div>
 <div class="bg-glow bg-glow-2"></div>

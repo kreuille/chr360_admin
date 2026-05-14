@@ -220,7 +220,7 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
 
           </div>
           <input type="hidden" id="f-plan" value="starter">
-          <input type="hidden" id="f-devise" value="CHF">
+          <input type="hidden" id="f-devise" value=""><!-- rempli par script selon SITE_DEVISE -->
         </div>
 
         <div class="field"><label>Nom du restaurant *</label><input type="text" id="f-restaurant" placeholder="Le Petit Bistrot"></div>
@@ -363,7 +363,7 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:64px">
       <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">🍽️ Food Cost</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">49 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Coût matière par portion + marge % + classement Star/Dog. Pro / Groupe.</div></div>
       <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">🧠 CFO IA</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">79 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Digest hebdomadaire de 3-5 recommandations chiffrées. Pro / Groupe.</div></div>
-      <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">👥 Personnel</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">19 <span style="font-size:12px;color:#6B7280">CHF/mois/employé</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Planning + pointage QR + masse salariale + ratio CA. Tous plans.</div></div>
+      <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">👥 Personnel</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">19 <span style="font-size:12px;color:#6B7280">${SITE_DEVISE}/mois/employé</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Planning + pointage QR + masse salariale + ratio CA. Tous plans.</div></div>
       <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">📞 Réceptionniste IA</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">59 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Standard téléphonique IA pour prise de réservations 24/7. Pro / Groupe.</div></div>
       <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">🤝 Concierge fiduciaire</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">99 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Support humain dédié + revue compta mensuelle. Pro / Groupe.</div></div>
       <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">🎓 Coach restaurateur IA</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">189 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Chat IA stratégique illimité + plans d'action mensuels. Pro / Groupe.</div></div>
@@ -391,15 +391,48 @@ const APPS_SCRIPT_URL = location.host.startsWith('staging.')
   ? 'https://script.google.com/macros/s/AKfycbze4eDyCGsVo_kO3C8pkordsJ9kvPpHJaqTJH7VwIrDbGr3i9dSSmL1i5oklbo7yzO5/exec'
   : 'https://script.google.com/macros/s/AKfycbwXXS_hqdG6BNdl70EnJw844IhmyKzWMhKbRF496MD6RvpHPk_oG8oxsX8bktehVRzTOA/exec';
 
-// ── Tarifs par devise ─────────────────────────────────────────
+// 2026-05-14 : devise selon TLD (parité 1:1 — convention SaaS B2B)
+// chr360.ch → CHF / chr360.fr → EUR / staging.chr360.ch → CHF
+// Stripe Adaptive Pricing convertit ensuite selon pays customer au checkout.
+const SITE_DEVISE = location.host.endsWith('.fr') ? 'EUR' : 'CHF';
+window.SITE_DEVISE = SITE_DEVISE;
+
+// ── Tarifs par devise (parité 1:1) ───────────────────────────
 const PLANS = {
-  starter: { CHF: { price: 89,  label: '89 CHF'  }, EUR: { price: 83,  label: '83 €'   }, USD: { price: 89,  label: '89 $'   } },
-  pro:     { CHF: { price: 149, label: '149 CHF' }, EUR: { price: 138, label: '138 €'  }, USD: { price: 149, label: '149 $'  } },
+  starter: { CHF: { price: 89,  label: '89 CHF'  }, EUR: { price: 89,  label: '89 €'   } },
+  pro:     { CHF: { price: 149, label: '149 CHF' }, EUR: { price: 149, label: '149 €'  } },
 };
 const PLAN_FEATURES = {
   starter: '<span class="tick">✓</span> 50 docs/mois &nbsp;·&nbsp; <span class="tick">✓</span> 1 caisse<br><span class="tick">✓</span> Dashboard Food Cost + Trésorerie &nbsp;·&nbsp; <span class="tick">✓</span> Email alerts',
   pro:     '<span class="tick">✓</span> IA illimitée &nbsp;·&nbsp; <span class="tick">✓</span> 8 caisses<br><span class="tick">✓</span> Tous KPIs &nbsp;·&nbsp; <span class="tick">✓</span> Email + Telegram &nbsp;·&nbsp; <span class="tick">✓</span> Support prioritaire',
 };
+
+// ── Auto-affichage devise selon TLD (CHF pour .ch, EUR pour .fr) ────
+// Exécuté dès que DOM parsed : remplace "CHF" par "EUR" dans tout le texte statique
+// + set le hidden input f-devise. Stripe Adaptive Pricing fait la conversion au checkout.
+function applySiteDevise() {
+  const inp = document.getElementById('f-devise');
+  if (inp) inp.value = SITE_DEVISE;
+  if (SITE_DEVISE !== 'EUR') return; // .ch → tout est déjà en CHF, rien à faire
+  const symbolFrom = 'CHF', symbolTo = 'EUR';
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: function(n) {
+      const p = n.parentNode;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      if (p.tagName === 'SCRIPT' || p.tagName === 'STYLE') return NodeFilter.FILTER_REJECT;
+      return n.nodeValue.indexOf(symbolFrom) >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }
+  });
+  const nodes = [];
+  let n;
+  while (n = walker.nextNode()) nodes.push(n);
+  nodes.forEach(node => { node.nodeValue = node.nodeValue.replace(/\bCHF\b/g, symbolTo); });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', applySiteDevise);
+} else {
+  applySiteDevise();
+}
 
 function selectPlan(plan, el) {
   document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
@@ -482,8 +515,8 @@ async function loadAddonsForFunnel(plan) {
       if (!compatible) continue; // Cache les add-ons incompatibles plutôt que les griser
 
       const priceLabel = addon.model === 'per_employee'
-        ? `${addon.price_chf} CHF/mois/employé`
-        : `${addon.price_chf} CHF/mois`;
+        ? `${addon.price_chf} ${SITE_DEVISE}/mois/employé`
+        : `${addon.price_chf} ${SITE_DEVISE}/mois`;
 
       html += `
         <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='rgba(0,229,255,0.25)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
@@ -539,11 +572,11 @@ function updateAddonsRecap() {
 
   let total = planPrices[plan] || 0;
   const itemsHtml = ['<div style="font-size:13px;color:var(--white);font-weight:600;margin-bottom:6px">Récap :</div>'];
-  itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span>Plan ${plan.charAt(0).toUpperCase() + plan.slice(1)}</span><span style="font-weight:600">${planPrices[plan]} CHF</span></div>`);
+  itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span>Plan ${plan.charAt(0).toUpperCase() + plan.slice(1)}</span><span style="font-weight:600">${planPrices[plan]} ${SITE_DEVISE}</span></div>`);
 
   if (bundleChecked && (plan === 'pro' || plan === 'groupe')) {
     total += 499;
-    itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;color:#A78BFA"><span>💎 Bundle Suite Pro</span><span style="font-weight:600">+ 499 CHF</span></div>`);
+    itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;color:#A78BFA"><span>💎 Bundle Suite Pro</span><span style="font-weight:600">+ 499 ${SITE_DEVISE}</span></div>`);
     // Liste les add-ons sélectionnés HORS bundle
     const bundleIncluded = ['foodcost', 'cfoia', 'coach_ia', 'receptionniste_ia'];
     Object.keys(ADDONS_FUNNEL_STATE.selected).forEach(id => {
@@ -553,7 +586,7 @@ function updateAddonsRecap() {
         const qty = (def.model === 'per_employee') ? ADDONS_FUNNEL_STATE.personnelQty : 1;
         const sub = def.price_chf * qty;
         total += sub;
-        itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span>${def.name}${qty > 1 ? ' × ' + qty : ''}</span><span style="font-weight:600">+ ${sub} CHF</span></div>`);
+        itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span>${def.name}${qty > 1 ? ' × ' + qty : ''}</span><span style="font-weight:600">+ ${sub} ${SITE_DEVISE}</span></div>`);
       }
     });
   } else {
@@ -564,11 +597,11 @@ function updateAddonsRecap() {
       const qty = (def.model === 'per_employee') ? ADDONS_FUNNEL_STATE.personnelQty : 1;
       const sub = def.price_chf * qty;
       total += sub;
-      itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span>${def.name}${qty > 1 ? ' × ' + qty : ''}</span><span style="font-weight:600">+ ${sub} CHF</span></div>`);
+      itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span>${def.name}${qty > 1 ? ' × ' + qty : ''}</span><span style="font-weight:600">+ ${sub} ${SITE_DEVISE}</span></div>`);
     });
   }
 
-  itemsHtml.push('<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:8px;padding-top:6px;display:flex;justify-content:space-between;font-size:14px;font-weight:700"><span>Total mensuel</span><span style="color:#00E5FF">' + total + ' CHF</span></div>');
+  itemsHtml.push('<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:8px;padding-top:6px;display:flex;justify-content:space-between;font-size:14px;font-weight:700"><span>Total mensuel</span><span style="color:#00E5FF">' + total + ' ' + SITE_DEVISE + '</span></div>');
 
   const end = new Date(Date.now() + 14 * 864e5);
   const endStr = end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });

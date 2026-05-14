@@ -402,15 +402,40 @@ const APPS_SCRIPT_URL = location.host.startsWith('staging.')
   ? 'https://script.google.com/macros/s/AKfycbze4eDyCGsVo_kO3C8pkordsJ9kvPpHJaqTJH7VwIrDbGr3i9dSSmL1i5oklbo7yzO5/exec'
   : 'https://script.google.com/macros/s/AKfycbwXXS_hqdG6BNdl70EnJw844IhmyKzWMhKbRF496MD6RvpHPk_oG8oxsX8bktehVRzTOA/exec';
 
-// ── Tarifs par devise ─────────────────────────────────────────
+// 2026-05-14 : devise selon TLD (parité 1:1)
+const SITE_DEVISE = location.host.endsWith('.fr') ? 'EUR' : 'CHF';
+window.SITE_DEVISE = SITE_DEVISE;
+
+// ── Tarifs par devise (parité 1:1) ───────────────────────────
 const PLANS = {
-  starter: { CHF: { price: 89,  label: '89 CHF'  }, EUR: { price: 83,  label: '83 €'   }, USD: { price: 89,  label: '89 $'   } },
-  pro:     { CHF: { price: 149, label: '149 CHF' }, EUR: { price: 138, label: '138 €'  }, USD: { price: 149, label: '149 $'  } },
+  starter: { CHF: { price: 89,  label: '89 CHF'  }, EUR: { price: 89,  label: '89 €'   } },
+  pro:     { CHF: { price: 149, label: '149 CHF' }, EUR: { price: 149, label: '149 €'  } },
 };
 const PLAN_FEATURES = {
   starter: '<span class="tick">✓</span> 50 docs/mois &nbsp;·&nbsp; <span class="tick">✓</span> 1 caisse<br><span class="tick">✓</span> Dashboard Food Cost + Trésorerie &nbsp;·&nbsp; <span class="tick">✓</span> Email alerts',
   pro:     '<span class="tick">✓</span> IA illimitée &nbsp;·&nbsp; <span class="tick">✓</span> 8 caisses<br><span class="tick">✓</span> Tous KPIs &nbsp;·&nbsp; <span class="tick">✓</span> Email + Telegram &nbsp;·&nbsp; <span class="tick">✓</span> Support prioritaire',
 };
+
+// Auto-affichage devise selon TLD (idem inscription.html)
+function applySiteDevise() {
+  const inp = document.getElementById('f-devise');
+  if (inp) inp.value = SITE_DEVISE;
+  if (SITE_DEVISE !== 'EUR') return;
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: function(n) {
+      const p = n.parentNode;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      if (p.tagName === 'SCRIPT' || p.tagName === 'STYLE') return NodeFilter.FILTER_REJECT;
+      return n.nodeValue.indexOf('CHF') >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }
+  });
+  const nodes = [];
+  let n;
+  while (n = walker.nextNode()) nodes.push(n);
+  nodes.forEach(node => { node.nodeValue = node.nodeValue.replace(/\bCHF\b/g, 'EUR'); });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applySiteDevise);
+else applySiteDevise();
 
 function selectPlan(plan, el) {
   document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
