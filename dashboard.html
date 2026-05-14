@@ -926,6 +926,64 @@
     </div>
   </div>
 
+  <!-- ═══ MODULE 11 — CFO IA (digest hebdo + feedback 👍/👎) ═══ -->
+  <div id="cfoia-section" style="display:none">
+    <div class="section-label" style="margin-top:28px">
+      🧠 CFO IA — Conseils hebdomadaires
+      <button onclick="generateCfoIaAdvice()" id="cfoia-generate-btn" style="margin-left:12px;padding:4px 12px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);color:#A78BFA;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer">Générer maintenant</button>
+    </div>
+    <div class="card" id="cfoia-card" style="padding:20px">
+      <div id="cfoia-loading" style="text-align:center;padding:20px;color:#6b7280;font-size:13px">⏳ Chargement…</div>
+      <div id="cfoia-empty" style="display:none;text-align:center;padding:30px 10px;color:#6b7280">
+        <div style="font-size:32px;margin-bottom:8px">🧠</div>
+        <div style="font-weight:600;margin-bottom:4px">Aucun conseil pour l'instant</div>
+        <div style="font-size:13px;margin-bottom:14px">Le CFO IA génère un digest hebdomadaire chaque lundi à 06:00.<br>Tu peux aussi forcer la génération manuellement.</div>
+      </div>
+      <div id="cfoia-list" style="display:none;flex-direction:column;gap:12px"></div>
+    </div>
+  </div>
+
+  <!-- ═══ MODULE 13 — PERSONNEL (résumé masse salariale + liens) ═══ -->
+  <div id="personnel-section" style="display:none">
+    <div class="section-label" style="margin-top:28px">
+      👥 Personnel &amp; masse salariale
+      <a href="#" id="link-personnel" style="font-size:11px;color:#4f46e5;text-decoration:none;margin-left:12px;font-weight:500">📋 Gérer équipe &amp; planning →</a>
+      <a href="#" id="link-pointage" style="font-size:11px;color:#10b981;text-decoration:none;margin-left:10px;font-weight:500">🕒 Écran pointage →</a>
+    </div>
+    <div class="card" id="personnel-card" style="padding:20px">
+      <div id="personnel-loading" style="text-align:center;padding:20px;color:#6b7280;font-size:13px">⏳ Chargement…</div>
+      <div id="personnel-content" style="display:none">
+        <div style="display:flex;flex-wrap:wrap;gap:24px;margin-bottom:8px">
+          <div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Employés actifs</div>
+            <div style="font-size:22px;font-weight:600" id="pers-stat-actifs">—</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Masse salariale (mois)</div>
+            <div style="font-size:22px;font-weight:600" id="pers-stat-masse">—</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Coût horaire moyen</div>
+            <div style="font-size:22px;font-weight:600" id="pers-stat-cout-h">—</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Facturation Stripe</div>
+            <div style="font-size:22px;font-weight:600;color:#A78BFA" id="pers-stat-billing">— CHF</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;color:#6b7280">
+          Stripe : 19 CHF/mois × employés actifs. Recalcul automatique le 1er de chaque mois à 02:30 CET.
+        </div>
+      </div>
+      <div id="personnel-empty" style="display:none;text-align:center;padding:30px 10px;color:#6b7280">
+        <div style="font-size:32px;margin-bottom:8px">👥</div>
+        <div style="font-weight:600;margin-bottom:4px">Aucun employé enregistré</div>
+        <div style="font-size:13px;margin-bottom:14px">Ajoute ton équipe pour suivre la masse salariale en temps réel.</div>
+        <a href="#" id="link-personnel-empty" style="display:inline-block;background:#4f46e5;color:white;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500">+ Ajouter mon premier employé</a>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ FOOD COST PAR PLAT (Module 10) ═══ -->
   <div class="section-label" style="margin-top:28px">
     Food Cost &amp; Marges par plat
@@ -1199,6 +1257,12 @@ async function loadData() {
 
     // T10 — Section "Mes modules" (pivot tarifaire add-ons)
     loadMyModules();
+
+    // Module 11 — CFO IA (digest hebdo, visible si addon cfoia ou bundle)
+    loadCfoIa();
+
+    // Module 13 — Personnel (résumé, visible si addon personnel actif)
+    loadPersonnel();
 
     // Badge de succès
     if (badgeLive) {
@@ -2922,6 +2986,188 @@ async function loadFoodCost() {
     if (empty)   empty.style.display = 'none';
     if (content) content.style.display = 'none';
     console.warn('[foodcost] Exception:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODULE 11 — CFO IA (digest hebdo + feedback 👍/👎)
+// ═══════════════════════════════════════════════════════════
+async function loadCfoIa() {
+  // Visible seulement si addon 'cfoia' actif OU bundle Suite Pro
+  let isActive = false;
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=getClientAddons&id=${encodeURIComponent(CLIENT_TOKEN)}`);
+    const d = await r.json();
+    if (d.ok) {
+      const ids = (d.addons || []).map(a => a.addon_id);
+      isActive = ids.indexOf('cfoia') >= 0 || !!d.bundle_suite_pro;
+    }
+  } catch(e) { console.warn('[cfoia] check addon failed', e); }
+
+  const section = document.getElementById('cfoia-section');
+  if (!isActive) { if (section) section.style.display = 'none'; return; }
+  if (section) section.style.display = 'block';
+
+  const loading = document.getElementById('cfoia-loading');
+  const empty   = document.getElementById('cfoia-empty');
+  const listEl  = document.getElementById('cfoia-list');
+
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=listCfoConseils&id=${encodeURIComponent(CLIENT_TOKEN)}`);
+    const d = await r.json();
+    if (loading) loading.style.display = 'none';
+    const conseils = d.conseils || [];
+    if (conseils.length === 0) {
+      if (empty) empty.style.display = 'block';
+      if (listEl) listEl.style.display = 'none';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    if (listEl) {
+      listEl.style.display = 'flex';
+      // Affiche les 5 derniers conseils
+      const last5 = conseils.slice(-5).reverse();
+      listEl.innerHTML = last5.map(c => renderCfoConseil(c)).join('');
+    }
+  } catch(e) {
+    if (loading) loading.style.display = 'none';
+    console.warn('[cfoia] load failed', e);
+  }
+}
+
+function renderCfoConseil(c) {
+  const date = c.date_generation ? new Date(c.date_generation).toLocaleDateString('fr-CH', {day:'2-digit',month:'short'}) : '—';
+  const titre = c.titre || c.theme || 'Conseil';
+  const reco  = c.recommandation || '';
+  const impact = c.impact_estime_chf ? `Impact estimé : ${parseFloat(c.impact_estime_chf).toFixed(0)} CHF/mois` : '';
+  const conf = c.confidence ? `${Math.round(parseFloat(c.confidence) * 100)}%` : '';
+  const fb = c.feedback || '';
+  const fbUp = fb === 'up' ? 'background:rgba(0,200,100,0.18);color:#00C864' : 'background:rgba(255,255,255,0.04);color:#9CA3AF';
+  const fbDown = fb === 'down' ? 'background:rgba(248,113,113,0.18);color:#F87171' : 'background:rgba(255,255,255,0.04);color:#9CA3AF';
+  return `
+    <div style="padding:16px;background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.15);border-radius:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:#A78BFA;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${date}${conf ? ' · ' + conf + ' confiance' : ''}</div>
+          <div style="font-size:15px;font-weight:600;margin-top:2px">${escapeHtml(titre)}</div>
+        </div>
+        <div style="display:flex;gap:6px;margin-left:14px">
+          <button onclick="setCfoFeedback('${c.conseil_id}','up')" title="Utile" style="padding:4px 8px;border:none;border-radius:6px;cursor:pointer;font-size:14px;${fbUp}">👍</button>
+          <button onclick="setCfoFeedback('${c.conseil_id}','down')" title="Pas utile" style="padding:4px 8px;border:none;border-radius:6px;cursor:pointer;font-size:14px;${fbDown}">👎</button>
+        </div>
+      </div>
+      <div style="font-size:13px;color:#D1D5DB;line-height:1.5">${escapeHtml(reco)}</div>
+      ${impact ? `<div style="margin-top:8px;font-size:12px;color:#10b981;font-weight:600">${impact}</div>` : ''}
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function setCfoFeedback(conseilId, value) {
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=setCfoFeedback`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ id: CLIENT_TOKEN, conseil_id: conseilId, feedback: value })
+    });
+    const d = await res.json();
+    if (d.ok) loadCfoIa();
+    else alert('Erreur feedback : ' + (d.error || 'inconnue'));
+  } catch(e) { alert('Erreur réseau : ' + e.message); }
+}
+
+async function generateCfoIaAdvice() {
+  const btn = document.getElementById('cfoia-generate-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Génération…'; }
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=generateCfoIaAdvice`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ id: CLIENT_TOKEN })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      alert(`✅ ${d.generated || 0} conseils générés${d.mode === 'educational' ? ' (mode éducatif, données insuffisantes)' : ''}`);
+      loadCfoIa();
+    } else {
+      alert('❌ ' + (d.error || 'Erreur inconnue'));
+    }
+  } catch(e) { alert('Erreur : ' + e.message); }
+  finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Générer maintenant'; }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODULE 13 — PERSONNEL (résumé masse salariale)
+// ═══════════════════════════════════════════════════════════
+async function loadPersonnel() {
+  // Update liens avec token
+  const linkPers = document.getElementById('link-personnel');
+  const linkPoint = document.getElementById('link-pointage');
+  const linkEmpty = document.getElementById('link-personnel-empty');
+  if (linkPers)  linkPers.href  = `/personnel.html?id=${CLIENT_TOKEN}`;
+  if (linkPoint) linkPoint.href = `/pointage.html?id=${CLIENT_TOKEN}`;
+  if (linkEmpty) linkEmpty.href = `/personnel.html?id=${CLIENT_TOKEN}`;
+
+  // Visible seulement si addon 'personnel' actif
+  let isActive = false;
+  let qty = 0;
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=getClientAddons&id=${encodeURIComponent(CLIENT_TOKEN)}`);
+    const d = await r.json();
+    if (d.ok) {
+      const a = (d.addons || []).find(x => x.addon_id === 'personnel');
+      isActive = !!a;
+      qty = a ? (a.quantity || 0) : 0;
+    }
+  } catch(e) { console.warn('[personnel] check addon failed', e); }
+
+  const section = document.getElementById('personnel-section');
+  if (!isActive) { if (section) section.style.display = 'none'; return; }
+  if (section) section.style.display = 'block';
+
+  const loading = document.getElementById('personnel-loading');
+  const content = document.getElementById('personnel-content');
+  const empty   = document.getElementById('personnel-empty');
+
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=listEmployes&id=${encodeURIComponent(CLIENT_TOKEN)}`);
+    const d = await r.json();
+    if (loading) loading.style.display = 'none';
+    const employes = (d.employes || []).filter(e => e.actif !== false && e.actif !== 'false');
+    const nb = employes.length;
+
+    if (nb === 0) {
+      if (empty)   empty.style.display = 'block';
+      if (content) content.style.display = 'none';
+      return;
+    }
+
+    if (empty)   empty.style.display = 'none';
+    if (content) content.style.display = 'block';
+
+    // Calcul masse salariale mensuelle estimée
+    let masse = 0;
+    let cumulCoutH = 0;
+    employes.forEach(e => {
+      const sal = parseFloat(e.salaire_brut_mensuel) || 0;
+      const charges = parseFloat(e.charges_pct) || 16;
+      masse += sal * (1 + charges/100);
+      const heures = parseFloat(e.heures_contractuelles) || 173;
+      cumulCoutH += (sal * (1 + charges/100)) / heures;
+    });
+    const coutHMoy = nb > 0 ? (cumulCoutH / nb) : 0;
+    const billing = qty * 19;
+
+    document.getElementById('pers-stat-actifs').textContent  = nb;
+    document.getElementById('pers-stat-masse').textContent   = masse.toFixed(0) + ' CHF';
+    document.getElementById('pers-stat-cout-h').textContent  = coutHMoy.toFixed(2) + ' CHF';
+    document.getElementById('pers-stat-billing').textContent = billing + ' CHF';
+  } catch(e) {
+    if (loading) loading.style.display = 'none';
+    console.warn('[personnel] load failed', e);
   }
 }
 

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,user-scalable=no">
+<title>CHR 360° — Pointage</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #f1f5f9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    user-select: none;
+  }
+  .clock-time {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .clock-date {
+    font-size: 1rem;
+    color: #94a3b8;
+    margin-bottom: 2rem;
+  }
+  .pin-display {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 2rem;
+    min-height: 60px;
+    align-items: center;
+  }
+  .pin-dot {
+    width: 28px;
+    height: 28px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    background: transparent;
+    transition: all 0.15s;
+  }
+  .pin-dot.filled {
+    background: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 0 12px rgba(16,185,129,0.5);
+  }
+  .pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 320px;
+    width: 100%;
+  }
+  .key {
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #f1f5f9;
+    font-size: 1.8rem;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.08s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .key:active { background: rgba(16,185,129,0.2); transform: scale(0.96); }
+  .key.clear { background: rgba(248,113,113,0.1); color: #f87171; font-size: 1.2rem; }
+  .key.empty { visibility: hidden; }
+  .status {
+    margin-top: 1.5rem;
+    min-height: 60px;
+    font-size: 1rem;
+    text-align: center;
+  }
+  .status.success { color: #10b981; }
+  .status.error { color: #f87171; }
+  .header-info {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    font-size: 11px;
+    color: #475569;
+  }
+  .footer-link {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    font-size: 11px;
+    color: #475569;
+    text-decoration: none;
+  }
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal.show { display: flex; }
+  .modal-content {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 400px;
+    text-align: center;
+  }
+  .modal h2 { margin-bottom: 1rem; }
+  .btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 4px;
+  }
+  .btn-in { background: #10b981; color: white; }
+  .btn-out { background: #f59e0b; color: white; }
+  .btn-cancel { background: #475569; color: white; }
+</style>
+</head>
+<body>
+<div class="header-info">CHR 360° — Pointage</div>
+
+<div class="clock-time" id="clock-time">--:--</div>
+<div class="clock-date" id="clock-date">—</div>
+
+<div class="pin-display" id="pin-display">
+  <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+</div>
+
+<div class="pad" id="pad">
+  <button class="key" data-key="1">1</button>
+  <button class="key" data-key="2">2</button>
+  <button class="key" data-key="3">3</button>
+  <button class="key" data-key="4">4</button>
+  <button class="key" data-key="5">5</button>
+  <button class="key" data-key="6">6</button>
+  <button class="key" data-key="7">7</button>
+  <button class="key" data-key="8">8</button>
+  <button class="key" data-key="9">9</button>
+  <button class="key empty"></button>
+  <button class="key" data-key="0">0</button>
+  <button class="key clear" id="key-clear">⌫</button>
+</div>
+
+<div class="status" id="status">Entre ton PIN à 4 chiffres pour pointer</div>
+
+<a href="#" class="footer-link" id="link-back">← Retour</a>
+
+<!-- Modal IN/OUT choice -->
+<div class="modal" id="modal-choice">
+  <div class="modal-content">
+    <h2 id="modal-greeting">Bonjour</h2>
+    <p style="color:#94a3b8;margin-bottom:1.5rem">Que veux-tu faire ?</p>
+    <button class="btn btn-in" onclick="confirmPointage('in')">▶ Démarrer service</button>
+    <br>
+    <button class="btn btn-out" onclick="confirmPointage('out')">■ Terminer service</button>
+    <br>
+    <button class="btn btn-cancel" onclick="closeChoice()">Annuler</button>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = location.host.startsWith('staging.')
+  ? 'https://script.google.com/macros/s/AKfycbze4eDyCGsVo_kO3C8pkordsJ9kvPpHJaqTJH7VwIrDbGr3i9dSSmL1i5oklbo7yzO5/exec'
+  : 'https://script.google.com/macros/s/AKfycbwXXS_hqdG6BNdl70EnJw844IhmyKzWMhKbRF496MD6RvpHPk_oG8oxsX8bktehVRzTOA/exec';
+
+const urlParams = new URLSearchParams(window.location.search);
+const CLIENT_TOKEN = urlParams.get('id');
+if (!CLIENT_TOKEN) { document.body.innerHTML = '<div style="padding:2rem;color:#f87171;text-align:center">Token client manquant.</div>'; }
+
+document.getElementById('link-back').href = `/personnel.html?id=${CLIENT_TOKEN}`;
+
+let PIN = '';
+const dots = () => document.querySelectorAll('.pin-dot');
+
+// Horloge
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock-time').textContent =
+    now.getHours().toString().padStart(2, '0') + ':' +
+    now.getMinutes().toString().padStart(2, '0');
+  document.getElementById('clock-date').textContent =
+    now.toLocaleDateString('fr-CH', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+function renderPin() {
+  dots().forEach((d, i) => d.classList.toggle('filled', i < PIN.length));
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status' + (type ? ' ' + type : '');
+}
+
+function resetPin() {
+  PIN = '';
+  renderPin();
+  setTimeout(() => setStatus('Entre ton PIN à 4 chiffres pour pointer', ''), 100);
+}
+
+// Clavier
+document.getElementById('pad').addEventListener('click', e => {
+  if (!e.target.matches('.key')) return;
+  if (e.target.id === 'key-clear') {
+    PIN = PIN.slice(0, -1);
+    renderPin();
+    return;
+  }
+  const k = e.target.dataset.key;
+  if (!k) return;
+  if (PIN.length >= 4) return;
+  PIN += k;
+  renderPin();
+  if (PIN.length === 4) verifyPin();
+});
+
+// Support clavier physique
+document.addEventListener('keydown', e => {
+  if (/^[0-9]$/.test(e.key) && PIN.length < 4) {
+    PIN += e.key; renderPin();
+    if (PIN.length === 4) verifyPin();
+  } else if (e.key === 'Backspace') {
+    PIN = PIN.slice(0, -1); renderPin();
+  } else if (e.key === 'Enter' && PIN.length === 4) {
+    verifyPin();
+  }
+});
+
+let CURRENT_PIN_BUFFER = '';
+
+async function verifyPin() {
+  CURRENT_PIN_BUFFER = PIN;
+  setStatus('⏳ Vérification…', '');
+  // On ne fait pas l'appel ici : on attend que l'employé choisisse in/out, puis on envoie
+  // Ouvrir la modale de choix in/out directement
+  // Pour avoir le prénom, on tente une vérif "in" silencieuse (l'API doit gérer)
+  // Plus simple : ouvrir la modale, puis envoyer le choix
+  document.getElementById('modal-greeting').textContent = 'PIN entré ✓';
+  document.getElementById('modal-choice').classList.add('show');
+}
+
+function closeChoice() {
+  document.getElementById('modal-choice').classList.remove('show');
+  resetPin();
+}
+
+async function confirmPointage(direction) {
+  document.getElementById('modal-choice').classList.remove('show');
+  setStatus('⏳ Pointage…', '');
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=pointer`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ id: CLIENT_TOKEN, pin: CURRENT_PIN_BUFFER, direction: direction })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      const emp = d.employe_prenom ? `${d.employe_prenom}` : 'Employé';
+      const action = direction === 'in' ? 'Service démarré ▶' : 'Service terminé ■';
+      const heure = new Date().toLocaleTimeString('fr-CH', {hour:'2-digit', minute:'2-digit'});
+      setStatus(`✅ ${emp} — ${action} à ${heure}`, 'success');
+    } else {
+      const msg = {
+        invalid_pin: '❌ PIN incorrect',
+        rate_limit: '⛔ Trop de tentatives — réessaie dans 10 min',
+        employe_not_found: '❌ PIN incorrect',
+        employe_inactive: '❌ Compte désactivé',
+        already_in: 'ℹ️ Service déjà en cours',
+        already_out: 'ℹ️ Pas de service en cours',
+        invalid_direction: '❌ Action invalide'
+      };
+      setStatus(msg[d.error] || ('❌ ' + (d.error || 'Erreur')), 'error');
+    }
+  } catch (e) {
+    setStatus('❌ Erreur réseau', 'error');
+  }
+  setTimeout(resetPin, 3000);
+}
+</script>
+</body>
+</html>

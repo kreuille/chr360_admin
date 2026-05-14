@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHR 360° — Personnel &amp; Planning</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --bg: #f9fafb;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --text-muted: #6b7280;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; padding: 1rem; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+  header h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  header p { color: var(--text-muted); font-size: 0.9rem; }
+  .header-actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .card h2 { font-size: 1.1rem; margin-bottom: 1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  .grid { display: grid; gap: 0.75rem; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem; color: var(--text); }
+  input, select, textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; background: white; color: var(--text); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+  .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--bg); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th { text-align: left; padding: 0.6rem; color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); }
+  td { padding: 0.7rem 0.6rem; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: rgba(79,70,229,0.03); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-success { background: rgba(16,185,129,0.12); color: var(--success); }
+  .badge-danger { background: rgba(239,68,68,0.12); color: var(--danger); }
+  .badge-warning { background: rgba(245,158,11,0.12); color: var(--warning); }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+  .planning-grid { display: grid; grid-template-columns: 180px repeat(7, minmax(110px, 1fr)); gap: 4px; font-size: 12px; }
+  .planning-grid .ph { padding: 8px; background: rgba(79,70,229,0.06); font-weight: 600; text-align: center; border-radius: 4px; }
+  .planning-grid .pemp { padding: 8px; background: var(--card); border: 1px solid var(--border); border-radius: 4px; font-weight: 500; display:flex; align-items:center; }
+  .planning-grid .pslot { padding: 4px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; min-height: 70px; cursor: pointer; position:relative; }
+  .planning-grid .pslot:hover { background: rgba(79,70,229,0.04); border-color: var(--primary); }
+  .planning-grid .pslot .slot { background: var(--primary); color: white; padding: 3px 6px; border-radius: 3px; font-size: 11px; margin-bottom: 3px; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 1rem; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: white; border-radius: 12px; padding: 1.5rem; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .modal h3 { margin-bottom: 1rem; }
+  .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 1.2rem; }
+  .tab { padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; color: var(--text-muted); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .week-nav { display:flex; gap:8px; align-items:center; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>👥 Personnel &amp; Planning</h1>
+      <p id="restaurant-name">Chargement…</p>
+    </div>
+    <div class="header-actions">
+      <a href="#" id="link-dashboard" class="btn btn-secondary">← Dashboard</a>
+      <a href="#" id="link-pointage-top" class="btn btn-secondary">🕒 Écran pointage</a>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="employes" onclick="switchTab('employes')">Équipe</div>
+    <div class="tab" data-tab="planning" onclick="switchTab('planning')">Planning hebdo</div>
+    <div class="tab" data-tab="kpi" onclick="switchTab('kpi')">Coûts &amp; KPIs</div>
+  </div>
+
+  <!-- ═══ ONGLET EMPLOYÉS ═══ -->
+  <div id="tab-employes" class="tab-content">
+    <div class="card">
+      <h2>
+        <span>Liste de l'équipe — <span id="emp-count">0</span> employés actifs</span>
+        <button class="btn btn-primary" onclick="openEmployeModal()">+ Nouvel employé</button>
+      </h2>
+      <div id="emp-loading" style="text-align:center;color:var(--text-muted);padding:2rem">⏳ Chargement…</div>
+      <div id="emp-empty" class="empty-state" style="display:none">
+        <div class="icon">👥</div>
+        <div style="font-weight:600;margin-bottom:6px">Aucun employé enregistré</div>
+        <div style="font-size:13px;margin-bottom:14px">Ajoute ton équipe pour suivre la masse salariale.</div>
+        <button class="btn btn-primary" onclick="openEmployeModal()">+ Ajouter mon premier employé</button>
+      </div>
+      <div id="emp-table-wrap" style="display:none;overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Poste</th>
+              <th>Type</th>
+              <th>Salaire brut</th>
+              <th>Charges %</th>
+              <th>Coût horaire</th>
+              <th>PIN</th>
+              <th>Statut</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="emp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ONGLET PLANNING ═══ -->
+  <div id="tab-planning" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>
+        <span>Planning hebdomadaire</span>
+        <div class="week-nav">
+          <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">← Semaine préc.</button>
+          <span id="week-label" style="font-weight:600">—</span>
+          <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">Semaine suiv. →</button>
+        </div>
+      </h2>
+      <div id="planning-loading" style="text-align:center;color:var(--text-muted);padding:2rem">⏳ Chargement…</div>
+      <div id="planning-empty" style="display:none;text-align:center;color:var(--text-muted);padding:2rem;font-size:13px">Ajoute d'abord des employés pour pouvoir saisir le planning.</div>
+      <div id="planning-grid-wrap" style="display:none;overflow-x:auto">
+        <div class="planning-grid" id="planning-grid"></div>
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:var(--text-muted)">Astuce : clique sur une cellule pour ajouter / éditer un créneau.</div>
+    </div>
+  </div>
+
+  <!-- ═══ ONGLET KPI ═══ -->
+  <div id="tab-kpi" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>Coûts salariaux — vue mensuelle</h2>
+      <div id="kpi-content" style="font-size:14px;color:var(--text-muted)">
+        Les KPIs mensuels (masse salariale, productivité, ratio salaire/CA) sont calculés automatiquement à partir des pointages.<br><br>
+        <strong>Cron quotidien</strong> : <code>computeDailyLaborCosts</code> tourne tous les jours à 04:00 CET et alimente l'onglet <code>COUTS_SALARIAUX_JOURNALIERS</code> de ta Sheet.<br><br>
+        Vue détaillée disponible dans la Sheet du restaurant (onglet <code>KPI_PERSONNEL_MENSUEL</code>).
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ MODALE EMPLOYÉ ═══ -->
+<div class="modal-overlay" id="employeModal">
+  <div class="modal">
+    <h3 id="emp-modal-title">Nouvel employé</h3>
+    <input type="hidden" id="emp-id">
+    <div class="grid grid-2" style="margin-bottom:12px">
+      <div>
+        <label>Prénom</label>
+        <input type="text" id="emp-prenom" placeholder="Marie">
+      </div>
+      <div>
+        <label>Nom</label>
+        <input type="text" id="emp-nom" placeholder="Dupont">
+      </div>
+    </div>
+    <div class="grid grid-2" style="margin-bottom:12px">
+      <div>
+        <label>Poste</label>
+        <input type="text" id="emp-poste" placeholder="Cuisinier, Serveur…">
+      </div>
+      <div>
+        <label>Type contrat</label>
+        <select id="emp-type">
+          <option value="CDI">CDI</option>
+          <option value="CDD">CDD</option>
+          <option value="extra">Extra</option>
+          <option value="stagiaire">Stagiaire</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-2" style="margin-bottom:12px">
+      <div>
+        <label>Salaire brut mensuel (CHF)</label>
+        <input type="number" id="emp-salaire" min="0" step="100" placeholder="4500">
+      </div>
+      <div>
+        <label>Heures contractuelles / mois</label>
+        <input type="number" id="emp-heures" min="0" step="1" value="173">
+      </div>
+    </div>
+    <div class="grid grid-2" style="margin-bottom:12px">
+      <div>
+        <label>Charges patronales % (CH ≈ 16, FR ≈ 42)</label>
+        <input type="number" id="emp-charges" min="0" max="80" step="0.5" value="16">
+      </div>
+      <div>
+        <label>Date entrée</label>
+        <input type="date" id="emp-date-entree">
+      </div>
+    </div>
+    <div style="margin-bottom:12px;font-size:12px;color:var(--text-muted)">Un PIN à 4 chiffres sera généré automatiquement pour le pointage tablette.</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeEmployeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveEmploye()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODALE SLOT PLANNING ═══ -->
+<div class="modal-overlay" id="slotModal">
+  <div class="modal">
+    <h3>Créneau planning</h3>
+    <input type="hidden" id="slot-id">
+    <input type="hidden" id="slot-employe-id">
+    <input type="hidden" id="slot-date">
+    <div style="margin-bottom:10px;font-size:13px;color:var(--text-muted)" id="slot-context">—</div>
+    <div class="grid grid-2" style="margin-bottom:12px">
+      <div>
+        <label>Heure début</label>
+        <input type="time" id="slot-heure-debut" value="09:00">
+      </div>
+      <div>
+        <label>Heure fin</label>
+        <input type="time" id="slot-heure-fin" value="17:00">
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label>Notes (optionnel)</label>
+      <input type="text" id="slot-notes" placeholder="Service midi, double…">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" onclick="deleteSlot()" id="slot-delete-btn" style="display:none">Supprimer</button>
+      <button class="btn btn-secondary" onclick="closeSlotModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveSlot()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// P0.1 T6.3 — env detection
+const APPS_SCRIPT_URL = location.host.startsWith('staging.')
+  ? 'https://script.google.com/macros/s/AKfycbze4eDyCGsVo_kO3C8pkordsJ9kvPpHJaqTJH7VwIrDbGr3i9dSSmL1i5oklbo7yzO5/exec'
+  : 'https://script.google.com/macros/s/AKfycbwXXS_hqdG6BNdl70EnJw844IhmyKzWMhKbRF496MD6RvpHPk_oG8oxsX8bktehVRzTOA/exec';
+
+const urlParams = new URLSearchParams(window.location.search);
+const CLIENT_TOKEN = urlParams.get('id');
+if (!CLIENT_TOKEN) { document.body.innerHTML = '<div style="padding:2rem;color:red;text-align:center">Token client manquant dans l\'URL.</div>'; }
+
+// Liens header
+document.getElementById('link-dashboard').href     = `/dashboard.html?id=${CLIENT_TOKEN}`;
+document.getElementById('link-pointage-top').href  = `/pointage.html?id=${CLIENT_TOKEN}`;
+
+let EMPLOYES = [];
+let SLOTS = [];
+let CURRENT_WEEK_OFFSET = 0; // 0 = semaine en cours
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = (c.id === 'tab-' + name) ? 'block' : 'none');
+  if (name === 'planning') loadPlanning();
+}
+
+// ═══ EMPLOYÉS ═══
+async function loadEmployes() {
+  const loading = document.getElementById('emp-loading');
+  const empty   = document.getElementById('emp-empty');
+  const tableWrap = document.getElementById('emp-table-wrap');
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=listEmployes&id=${encodeURIComponent(CLIENT_TOKEN)}`);
+    const d = await r.json();
+    loading.style.display = 'none';
+    EMPLOYES = d.employes || [];
+    const actifs = EMPLOYES.filter(e => e.actif !== false && e.actif !== 'false');
+    document.getElementById('emp-count').textContent = actifs.length;
+    if (EMPLOYES.length === 0) {
+      empty.style.display = 'block';
+      tableWrap.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    tableWrap.style.display = 'block';
+    const tbody = document.getElementById('emp-tbody');
+    tbody.innerHTML = EMPLOYES.map(e => {
+      const isActif = e.actif !== false && e.actif !== 'false';
+      const sal = parseFloat(e.salaire_brut_mensuel) || 0;
+      const charges = parseFloat(e.charges_pct) || 0;
+      const heures = parseFloat(e.heures_contractuelles) || 173;
+      const coutH = heures > 0 ? (sal * (1 + charges/100) / heures) : 0;
+      return `<tr>
+        <td><strong>${escapeHtml(e.prenom || '')} ${escapeHtml(e.nom || '')}</strong></td>
+        <td>${escapeHtml(e.poste || '—')}</td>
+        <td>${escapeHtml(e.type_contrat || '—')}</td>
+        <td>${sal.toFixed(0)} CHF</td>
+        <td>${charges.toFixed(1)}%</td>
+        <td>${coutH.toFixed(2)} CHF/h</td>
+        <td><code style="font-size:11px">${escapeHtml(e.pin_dernier_chiffre ? '••••' : '—')}</code> <button class="btn btn-secondary btn-sm" onclick="regeneratePin('${e.employe_id}')" title="Régénérer PIN">🔄</button></td>
+        <td>${isActif ? '<span class="badge badge-success">Actif</span>' : '<span class="badge badge-danger">Inactif</span>'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-secondary btn-sm" onclick="editEmploye('${e.employe_id}')">Éditer</button>
+          ${isActif ? `<button class="btn btn-danger btn-sm" onclick="deactivateEmp('${e.employe_id}')">Désactiver</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    loading.innerHTML = 'Erreur : ' + e.message;
+  }
+}
+
+function openEmployeModal() {
+  document.getElementById('emp-modal-title').textContent = 'Nouvel employé';
+  document.getElementById('emp-id').value = '';
+  ['emp-prenom','emp-nom','emp-poste','emp-salaire','emp-date-entree'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('emp-type').value = 'CDI';
+  document.getElementById('emp-heures').value = '173';
+  document.getElementById('emp-charges').value = '16';
+  document.getElementById('employeModal').classList.add('show');
+}
+
+function editEmploye(id) {
+  const e = EMPLOYES.find(x => x.employe_id === id);
+  if (!e) return;
+  document.getElementById('emp-modal-title').textContent = 'Éditer ' + (e.prenom || '');
+  document.getElementById('emp-id').value = id;
+  document.getElementById('emp-prenom').value = e.prenom || '';
+  document.getElementById('emp-nom').value = e.nom || '';
+  document.getElementById('emp-poste').value = e.poste || '';
+  document.getElementById('emp-type').value = e.type_contrat || 'CDI';
+  document.getElementById('emp-salaire').value = e.salaire_brut_mensuel || '';
+  document.getElementById('emp-heures').value = e.heures_contractuelles || '173';
+  document.getElementById('emp-charges').value = e.charges_pct || '16';
+  document.getElementById('emp-date-entree').value = (e.date_entree || '').substring(0, 10);
+  document.getElementById('employeModal').classList.add('show');
+}
+
+function closeEmployeModal() { document.getElementById('employeModal').classList.remove('show'); }
+
+async function saveEmploye() {
+  const id = document.getElementById('emp-id').value;
+  const body = {
+    id: CLIENT_TOKEN,
+    employe_id: id || undefined,
+    prenom: document.getElementById('emp-prenom').value.trim(),
+    nom: document.getElementById('emp-nom').value.trim(),
+    poste: document.getElementById('emp-poste').value.trim(),
+    type_contrat: document.getElementById('emp-type').value,
+    salaire_brut_mensuel: parseFloat(document.getElementById('emp-salaire').value) || 0,
+    heures_contractuelles: parseFloat(document.getElementById('emp-heures').value) || 173,
+    charges_pct: parseFloat(document.getElementById('emp-charges').value) || 16,
+    date_entree: document.getElementById('emp-date-entree').value || null
+  };
+  if (!body.prenom || !body.nom) { alert('Prénom et nom obligatoires.'); return; }
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=upsertEmploye`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'}, body: JSON.stringify(body)
+    });
+    const d = await res.json();
+    if (d.ok) {
+      const msg = d.pin ? `✅ Employé enregistré.\n\n📌 PIN (4 chiffres) : ${d.pin}\nNote-le : il ne sera plus affiché.` : '✅ Employé mis à jour.';
+      alert(msg);
+      closeEmployeModal();
+      loadEmployes();
+    } else {
+      alert('❌ ' + (d.error || 'Erreur inconnue'));
+    }
+  } catch (e) { alert('Erreur : ' + e.message); }
+}
+
+async function regeneratePin(id) {
+  if (!confirm('Régénérer le PIN ? L\'ancien sera invalidé.')) return;
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=regeneratePinEmploye`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ id: CLIENT_TOKEN, employe_id: id })
+    });
+    const d = await res.json();
+    if (d.ok && d.pin) alert(`✅ Nouveau PIN : ${d.pin}\nNote-le immédiatement.`);
+    else alert('❌ ' + (d.error || 'Erreur'));
+  } catch (e) { alert('Erreur : ' + e.message); }
+}
+
+async function deactivateEmp(id) {
+  if (!confirm('Désactiver cet employé ? Il ne pourra plus pointer.')) return;
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=deactivateEmploye`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ id: CLIENT_TOKEN, employe_id: id })
+    });
+    const d = await res.json();
+    if (d.ok) loadEmployes();
+    else alert('❌ ' + (d.error || 'Erreur'));
+  } catch (e) { alert('Erreur : ' + e.message); }
+}
+
+// ═══ PLANNING ═══
+function getWeekStart(offset) {
+  const now = new Date();
+  now.setDate(now.getDate() + offset * 7);
+  const day = now.getDay();
+  const diff = (day === 0 ? -6 : 1 - day); // lundi
+  now.setDate(now.getDate() + diff);
+  now.setHours(0, 0, 0, 0);
+  return now;
+}
+
+function ymd(d) { return d.toISOString().substring(0, 10); }
+
+function changeWeek(delta) {
+  CURRENT_WEEK_OFFSET += delta;
+  loadPlanning();
+}
+
+async function loadPlanning() {
+  const loading = document.getElementById('planning-loading');
+  const empty   = document.getElementById('planning-empty');
+  const wrap    = document.getElementById('planning-grid-wrap');
+
+  // Charge employés si pas déjà fait
+  if (EMPLOYES.length === 0) {
+    try {
+      const r = await fetch(`${APPS_SCRIPT_URL}?action=listEmployes&id=${encodeURIComponent(CLIENT_TOKEN)}`);
+      const d = await r.json();
+      EMPLOYES = d.employes || [];
+    } catch(e) {}
+  }
+  const actifs = EMPLOYES.filter(e => e.actif !== false && e.actif !== 'false');
+  if (actifs.length === 0) {
+    loading.style.display = 'none';
+    empty.style.display = 'block';
+    wrap.style.display = 'none';
+    return;
+  }
+
+  const weekStart = getWeekStart(CURRENT_WEEK_OFFSET);
+  const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
+  document.getElementById('week-label').textContent =
+    weekStart.toLocaleDateString('fr-CH', {day:'2-digit',month:'short'}) + ' → ' +
+    weekEnd.toLocaleDateString('fr-CH', {day:'2-digit',month:'short',year:'numeric'});
+
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=listPlanning&id=${encodeURIComponent(CLIENT_TOKEN)}&date_debut=${ymd(weekStart)}&date_fin=${ymd(weekEnd)}`);
+    const d = await r.json();
+    loading.style.display = 'none';
+    empty.style.display = 'none';
+    wrap.style.display = 'block';
+    SLOTS = d.slots || [];
+
+    const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const grid = document.getElementById('planning-grid');
+    let html = '<div class="ph">Employé</div>';
+    for (let i = 0; i < 7; i++) {
+      const dt = new Date(weekStart); dt.setDate(dt.getDate() + i);
+      html += `<div class="ph">${days[i]} ${dt.getDate()}/${dt.getMonth()+1}</div>`;
+    }
+    actifs.forEach(emp => {
+      html += `<div class="pemp">${escapeHtml(emp.prenom || '')} ${escapeHtml(emp.nom || '')}</div>`;
+      for (let i = 0; i < 7; i++) {
+        const dt = new Date(weekStart); dt.setDate(dt.getDate() + i);
+        const dayStr = ymd(dt);
+        const slotsHere = SLOTS.filter(s => s.employe_id === emp.employe_id && (s.date || '').substring(0,10) === dayStr);
+        const slotsHtml = slotsHere.map(s =>
+          `<div class="slot" onclick="event.stopPropagation();editSlot('${s.slot_id}')">${escapeHtml(s.heure_debut || '')}–${escapeHtml(s.heure_fin || '')}</div>`
+        ).join('');
+        html += `<div class="pslot" onclick="newSlot('${emp.employe_id}','${dayStr}','${escapeHtml(emp.prenom||'')} ${escapeHtml(emp.nom||'')}')">${slotsHtml}</div>`;
+      }
+    });
+    grid.innerHTML = html;
+  } catch (e) {
+    loading.innerHTML = 'Erreur : ' + e.message;
+  }
+}
+
+function newSlot(empId, dateStr, empLabel) {
+  document.getElementById('slot-id').value = '';
+  document.getElementById('slot-employe-id').value = empId;
+  document.getElementById('slot-date').value = dateStr;
+  document.getElementById('slot-heure-debut').value = '09:00';
+  document.getElementById('slot-heure-fin').value = '17:00';
+  document.getElementById('slot-notes').value = '';
+  document.getElementById('slot-context').textContent = empLabel + ' — ' + dateStr;
+  document.getElementById('slot-delete-btn').style.display = 'none';
+  document.getElementById('slotModal').classList.add('show');
+}
+
+function editSlot(slotId) {
+  const s = SLOTS.find(x => x.slot_id === slotId);
+  if (!s) return;
+  const emp = EMPLOYES.find(e => e.employe_id === s.employe_id) || {};
+  document.getElementById('slot-id').value = slotId;
+  document.getElementById('slot-employe-id').value = s.employe_id;
+  document.getElementById('slot-date').value = (s.date || '').substring(0,10);
+  document.getElementById('slot-heure-debut').value = s.heure_debut || '09:00';
+  document.getElementById('slot-heure-fin').value = s.heure_fin || '17:00';
+  document.getElementById('slot-notes').value = s.notes || '';
+  document.getElementById('slot-context').textContent = `${emp.prenom||''} ${emp.nom||''} — ${(s.date||'').substring(0,10)}`;
+  document.getElementById('slot-delete-btn').style.display = 'inline-block';
+  document.getElementById('slotModal').classList.add('show');
+}
+
+function closeSlotModal() { document.getElementById('slotModal').classList.remove('show'); }
+
+async function saveSlot() {
+  const body = {
+    id: CLIENT_TOKEN,
+    slot_id: document.getElementById('slot-id').value || undefined,
+    employe_id: document.getElementById('slot-employe-id').value,
+    date: document.getElementById('slot-date').value,
+    heure_debut: document.getElementById('slot-heure-debut').value,
+    heure_fin: document.getElementById('slot-heure-fin').value,
+    notes: document.getElementById('slot-notes').value
+  };
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=upsertSlot`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'}, body: JSON.stringify(body)
+    });
+    const d = await res.json();
+    if (d.ok) { closeSlotModal(); loadPlanning(); }
+    else alert('❌ ' + (d.error || 'Erreur'));
+  } catch (e) { alert('Erreur : ' + e.message); }
+}
+
+async function deleteSlot() {
+  const slotId = document.getElementById('slot-id').value;
+  if (!slotId || !confirm('Supprimer ce créneau ?')) return;
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=deleteSlot`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ id: CLIENT_TOKEN, slot_id: slotId })
+    });
+    const d = await res.json();
+    if (d.ok) { closeSlotModal(); loadPlanning(); }
+    else alert('❌ ' + (d.error || 'Erreur'));
+  } catch (e) { alert('Erreur : ' + e.message); }
+}
+
+function escapeHtml(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Bootstrap
+loadEmployes();
+</script>
+</body>
+</html>
