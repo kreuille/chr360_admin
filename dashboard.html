@@ -1006,6 +1006,47 @@ function dismissWelcomeBanner() {
     </div>
   </div>
 
+  <!-- ═══ MODULE 12 — RÉCEPTIONNISTE IA (résumé appels + résa du jour) ═══ -->
+  <div id="receptionniste-section" style="display:none">
+    <div class="section-label" style="margin-top:28px">
+      📞 Réceptionniste IA
+      <a href="#" id="link-receptionniste" style="font-size:11px;color:#f59e0b;text-decoration:none;margin-left:12px;font-weight:500">⚙️ Configurer l'agent →</a>
+      <span style="font-size:10px;background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:600">EARLY ACCESS</span>
+    </div>
+    <div class="card" id="receptionniste-card" style="padding:20px">
+      <div id="receptionniste-loading" style="text-align:center;padding:20px;color:#6b7280;font-size:13px">⏳ Chargement…</div>
+      <div id="receptionniste-content" style="display:none">
+        <div style="display:flex;flex-wrap:wrap;gap:24px;margin-bottom:8px">
+          <div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Résa aujourd'hui</div>
+            <div style="font-size:22px;font-weight:600" id="recep-stat-resa-today">—</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Couverts attendus</div>
+            <div style="font-size:22px;font-weight:600" id="recep-stat-couverts">—</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Commandes du jour</div>
+            <div style="font-size:22px;font-weight:600" id="recep-stat-cmd">—</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">CA prévisionnel</div>
+            <div style="font-size:22px;font-weight:600;color:#10b981" id="recep-stat-ca">— CHF</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;color:#6b7280">
+          Données synchronisées en temps réel depuis votre agent vocal. Numéro de réception configurable depuis l'écran agent.
+        </div>
+      </div>
+      <div id="receptionniste-empty" style="display:none;text-align:center;padding:30px 10px;color:#6b7280">
+        <div style="font-size:32px;margin-bottom:8px">📞</div>
+        <div style="font-weight:600;margin-bottom:4px">Aucun appel pour l'instant</div>
+        <div style="font-size:13px;margin-bottom:14px">Configure ton agent vocal pour commencer à recevoir réservations et commandes.</div>
+        <a href="#" id="link-receptionniste-empty" style="display:inline-block;background:#f59e0b;color:white;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500">⚙️ Configurer l'agent</a>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ MODULE 13 — PERSONNEL (résumé masse salariale + liens) ═══ -->
   <div id="personnel-section" style="display:none">
     <div class="section-label" style="margin-top:28px">
@@ -1326,6 +1367,9 @@ async function loadData() {
 
     // Module 13 — Personnel (résumé, visible si addon personnel actif)
     loadPersonnel();
+
+    // Module 12 — Réceptionniste IA (résumé, visible si addon receptionniste_ia actif)
+    loadReceptionniste();
 
     // Badge de succès
     if (badgeLive) {
@@ -2891,7 +2935,12 @@ async function loadMyModules() {
       const includedInBundle = isBundle && (catalog.bundle.includes_addons || []).indexOf(addon.id) >= 0;
       const activeAddon = activeAddons.find(a => a.addon_id === addon.id) || {};
 
-      const statusBadge = includedInBundle
+      // Module 12 — Réceptionniste IA en early access (dev en cours)
+      const isComingSoon = addon.id === 'receptionniste_ia';
+
+      const statusBadge = isComingSoon
+        ? '<span style="padding:2px 8px;background:rgba(245,158,11,0.15);color:#f59e0b;font-size:11px;font-weight:600;border-radius:4px">🔜 BIENTÔT</span>'
+        : includedInBundle
         ? '<span style="padding:2px 8px;background:rgba(167,139,250,0.15);color:#A78BFA;font-size:11px;font-weight:600;border-radius:4px">INCLUS BUNDLE</span>'
         : isActive
           ? '<span style="padding:2px 8px;background:rgba(0,200,100,0.15);color:#00C864;font-size:11px;font-weight:600;border-radius:4px">ACTIF</span>'
@@ -2903,7 +2952,9 @@ async function loadMyModules() {
         ? ` × ${activeAddon.quantity} employés`
         : '';
 
-      const action = includedInBundle
+      const action = isComingSoon
+        ? `<button onclick="joinWaitlist('${addon.id}', '${addon.name.replace(/'/g, "\\'")}')" style="padding:6px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer">📩 Rejoindre la liste</button>`
+        : includedInBundle
         ? '<span style="font-size:12px;color:#6B7280">Géré par bundle</span>'
         : isActive
           ? `<button onclick="toggleAddon('${addon.id}', 'remove', '${addon.name.replace(/'/g, "\\'")}')" style="padding:6px 14px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#F87171;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer">Désactiver</button>`
@@ -2936,6 +2987,25 @@ async function loadMyModules() {
     console.error('[T10 loadMyModules]', e);
     showError('Erreur de chargement : ' + e.message);
   }
+}
+
+// Module 12 — Liste d'attente Réceptionniste IA (early access)
+async function joinWaitlist(addonId, addonName) {
+  if (!confirm(`📩 Rejoindre la liste d'attente "${addonName}" ?\n\nTu seras notifié·e par email dès que le module est disponible.\n\nAucun engagement, aucune facturation.`)) return;
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=joinAddonWaitlist`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ id: CLIENT_TOKEN, addon_id: addonId })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      alert(`✅ Tu es inscrit·e à la liste d'attente "${addonName}".\n\nOn te contacte dès l'ouverture.`);
+    } else if (d.error === 'already_in_waitlist') {
+      alert(`ℹ️ Tu es déjà sur la liste d'attente "${addonName}".`);
+    } else {
+      alert('❌ ' + (d.error || 'Erreur inconnue'));
+    }
+  } catch (e) { alert('Erreur réseau : ' + e.message); }
 }
 
 async function toggleAddon(addonId, action, addonName) {
@@ -3159,6 +3229,68 @@ async function generateCfoIaAdvice() {
   } catch(e) { alert('Erreur : ' + e.message); }
   finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Générer maintenant'; }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODULE 12 — RÉCEPTIONNISTE IA (résumé appels + résa du jour)
+// ═══════════════════════════════════════════════════════════
+async function loadReceptionniste() {
+  // Liens
+  const linkR = document.getElementById('link-receptionniste');
+  const linkE = document.getElementById('link-receptionniste-empty');
+  if (linkR) linkR.href = `/receptionniste.html?id=${CLIENT_TOKEN}`;
+  if (linkE) linkE.href = `/receptionniste.html?id=${CLIENT_TOKEN}`;
+
+  // Visible si addon 'receptionniste_ia' actif (bundle ne l'inclut PAS tant que pas livré)
+  let isActive = false;
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=getClientAddons&id=${encodeURIComponent(CLIENT_TOKEN)}`);
+    const d = await r.json();
+    if (d.ok) {
+      isActive = (d.addons || []).some(a => a.addon_id === 'receptionniste_ia');
+    }
+  } catch(e) { console.warn('[receptionniste] check addon failed', e); }
+
+  const section = document.getElementById('receptionniste-section');
+  if (!isActive) { if (section) section.style.display = 'none'; return; }
+  if (section) section.style.display = 'block';
+
+  const loading = document.getElementById('receptionniste-loading');
+  const content = document.getElementById('receptionniste-content');
+  const empty   = document.getElementById('receptionniste-empty');
+
+  try {
+    const today = new Date().toISOString().substring(0, 10);
+    const [rResa, rCmd] = await Promise.all([
+      fetch(`${APPS_SCRIPT_URL}?action=listReservations&id=${encodeURIComponent(CLIENT_TOKEN)}&date_debut=${today}&date_fin=${today}`).then(r => r.json()),
+      fetch(`${APPS_SCRIPT_URL}?action=listCommandes&id=${encodeURIComponent(CLIENT_TOKEN)}`).then(r => r.json())
+    ]);
+    if (loading) loading.style.display = 'none';
+
+    const resas = rResa.reservations || [];
+    const cmds = (rCmd.commandes || []).filter(c => String(c.date || '').substring(0,10) === today);
+
+    if (resas.length === 0 && cmds.length === 0) {
+      if (empty) empty.style.display = 'block';
+      if (content) content.style.display = 'none';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    if (content) content.style.display = 'block';
+
+    const totalCouverts = resas.reduce((s, r) => s + (parseInt(r.nb_couverts, 10) || 0), 0);
+    const caCmds = cmds.reduce((s, c) => s + (parseFloat(c.total_chf) || 0), 0);
+    // Estimation CA résa (ticket moyen 45 CHF) — heuristique, à raffiner avec ticket moyen client
+    const caResas = totalCouverts * 45;
+
+    document.getElementById('recep-stat-resa-today').textContent = resas.length;
+    document.getElementById('recep-stat-couverts').textContent   = totalCouverts;
+    document.getElementById('recep-stat-cmd').textContent        = cmds.length;
+    document.getElementById('recep-stat-ca').textContent         = (caCmds + caResas).toFixed(0) + ' CHF';
+  } catch(e) {
+    if (loading) loading.style.display = 'none';
+    console.warn('[receptionniste] load failed', e);
   }
 }
 

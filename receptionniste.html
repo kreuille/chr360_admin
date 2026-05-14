@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHR 360° — Configuration Réceptionniste IA</title>
+<style>
+  :root { --primary:#f59e0b; --primary-hover:#d97706; --bg:#f9fafb; --card:#fff; --border:#e5e7eb; --text:#111827; --text-muted:#6b7280; --success:#10b981; --danger:#ef4444; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); line-height:1.5; padding:1rem; }
+  .container { max-width:1000px; margin:0 auto; }
+  header { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+  header h1 { font-size:1.5rem; }
+  header p { color:var(--text-muted); font-size:0.9rem; }
+  .badge { display:inline-block; padding:2px 8px; background:rgba(245,158,11,.15); color:var(--primary); font-size:11px; font-weight:600; border-radius:4px; margin-left:8px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:1.5rem; margin-bottom:1.5rem; }
+  .card h2 { font-size:1.1rem; margin-bottom:1rem; display:flex; align-items:center; gap:.5rem; }
+  .grid { display:grid; gap:.75rem; }
+  .grid-2 { grid-template-columns:1fr 1fr; }
+  @media (max-width:768px) { .grid-2 { grid-template-columns:1fr; } }
+  label { display:block; font-size:.85rem; font-weight:500; margin-bottom:.25rem; }
+  input, select, textarea { width:100%; padding:.5rem; border:1px solid var(--border); border-radius:6px; font-size:.9rem; background:#fff; }
+  textarea { resize:vertical; min-height:60px; }
+  .btn { padding:.5rem 1rem; border:none; border-radius:6px; font-size:.9rem; font-weight:500; cursor:pointer; }
+  .btn-primary { background:var(--primary); color:#fff; }
+  .btn-primary:hover { background:var(--primary-hover); }
+  .btn-secondary { background:var(--card); color:var(--text); border:1px solid var(--border); }
+  .info-banner { padding:14px; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.3); border-radius:8px; font-size:13px; color:#92400e; margin-bottom:1.5rem; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:1.2rem; flex-wrap:wrap; }
+  .tab { padding:10px 16px; cursor:pointer; border-bottom:2px solid transparent; font-weight:500; color:var(--text-muted); }
+  .tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+  .toggle { display:flex; align-items:center; gap:8px; padding:8px 0; }
+  .toggle input { width:auto; }
+  .save-bar { position:sticky; bottom:0; background:var(--card); border-top:1px solid var(--border); padding:10px 16px; margin:0 -1rem -1rem; display:flex; justify-content:flex-end; gap:10px; box-shadow:0 -2px 8px rgba(0,0,0,.04); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>📞 Réceptionniste IA <span class="badge">EARLY ACCESS</span></h1>
+      <p id="header-sub">Configure ton agent vocal pour qu'il réponde au téléphone à ta place.</p>
+    </div>
+    <a href="#" id="link-dashboard" class="btn btn-secondary">← Dashboard</a>
+  </header>
+
+  <div class="info-banner">
+    ⚠️ <strong>Early access</strong> — Module 12 en développement. La configuration ci-dessous prépare l'agent. Les appels seront actifs dès la mise en service de notre partenaire vocal (Vapi.ai). Tu seras notifié·e par email.
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="general" onclick="switchTab('general')">Général</div>
+    <div class="tab" data-tab="capabilities" onclick="switchTab('capabilities')">Capacités</div>
+    <div class="tab" data-tab="scripts" onclick="switchTab('scripts')">Scripts &amp; salutations</div>
+    <div class="tab" data-tab="legal" onclick="switchTab('legal')">RGPD &amp; consentement</div>
+  </div>
+
+  <!-- ═══ GÉNÉRAL ═══ -->
+  <div id="tab-general" class="tab-content">
+    <div class="card">
+      <h2>Identité de l'agent</h2>
+      <div class="grid grid-2">
+        <div>
+          <label>Provider vocal</label>
+          <select id="cfg-voice_provider">
+            <option value="vapi">Vapi.ai (recommandé)</option>
+            <option value="retell">Retell.ai</option>
+          </select>
+        </div>
+        <div>
+          <label>Voix utilisée</label>
+          <select id="cfg-voice_id">
+            <option value="default">Voix par défaut (FR)</option>
+            <option value="charlotte">Charlotte — féminine, chaleureuse</option>
+            <option value="antoine">Antoine — masculine, professionnelle</option>
+          </select>
+        </div>
+        <div>
+          <label>Langues supportées</label>
+          <input type="text" id="cfg-languages" placeholder="fr,de,en,it">
+        </div>
+        <div>
+          <label>Numéro de transfert (humain)</label>
+          <input type="tel" id="cfg-forward_to_human" placeholder="+41 79 ...">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Horaires</h2>
+      <div class="grid grid-2">
+        <div>
+          <label>Heures d'ouverture (texte libre)</label>
+          <input type="text" id="cfg-hours_open" placeholder="lundi-samedi 11h-23h">
+        </div>
+        <div>
+          <label>Jours fermés</label>
+          <input type="text" id="cfg-hours_closed" placeholder="dimanche">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CAPACITÉS ═══ -->
+  <div id="tab-capabilities" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>Ce que l'agent peut faire</h2>
+      <div class="toggle">
+        <input type="checkbox" id="cfg-can_take_reservations">
+        <label for="cfg-can_take_reservations">📅 Prendre des réservations de table</label>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="cfg-can_take_orders">
+        <label for="cfg-can_take_orders">🥡 Prendre des commandes à emporter</label>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="cfg-can_charge_card">
+        <label for="cfg-can_charge_card">💳 Envoyer un lien de paiement Stripe par SMS</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Message de fallback</h2>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Si l'agent ne sait pas répondre, il dit :</p>
+      <textarea id="cfg-fallback_message" rows="3"></textarea>
+    </div>
+  </div>
+
+  <!-- ═══ SCRIPTS ═══ -->
+  <div id="tab-scripts" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>Salutations d'accueil</h2>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px"><code>{restaurant}</code> sera remplacé par le nom de ton restaurant.</p>
+      <div style="margin-bottom:12px">
+        <label>🇫🇷 Français</label>
+        <textarea id="cfg-greeting_fr" rows="2"></textarea>
+      </div>
+      <div style="margin-bottom:12px">
+        <label>🇩🇪 Deutsch</label>
+        <textarea id="cfg-greeting_de" rows="2"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RGPD ═══ -->
+  <div id="tab-legal" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>Enregistrement et consentement</h2>
+      <div class="toggle">
+        <input type="checkbox" id="cfg-record_calls">
+        <label for="cfg-record_calls">🎙️ Enregistrer les appels (pour qualité + entraînement)</label>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-top:8px">Si activé, le consentement explicite ci-dessous est joué au début de chaque appel (obligatoire RGPD/nLPD) :</p>
+      <textarea id="cfg-consent_recording_fr" rows="3" style="margin-top:8px"></textarea>
+    </div>
+  </div>
+
+  <div class="save-bar">
+    <button class="btn btn-secondary" onclick="loadConfig()">↻ Annuler les modifs</button>
+    <button class="btn btn-primary" onclick="saveConfig()">💾 Enregistrer</button>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = location.host.startsWith('staging.')
+  ? 'https://script.google.com/macros/s/AKfycbze4eDyCGsVo_kO3C8pkordsJ9kvPpHJaqTJH7VwIrDbGr3i9dSSmL1i5oklbo7yzO5/exec'
+  : 'https://script.google.com/macros/s/AKfycbwXXS_hqdG6BNdl70EnJw844IhmyKzWMhKbRF496MD6RvpHPk_oG8oxsX8bktehVRzTOA/exec';
+
+const urlParams = new URLSearchParams(window.location.search);
+const CLIENT_TOKEN = urlParams.get('id');
+if (!CLIENT_TOKEN) { document.body.innerHTML = '<div style="padding:2rem;color:red;text-align:center">Token client manquant.</div>'; }
+
+document.getElementById('link-dashboard').href = `/dashboard.html?id=${CLIENT_TOKEN}`;
+
+const KEYS = ['voice_provider','voice_id','languages','hours_open','hours_closed','forward_to_human',
+  'can_take_reservations','can_take_orders','can_charge_card','fallback_message',
+  'greeting_fr','greeting_de','record_calls','consent_recording_fr'];
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = (c.id === 'tab-' + name) ? 'block' : 'none');
+}
+
+async function loadConfig() {
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=getAgentConfig&id=${encodeURIComponent(CLIENT_TOKEN)}`);
+    const d = await r.json();
+    if (!d.ok) return alert('Erreur : ' + (d.error || 'inconnue'));
+    const cfg = d.config || {};
+    KEYS.forEach(k => {
+      const el = document.getElementById('cfg-' + k);
+      if (!el) return;
+      if (el.type === 'checkbox') {
+        el.checked = (cfg[k] === 'true' || cfg[k] === true);
+      } else {
+        el.value = cfg[k] || '';
+      }
+    });
+  } catch (e) { alert('Erreur réseau : ' + e.message); }
+}
+
+async function saveConfig() {
+  const updates = {};
+  KEYS.forEach(k => {
+    const el = document.getElementById('cfg-' + k);
+    if (!el) return;
+    updates[k] = el.type === 'checkbox' ? String(el.checked) : el.value;
+  });
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=updateAgentConfig`, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ id: CLIENT_TOKEN, config: updates })
+    });
+    const d = await r.json();
+    if (d.ok) alert(`✅ ${d.updated} paramètres mis à jour.`);
+    else alert('❌ ' + (d.error || 'Erreur'));
+  } catch (e) { alert('Erreur : ' + e.message); }
+}
+
+loadConfig();
+</script>
+</body>
+</html>
