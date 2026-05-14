@@ -763,6 +763,43 @@
 <div class="bg-glow bg-glow-1"></div>
 <div class="bg-glow bg-glow-2"></div>
 
+<!-- ═══ BANNIÈRE BIENVENUE POST-INSCRIPTION ═══ -->
+<div id="welcomeAddonsBanner" style="display:none;position:sticky;top:0;z-index:50;padding:14px 20px;background:linear-gradient(135deg,#7c3aed,#00E5FF);border-bottom:2px solid rgba(0,0,0,.3);box-shadow:0 4px 20px rgba(0,229,255,.3)">
+  <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="font-size:24px">🎉</div>
+    <div style="flex:1;min-width:200px;color:white">
+      <div style="font-weight:700;font-size:15px">Bienvenue ! Personnalise ton CHR 360°</div>
+      <div style="font-size:12.5px;opacity:.9">Active les modules IA dont tu as besoin — désactivables à tout moment, aucun prélèvement pendant les 14 jours d'essai.</div>
+    </div>
+    <button onclick="scrollToModules()" style="padding:10px 20px;background:white;color:#7c3aed;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">Choisir mes modules →</button>
+    <button onclick="dismissWelcomeBanner()" style="padding:8px 12px;background:rgba(255,255,255,.15);color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer">Plus tard</button>
+  </div>
+</div>
+
+<script>
+// Affiche la bannière si just_paid=1 OU si le client n'a aucun add-on actif
+function scrollToModules() {
+  const el = document.querySelector('[id*="my-modules"]') || document.querySelector('.section-label');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  dismissWelcomeBanner();
+}
+function dismissWelcomeBanner() {
+  const b = document.getElementById('welcomeAddonsBanner');
+  if (b) b.style.display = 'none';
+  try { localStorage.setItem('chr360_welcome_dismissed', '1'); } catch(e){}
+}
+(function showBannerIfFirstVisit() {
+  const params = new URLSearchParams(location.search);
+  const justPaid = params.get('just_paid') === '1';
+  let dismissed = false;
+  try { dismissed = localStorage.getItem('chr360_welcome_dismissed') === '1'; } catch(e){}
+  if (justPaid && !dismissed) {
+    const b = document.getElementById('welcomeAddonsBanner');
+    if (b) b.style.display = 'block';
+  }
+})();
+</script>
+
 <div class="app">
 
   <!-- ═══ HEADER ═══ -->
