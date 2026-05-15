@@ -1095,26 +1095,43 @@ function dismissWelcomeBanner() {
     <div class="card" id="personnel-card" style="padding:20px">
       <div id="personnel-loading" style="text-align:center;padding:20px;color:#6b7280;font-size:13px">⏳ Chargement…</div>
       <div id="personnel-content" style="display:none">
-        <div style="display:flex;flex-wrap:wrap;gap:24px;margin-bottom:8px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:14px">
           <div>
             <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Employés actifs</div>
             <div style="font-size:22px;font-weight:600" id="pers-stat-actifs">—</div>
           </div>
           <div>
-            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Masse salariale (mois)</div>
-            <div style="font-size:22px;font-weight:600" id="pers-stat-masse">—</div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Coût réel du mois</div>
+            <div style="font-size:22px;font-weight:600;color:#10b981" id="pers-stat-cout-reel">— CHF</div>
+            <div style="font-size:10px;color:#6b7280;margin-top:2px" id="pers-stat-cout-reel-sub">(pointage)</div>
           </div>
           <div>
-            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Coût horaire moyen</div>
-            <div style="font-size:22px;font-weight:600" id="pers-stat-cout-h">—</div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Masse salariale contrats</div>
+            <div style="font-size:22px;font-weight:600" id="pers-stat-masse">—</div>
+            <div style="font-size:10px;color:#6b7280;margin-top:2px">(estimation)</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Heures réelles / planifiées</div>
+            <div style="font-size:22px;font-weight:600" id="pers-stat-heures">—</div>
+            <div style="font-size:10px;color:#6b7280;margin-top:2px" id="pers-stat-heures-ratio">—</div>
           </div>
           <div>
             <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Facturation Stripe</div>
             <div style="font-size:22px;font-weight:600;color:#A78BFA" id="pers-stat-billing">— CHF</div>
+            <div style="font-size:10px;color:#6b7280;margin-top:2px">(19 CHF × employé)</div>
           </div>
         </div>
+
+        <!-- Mini chart 14 derniers jours -->
+        <div id="pers-chart-wrap" style="margin-top:10px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);display:none">
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Coût journalier — 14 derniers jours</div>
+          <div style="overflow-x:auto">
+            <svg id="pers-chart" width="100%" height="80" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+
         <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;color:#6b7280">
-          Stripe : 19 CHF/mois × employés actifs. Recalcul automatique le 1er de chaque mois à 02:30 CET.
+          Coût réel basé sur les pointages effectifs (cron 04h00 CET). Stripe facturé le 1er du mois à 02:30 CET.
         </div>
       </div>
       <div id="personnel-empty" style="display:none;text-align:center;padding:30px 10px;color:#6b7280">
@@ -3597,23 +3614,78 @@ async function loadPersonnel() {
     if (empty)   empty.style.display = 'none';
     if (content) content.style.display = 'block';
 
-    // Calcul masse salariale mensuelle estimée
+    // Calcul masse salariale mensuelle estimée (contrats)
     let masse = 0;
-    let cumulCoutH = 0;
     employes.forEach(e => {
       const sal = parseFloat(e.salaire_brut_mensuel) || 0;
       const charges = parseFloat(e.charges_pct) || 16;
       masse += sal * (1 + charges/100);
-      const heures = parseFloat(e.heures_contractuelles) || 173;
-      cumulCoutH += (sal * (1 + charges/100)) / heures;
     });
-    const coutHMoy = nb > 0 ? (cumulCoutH / nb) : 0;
     const billing = qty * 19;
 
     document.getElementById('pers-stat-actifs').textContent  = nb;
-    document.getElementById('pers-stat-masse').textContent   = masse.toFixed(0) + ' CHF';
-    document.getElementById('pers-stat-cout-h').textContent  = coutHMoy.toFixed(2) + ' CHF';
+    document.getElementById('pers-stat-masse').textContent   = Math.round(masse).toLocaleString('fr-CH') + ' CHF';
     document.getElementById('pers-stat-billing').textContent = billing + ' CHF';
+
+    // KPI mois (coûts réels via pointages)
+    try {
+      const rk = await fetch(`${APPS_SCRIPT_URL}?action=personnelKpiMonth&id=${encodeURIComponent(CLIENT_TOKEN)}`);
+      const k = await rk.json();
+      if (k.ok && !k.empty) {
+        document.getElementById('pers-stat-cout-reel').textContent = Math.round(k.total_cout).toLocaleString('fr-CH') + ' CHF';
+        document.getElementById('pers-stat-cout-reel-sub').textContent = `${k.nb_jours} jour${k.nb_jours>1?'s':''} pointés`;
+        document.getElementById('pers-stat-heures').textContent = k.total_heures.toFixed(1) + ' / ' + k.total_heures_planifiees.toFixed(1) + ' h';
+        if (k.ratio_heures_realisees_pct !== null) {
+          const r = k.ratio_heures_realisees_pct;
+          const color = (r >= 95 && r <= 105) ? '#10b981' : (r > 105 ? '#f59e0b' : '#f87171');
+          document.getElementById('pers-stat-heures-ratio').innerHTML = `<span style="color:${color};font-weight:600">${r.toFixed(0)}%</span> du planifié`;
+        }
+      } else {
+        document.getElementById('pers-stat-cout-reel').textContent = '0 CHF';
+        document.getElementById('pers-stat-cout-reel-sub').textContent = 'Aucun pointage ce mois';
+        document.getElementById('pers-stat-heures').textContent = '0 / 0 h';
+        document.getElementById('pers-stat-heures-ratio').textContent = 'En attente données';
+      }
+    } catch(e) { console.warn('[personnel] kpi failed', e); }
+
+    // Mini chart 14 derniers jours
+    try {
+      const today = new Date();
+      const ago = new Date(); ago.setDate(today.getDate() - 13);
+      const fmt = (d) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      const rc = await fetch(`${APPS_SCRIPT_URL}?action=listCoutsSalariaux&id=${encodeURIComponent(CLIENT_TOKEN)}&date_debut=${fmt(ago)}&date_fin=${fmt(today)}`);
+      const c = await rc.json();
+      const jours = (c.jours || []);
+      if (jours.length > 0) {
+        document.getElementById('pers-chart-wrap').style.display = 'block';
+        const svg = document.getElementById('pers-chart');
+        // Construit série complète 14 jours (avec 0 si pas de pointage)
+        const map = {}; jours.forEach(j => { map[j.date] = j.cout_total_chf || 0; });
+        const series = [];
+        for (let i = 0; i < 14; i++) {
+          const d = new Date(ago); d.setDate(ago.getDate() + i);
+          const ds = fmt(d);
+          series.push({ date: ds, cout: parseFloat(map[ds]) || 0, day: d.getDate() });
+        }
+        const maxV = Math.max(...series.map(s => s.cout), 1);
+        const W = 600, H = 80, barW = (W / series.length) - 2;
+        let html = '';
+        series.forEach((s, i) => {
+          const h = (s.cout / maxV) * (H - 20);
+          const x = i * (W / series.length);
+          const y = H - h - 14;
+          html += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="2" fill="${s.cout > 0 ? '#A78BFA' : 'rgba(167,139,250,0.15)'}">
+            <title>${s.date} — ${Math.round(s.cout)} CHF</title>
+          </rect>`;
+          if (i % 2 === 0) html += `<text x="${x + barW/2}" y="${H-2}" font-size="9" fill="#6b7280" text-anchor="middle">${s.day}</text>`;
+        });
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        svg.innerHTML = html;
+      } else {
+        document.getElementById('pers-chart-wrap').style.display = 'none';
+      }
+    } catch(e) { console.warn('[personnel] chart failed', e); }
+
   } catch(e) {
     if (loading) loading.style.display = 'none';
     console.warn('[personnel] load failed', e);

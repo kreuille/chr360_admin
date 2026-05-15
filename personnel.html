@@ -164,14 +164,74 @@
 
   <!-- ═══ ONGLET KPI ═══ -->
   <div id="tab-kpi" class="tab-content" style="display:none">
-    <div class="card">
-      <h2>Coûts salariaux — vue mensuelle</h2>
-      <div id="kpi-content" style="font-size:14px;color:var(--text-muted)">
-        Les KPIs mensuels (masse salariale, productivité, ratio salaire/CA) sont calculés automatiquement à partir des pointages.<br><br>
-        <strong>Cron quotidien</strong> : <code>computeDailyLaborCosts</code> tourne tous les jours à 04:00 CET et alimente l'onglet <code>COUTS_SALARIAUX_JOURNALIERS</code> de ta Sheet.<br><br>
-        Vue détaillée disponible dans la Sheet du restaurant (onglet <code>KPI_PERSONNEL_MENSUEL</code>).
+
+    <!-- Sélecteur mois -->
+    <div class="card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600">Mois analysé</div>
+        <div id="kpi-mois-label" style="font-size:18px;font-weight:600;margin-top:2px">—</div>
+      </div>
+      <div class="week-nav">
+        <button class="btn btn-secondary btn-sm" onclick="changeKpiMonth(-1)">← Mois préc.</button>
+        <button class="btn btn-secondary btn-sm" onclick="changeKpiMonth(1)">Mois suiv. →</button>
       </div>
     </div>
+
+    <div id="kpi-loading" style="text-align:center;color:var(--text-muted);padding:2rem">⏳ Chargement…</div>
+
+    <div id="kpi-empty" class="card" style="display:none;text-align:center;padding:2rem;color:var(--text-muted)">
+      <div style="font-size:32px;margin-bottom:8px">📊</div>
+      <div style="font-weight:600;margin-bottom:4px;color:var(--text)">Pas encore de données ce mois-ci</div>
+      <div style="font-size:13px">Les coûts salariaux sont calculés chaque jour à 04h00 CET<br>à partir des pointages de la veille.</div>
+    </div>
+
+    <div id="kpi-content-wrap" style="display:none">
+
+      <!-- KPI cards principales -->
+      <div class="grid grid-3" style="margin-bottom:1rem">
+        <div class="card" style="padding:1rem 1.25rem">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600">Masse salariale du mois</div>
+          <div id="kpi-cout-total" style="font-size:26px;font-weight:700;color:var(--text);margin-top:4px">— CHF</div>
+          <div id="kpi-delta-prev" style="font-size:12px;margin-top:6px"></div>
+        </div>
+        <div class="card" style="padding:1rem 1.25rem">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600">Heures travaillées</div>
+          <div id="kpi-heures" style="font-size:26px;font-weight:700;color:var(--text);margin-top:4px">— h</div>
+          <div id="kpi-heures-plan" style="font-size:12px;color:var(--text-muted);margin-top:6px">— h planifiées</div>
+        </div>
+        <div class="card" style="padding:1rem 1.25rem">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600">Coût horaire moyen réel</div>
+          <div id="kpi-cout-horaire" style="font-size:26px;font-weight:700;color:var(--text);margin-top:4px">— CHF/h</div>
+          <div id="kpi-ratio-realise" style="font-size:12px;color:var(--text-muted);margin-top:6px"></div>
+        </div>
+      </div>
+
+      <!-- Graphique journalier -->
+      <div class="card">
+        <h2 style="margin-bottom:0.6rem">Coût journalier <span id="kpi-nb-jours" style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:8px"></span></h2>
+        <div id="kpi-bars-wrap" style="overflow-x:auto;padding-bottom:8px">
+          <svg id="kpi-bars" width="100%" height="220" preserveAspectRatio="none"></svg>
+        </div>
+        <div id="kpi-bars-legend" style="display:flex;gap:18px;font-size:11px;color:var(--text-muted);margin-top:6px;flex-wrap:wrap">
+          <span><span style="display:inline-block;width:10px;height:10px;background:#4f46e5;border-radius:2px;margin-right:5px"></span>Coût réel</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:rgba(79,70,229,0.25);border-radius:2px;margin-right:5px"></span>Coût moyen mois</span>
+        </div>
+      </div>
+
+      <!-- Coût par poste -->
+      <div class="card">
+        <h2 style="margin-bottom:0.8rem">Répartition par poste</h2>
+        <div id="kpi-postes" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+      </div>
+
+      <!-- Top 3 jours les plus coûteux -->
+      <div class="card">
+        <h2 style="margin-bottom:0.8rem">Jours les plus coûteux du mois</h2>
+        <div id="kpi-top-jours" style="font-size:13.5px"></div>
+      </div>
+
+    </div>
+
   </div>
 
 </div>
@@ -561,6 +621,184 @@ async function deleteSlot() {
 }
 
 function escapeHtml(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ═══ KPI / COÛTS SALARIAUX ═══
+let KPI_MONTH_OFFSET = 0;  // 0 = mois courant, -1 = mois précédent…
+const POSTE_COLORS = ['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16'];
+
+function changeKpiMonth(delta) {
+  KPI_MONTH_OFFSET += delta;
+  loadKpi();
+}
+
+function getMoisStr(offset) {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + (offset || 0));
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function formatMois(mois) {
+  // "2026-05" → "Mai 2026"
+  const [y, m] = mois.split('-');
+  const noms = ['Janv.','Févr.','Mars','Avril','Mai','Juin','Juil.','Août','Sept.','Oct.','Nov.','Déc.'];
+  return noms[parseInt(m,10) - 1] + ' ' + y;
+}
+
+async function loadKpi() {
+  const loading = document.getElementById('kpi-loading');
+  const empty   = document.getElementById('kpi-empty');
+  const content = document.getElementById('kpi-content-wrap');
+  loading.style.display = 'block';
+  empty.style.display = 'none';
+  content.style.display = 'none';
+
+  const mois = getMoisStr(KPI_MONTH_OFFSET);
+  document.getElementById('kpi-mois-label').textContent = formatMois(mois);
+
+  try {
+    const r = await fetch(`${APPS_SCRIPT_URL}?action=personnelKpiMonth&id=${encodeURIComponent(CLIENT_TOKEN)}&mois=${mois}`);
+    const d = await r.json();
+    loading.style.display = 'none';
+
+    if (!d.ok) {
+      empty.style.display = 'block';
+      document.getElementById('kpi-empty').innerHTML = `<div style="color:var(--danger)">❌ ${escapeHtml(d.error || 'Erreur')}</div>`;
+      return;
+    }
+    if (d.empty || d.nb_jours === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+
+    content.style.display = 'block';
+    renderKpiStats(d);
+    renderKpiBars(d);
+    renderKpiPostes(d);
+    renderKpiTopJours(d);
+  } catch(e) {
+    loading.innerHTML = 'Erreur : ' + e.message;
+  }
+}
+
+function renderKpiStats(d) {
+  document.getElementById('kpi-cout-total').textContent  = d.total_cout.toLocaleString('fr-CH') + ' CHF';
+  document.getElementById('kpi-heures').textContent      = d.total_heures.toLocaleString('fr-CH', {maximumFractionDigits:1}) + ' h';
+  document.getElementById('kpi-heures-plan').textContent = d.total_heures_planifiees.toLocaleString('fr-CH', {maximumFractionDigits:1}) + ' h planifiées';
+  document.getElementById('kpi-cout-horaire').textContent = d.cout_horaire_moyen_reel.toLocaleString('fr-CH', {maximumFractionDigits:2}) + ' CHF/h';
+
+  // Ratio réalisation
+  const ratioEl = document.getElementById('kpi-ratio-realise');
+  if (d.ratio_heures_realisees_pct !== null) {
+    const r = d.ratio_heures_realisees_pct;
+    const color = (r >= 95 && r <= 105) ? 'var(--success)' : (r > 105 ? 'var(--warning)' : 'var(--danger)');
+    ratioEl.innerHTML = `<span style="color:${color};font-weight:600">${r.toFixed(1)}%</span> du planifié réalisé`;
+  } else {
+    ratioEl.textContent = '';
+  }
+
+  // Delta mois précédent
+  const dEl = document.getElementById('kpi-delta-prev');
+  if (d.nb_jours_prev > 0) {
+    const sign = d.delta_mois_prev_pct >= 0 ? '+' : '';
+    const color = d.delta_mois_prev_pct > 5 ? 'var(--danger)' : (d.delta_mois_prev_pct < -5 ? 'var(--success)' : 'var(--text-muted)');
+    dEl.innerHTML = `<span style="color:${color};font-weight:600">${sign}${d.delta_mois_prev_pct.toFixed(1)}%</span> vs mois précédent (coût/jour)`;
+  } else {
+    dEl.innerHTML = '<span style="color:var(--text-muted)">Pas de référence mois préc.</span>';
+  }
+
+  // Nb jours
+  document.getElementById('kpi-nb-jours').textContent = `(${d.nb_jours} jour${d.nb_jours > 1 ? 's' : ''})`;
+}
+
+function renderKpiBars(d) {
+  const svg = document.getElementById('kpi-bars');
+  if (!d.jours || d.jours.length === 0) { svg.innerHTML = ''; return; }
+  const jours = d.jours;
+  const maxCout = Math.max(...jours.map(j => j.cout), 1);
+  const avg = d.cout_moyen_journalier || 0;
+
+  // Auto-width: 32px per bar min, ou stretch
+  const barW = Math.max(28, Math.floor(720 / jours.length));
+  const gap = 4;
+  const totalW = jours.length * (barW + gap);
+  const H = 200;
+  const padTop = 12, padBottom = 26;
+  const usableH = H - padTop - padBottom;
+
+  let html = '';
+  // Ligne moyenne pointillée
+  const avgY = padTop + usableH - (avg / maxCout) * usableH;
+  html += `<line x1="0" y1="${avgY}" x2="${totalW}" y2="${avgY}" stroke="rgba(79,70,229,0.5)" stroke-dasharray="4 4" stroke-width="1"/>`;
+  html += `<text x="4" y="${avgY - 4}" font-size="9" fill="rgba(79,70,229,0.8)">moy. ${Math.round(avg)} CHF</text>`;
+
+  jours.forEach((j, i) => {
+    const h = (j.cout / maxCout) * usableH;
+    const y = padTop + usableH - h;
+    const x = i * (barW + gap);
+    const isAbove = j.cout > avg;
+    const color = isAbove ? '#4f46e5' : '#6366f1';
+    html += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="${color}" opacity="0.9">
+      <title>${j.date} — ${Math.round(j.cout)} CHF (${j.heures.toFixed(1)}h)</title>
+    </rect>`;
+    // Label jour (seulement tous les 5 si beaucoup)
+    if (jours.length <= 12 || i % Math.ceil(jours.length / 12) === 0) {
+      const day = j.date.substring(8);
+      html += `<text x="${x + barW/2}" y="${H - 8}" font-size="10" fill="#6b7280" text-anchor="middle">${day}</text>`;
+    }
+  });
+
+  svg.setAttribute('viewBox', `0 0 ${totalW} ${H}`);
+  svg.setAttribute('width', totalW);
+  svg.innerHTML = html;
+}
+
+function renderKpiPostes(d) {
+  const cont = document.getElementById('kpi-postes');
+  const postes = Object.keys(d.cout_par_poste || {}).filter(k => d.cout_par_poste[k] > 0);
+  if (postes.length === 0) {
+    cont.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Aucune répartition disponible — vérifiez les postes des employés.</div>';
+    return;
+  }
+  const total = postes.reduce((s, p) => s + d.cout_par_poste[p], 0);
+  postes.sort((a, b) => d.cout_par_poste[b] - d.cout_par_poste[a]);
+
+  cont.innerHTML = postes.map((p, i) => {
+    const val = d.cout_par_poste[p];
+    const pct = (val / total) * 100;
+    const color = POSTE_COLORS[i % POSTE_COLORS.length];
+    return `<div style="flex:1;min-width:160px;padding:12px 14px;background:rgba(79,70,229,0.04);border:1px solid var(--border);border-radius:8px;border-left:3px solid ${color}">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600">${escapeHtml(p)}</div>
+      <div style="font-size:18px;font-weight:700;margin-top:3px">${Math.round(val).toLocaleString('fr-CH')} CHF</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${pct.toFixed(1)}% du total</div>
+    </div>`;
+  }).join('');
+}
+
+function renderKpiTopJours(d) {
+  const cont = document.getElementById('kpi-top-jours');
+  if (!d.jours || d.jours.length === 0) { cont.innerHTML = ''; return; }
+  const top = [...d.jours].sort((a, b) => b.cout - a.cout).slice(0, 3);
+  cont.innerHTML = top.map((j, i) => {
+    const medal = ['🥇','🥈','🥉'][i];
+    const dt = new Date(j.date);
+    const label = dt.toLocaleDateString('fr-CH', { weekday:'long', day:'2-digit', month:'long' });
+    return `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div><span style="font-size:18px;margin-right:8px">${medal}</span><strong>${escapeHtml(label)}</strong></div>
+      <div style="text-align:right">
+        <div style="font-weight:600">${Math.round(j.cout).toLocaleString('fr-CH')} CHF</div>
+        <div style="font-size:11px;color:var(--text-muted)">${j.heures.toFixed(1)} h travaillées</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Override switchTab pour charger KPI à la demande
+const _origSwitchTab = switchTab;
+switchTab = function(name) {
+  _origSwitchTab(name);
+  if (name === 'kpi') loadKpi();
+};
 
 // Bootstrap
 loadEmployes();
