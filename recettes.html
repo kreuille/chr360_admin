@@ -172,6 +172,84 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+  /* Polish M10 */
+  .recette-stats-banner {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+  .recette-stats-banner > div {
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .recette-stats-banner .stat-mini-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-weight: 600;
+  }
+  .recette-stats-banner .stat-mini-value {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+  .recette-filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+  .filter-chip {
+    padding: 5px 11px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .filter-chip:hover { background: var(--bg); }
+  .filter-chip.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .filter-chip .chip-count {
+    opacity: 0.7;
+    margin-left: 5px;
+    font-weight: 400;
+  }
+  .sort-select {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    background: white;
+    margin-left: auto;
+  }
+  .marge-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  .marge-badge.star { background: rgba(16,185,129,0.12); color: var(--success); }
+  .marge-badge.bon { background: rgba(52,211,153,0.12); color: #059669; }
+  .marge-badge.puzzle { background: rgba(245,158,11,0.12); color: var(--warning); }
+  .marge-badge.dog { background: rgba(239,68,68,0.12); color: var(--danger); }
+  .recette-list li.deficit {
+    border-left: 3px solid var(--danger);
+    background: rgba(239,68,68,0.03);
+  }
 </style>
 </head>
 <body>
@@ -295,6 +373,30 @@
 <!-- Carte : liste recettes -->
 <section class="card">
   <h2>📋 Mes recettes <span id="recettes-count" style="font-weight:normal; color:var(--text-muted); font-size:0.85rem;"></span></h2>
+
+  <!-- Stats banner -->
+  <div class="recette-stats-banner" id="recette-stats" style="display:none">
+    <div>
+      <div class="stat-mini-label">Marge moyenne</div>
+      <div class="stat-mini-value" id="stat-marge-moy">—</div>
+    </div>
+    <div>
+      <div class="stat-mini-label">Marge médiane</div>
+      <div class="stat-mini-value" id="stat-marge-med">—</div>
+    </div>
+    <div style="cursor:pointer" title="Plats marge ≥ 65%" onclick="setRecetteFilter('star')">
+      <div class="stat-mini-label" style="color:var(--success)">⭐ Stars</div>
+      <div class="stat-mini-value" style="color:var(--success)" id="stat-stars">—</div>
+    </div>
+    <div style="cursor:pointer" title="Plats marge < 30%" onclick="setRecetteFilter('dog')">
+      <div class="stat-mini-label" style="color:var(--warning)">⚠ À risque</div>
+      <div class="stat-mini-value" style="color:var(--warning)" id="stat-risque">—</div>
+    </div>
+  </div>
+
+  <!-- Filtres + tri -->
+  <div class="recette-filters" id="recette-filters" style="display:none"></div>
+
   <ul class="recette-list" id="recettes-list">
     <li class="empty-state">
       <div class="spinner"></div> Chargement…
@@ -552,6 +654,135 @@ function loadIntoForm(recette) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ─── State filtres/tri recettes ─────────────────────────────
+let ALL_RECETTES = [];
+let RECETTE_FILTER = 'all';   // all | star | bon | puzzle | dog | cat:<Catégorie>
+let RECETTE_SORT = 'marge_desc';  // marge_desc | marge_asc | nom | prix_desc | categorie
+
+function margeBadge(m) {
+  if (m >= 65) return { cls: 'star', label: '⭐ Star' };
+  if (m >= 50) return { cls: 'bon', label: '🟢 Bon' };
+  if (m >= 30) return { cls: 'puzzle', label: '🟡 Puzzle' };
+  return { cls: 'dog', label: '🔴 Dog' };
+}
+
+function renderRecetteStats(recettes) {
+  const marges = recettes.map(r => parseFloat(r.marge_pct) || 0).filter(m => !isNaN(m));
+  if (marges.length === 0) {
+    document.getElementById('recette-stats').style.display = 'none';
+    return;
+  }
+  document.getElementById('recette-stats').style.display = 'grid';
+  const moy = marges.reduce((s,m) => s+m, 0) / marges.length;
+  const sortedM = marges.slice().sort((a,b) => a-b);
+  const med = sortedM[Math.floor(sortedM.length / 2)];
+  const stars = recettes.filter(r => (parseFloat(r.marge_pct) || 0) >= 65).length;
+  const risque = recettes.filter(r => (parseFloat(r.marge_pct) || 0) < 30).length;
+  document.getElementById('stat-marge-moy').textContent = moy.toFixed(1) + '%';
+  document.getElementById('stat-marge-med').textContent = med.toFixed(1) + '%';
+  document.getElementById('stat-stars').textContent = stars;
+  document.getElementById('stat-risque').textContent = risque;
+}
+
+function renderRecetteFilters(recettes) {
+  const filtersEl = document.getElementById('recette-filters');
+  if (recettes.length === 0) { filtersEl.style.display = 'none'; return; }
+  filtersEl.style.display = 'flex';
+
+  const cats = Array.from(new Set(recettes.map(r => r.categorie || 'Autre')));
+  const chips = [
+    { id: 'all', label: 'Toutes', count: recettes.length },
+    { id: 'star', label: '⭐ Stars', count: recettes.filter(r => (parseFloat(r.marge_pct)||0) >= 65).length },
+    { id: 'bon', label: '🟢 Bons', count: recettes.filter(r => { const m = parseFloat(r.marge_pct)||0; return m >= 50 && m < 65; }).length },
+    { id: 'puzzle', label: '🟡 Puzzle', count: recettes.filter(r => { const m = parseFloat(r.marge_pct)||0; return m >= 30 && m < 50; }).length },
+    { id: 'dog', label: '🔴 À risque', count: recettes.filter(r => (parseFloat(r.marge_pct)||0) < 30).length }
+  ].filter(c => c.id === 'all' || c.count > 0);
+
+  cats.forEach(cat => chips.push({ id: 'cat:' + cat, label: cat, count: recettes.filter(r => (r.categorie || 'Autre') === cat).length }));
+
+  let html = chips.map(ch => {
+    const active = RECETTE_FILTER === ch.id ? 'active' : '';
+    return `<button class="filter-chip ${active}" onclick="setRecetteFilter('${ch.id.replace(/'/g,"&#39;")}')">${ch.label}<span class="chip-count">${ch.count}</span></button>`;
+  }).join('');
+  html += `<select class="sort-select" id="recette-sort-select" onchange="setRecetteSort(this.value)">
+    <option value="marge_desc">Marge ↓</option>
+    <option value="marge_asc">Marge ↑</option>
+    <option value="nom">Nom A-Z</option>
+    <option value="prix_desc">Prix ↓</option>
+    <option value="categorie">Catégorie</option>
+  </select>`;
+  filtersEl.innerHTML = html;
+  const sel = document.getElementById('recette-sort-select');
+  if (sel) sel.value = RECETTE_SORT;
+}
+
+function setRecetteFilter(id) {
+  RECETTE_FILTER = id;
+  renderRecetteList();
+  renderRecetteFilters(ALL_RECETTES);
+}
+
+function setRecetteSort(sort) {
+  RECETTE_SORT = sort;
+  renderRecetteList();
+}
+
+function filterRecettes(recettes) {
+  if (RECETTE_FILTER === 'all') return recettes;
+  if (RECETTE_FILTER === 'star')   return recettes.filter(r => (parseFloat(r.marge_pct)||0) >= 65);
+  if (RECETTE_FILTER === 'bon')    return recettes.filter(r => { const m = parseFloat(r.marge_pct)||0; return m >= 50 && m < 65; });
+  if (RECETTE_FILTER === 'puzzle') return recettes.filter(r => { const m = parseFloat(r.marge_pct)||0; return m >= 30 && m < 50; });
+  if (RECETTE_FILTER === 'dog')    return recettes.filter(r => (parseFloat(r.marge_pct)||0) < 30);
+  if (RECETTE_FILTER.startsWith('cat:')) {
+    const cat = RECETTE_FILTER.slice(4);
+    return recettes.filter(r => (r.categorie || 'Autre') === cat);
+  }
+  return recettes;
+}
+
+function sortRecettes(recettes) {
+  const copy = recettes.slice();
+  switch (RECETTE_SORT) {
+    case 'marge_desc': return copy.sort((a,b) => (parseFloat(b.marge_pct)||0) - (parseFloat(a.marge_pct)||0));
+    case 'marge_asc':  return copy.sort((a,b) => (parseFloat(a.marge_pct)||0) - (parseFloat(b.marge_pct)||0));
+    case 'nom':        return copy.sort((a,b) => String(a.nom_plat||'').localeCompare(String(b.nom_plat||'')));
+    case 'prix_desc':  return copy.sort((a,b) => (parseFloat(b.prix_vente_ttc)||0) - (parseFloat(a.prix_vente_ttc)||0));
+    case 'categorie':  return copy.sort((a,b) => String(a.categorie||'Autre').localeCompare(String(b.categorie||'Autre')) || (parseFloat(b.marge_pct)||0) - (parseFloat(a.marge_pct)||0));
+    default: return copy;
+  }
+}
+
+function renderRecetteList() {
+  const ul = document.getElementById('recettes-list');
+  const filtered = sortRecettes(filterRecettes(ALL_RECETTES));
+  if (filtered.length === 0) {
+    ul.innerHTML = '<li class="empty-state">Aucune recette dans cette catégorie.</li>';
+    return;
+  }
+  ul.innerHTML = '';
+  filtered.forEach(rec => {
+    const li = document.createElement('li');
+    const marge = parseFloat(rec.marge_pct) || 0;
+    const margeCHF = parseFloat(rec.marge_chf) || 0;
+    const badge = margeBadge(marge);
+    if (margeCHF < 0) li.className = 'deficit';
+    const margeClass = marge >= 50 ? 'marge-positive' : (marge < 30 ? 'marge-negative' : '');
+    li.innerHTML = `
+      <div style="flex:1">
+        <div class="recette-nom">${escapeHtmlR(rec.nom_plat || '—')} <span class="marge-badge ${badge.cls}">${badge.label}</span></div>
+        <div class="recette-meta">${escapeHtmlR(rec.categorie || 'Plat')} · ${rec.nb_portions || 1} portion${rec.nb_portions > 1 ? 's' : ''} · Prix ${parseFloat(rec.prix_vente_ttc || 0).toFixed(2)} CHF · Coût ${parseFloat(rec.cout_portion_chf || 0).toFixed(2)} CHF · Marge ${margeCHF.toFixed(2)} CHF</div>
+      </div>
+      <div class="${margeClass}" style="font-size:18px">${marge.toFixed(1)}%</div>
+    `;
+    li.addEventListener('click', () => loadIntoForm(rec));
+    ul.appendChild(li);
+  });
+}
+
+function escapeHtmlR(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 // ─── Chargement des recettes ────────────────────────────────
 async function loadRecettes() {
   const ul = document.getElementById('recettes-list');
@@ -560,29 +791,19 @@ async function loadRecettes() {
     const r = await jsonpCall({ action: 'listRecettes', id: TOKEN });
     if (r.error) throw new Error(r.error);
     const recettes = (r.recettes || []).filter(rec => rec.actif !== false && rec.actif !== 'false');
+    ALL_RECETTES = recettes;
     document.getElementById('recettes-count').textContent = '(' + recettes.length + ')';
     if (recettes.length === 0) {
       ul.innerHTML = '<li class="empty-state">Aucune recette pour l\'instant.<br>Saisis ta première au-dessus, ou utilise « ✨ Suggestion IA ».</li>';
+      document.getElementById('recette-stats').style.display = 'none';
+      document.getElementById('recette-filters').style.display = 'none';
       return;
     }
-    recettes.sort((a, b) => (parseFloat(b.marge_pct) || 0) - (parseFloat(a.marge_pct) || 0));
-    ul.innerHTML = '';
-    recettes.forEach(rec => {
-      const li = document.createElement('li');
-      const marge = parseFloat(rec.marge_pct) || 0;
-      const margeClass = marge >= 50 ? 'marge-positive' : (marge < 30 ? 'marge-negative' : '');
-      li.innerHTML = `
-        <div>
-          <div class="recette-nom">${rec.nom_plat}</div>
-          <div class="recette-meta">${rec.categorie || 'Plat'} · ${rec.nb_portions || 1} portion${rec.nb_portions > 1 ? 's' : ''} · Prix ${parseFloat(rec.prix_vente_ttc || 0).toFixed(2)} CHF · Coût ${parseFloat(rec.cout_portion_chf || 0).toFixed(2)} CHF</div>
-        </div>
-        <div class="${margeClass}">${marge.toFixed(1)}%</div>
-      `;
-      li.addEventListener('click', () => loadIntoForm(rec));
-      ul.appendChild(li);
-    });
+    renderRecetteStats(recettes);
+    renderRecetteFilters(recettes);
+    renderRecetteList();
+
     // Cache catalogue depuis les recettes pour preview
-    // Inférence unite_ref (miroir backend unitRefFromIA) : g→kg, ml→L, sinon tel quel
     function inferUniteRef(u) {
       const x = String(u || '').toLowerCase();
       if (x === 'g') return 'kg';

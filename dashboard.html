@@ -1157,7 +1157,7 @@ function dismissWelcomeBanner() {
     </div>
     <div id="foodcost-content" style="display:none">
       <!-- Stats globales -->
-      <div style="display:flex;flex-wrap:wrap;gap:20px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06)">
         <div>
           <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Recettes actives</div>
           <div style="font-size:20px;font-weight:600" id="fc-stat-nb">—</div>
@@ -1165,16 +1165,34 @@ function dismissWelcomeBanner() {
         <div>
           <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Marge moyenne</div>
           <div style="font-size:20px;font-weight:600" id="fc-stat-marge-moy">—</div>
+          <div style="font-size:10px;color:#6b7280;margin-top:2px" id="fc-stat-marge-med">médiane —</div>
         </div>
-        <div>
-          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Marge médiane</div>
-          <div style="font-size:20px;font-weight:600" id="fc-stat-marge-med">—</div>
+        <div style="cursor:pointer" onclick="filterFoodCostBy('excellent')" title="Plats marge ≥ 65%">
+          <div style="font-size:11px;color:#10b981;text-transform:uppercase;letter-spacing:.05em;font-weight:600">⭐ Excellents</div>
+          <div style="font-size:20px;font-weight:600;color:#10b981" id="fc-stat-excellent">—</div>
+          <div style="font-size:10px;color:#6b7280;margin-top:2px">marge ≥ 65%</div>
+        </div>
+        <div style="cursor:pointer" onclick="filterFoodCostBy('risque')" title="Plats marge < 30%">
+          <div style="font-size:11px;color:#f59e0b;text-transform:uppercase;letter-spacing:.05em;font-weight:600">⚠ À risque</div>
+          <div style="font-size:20px;font-weight:600;color:#f59e0b" id="fc-stat-risque">—</div>
+          <div style="font-size:10px;color:#6b7280;margin-top:2px">marge &lt; 30%</div>
+        </div>
+        <div id="fc-deficitaires-wrap" style="display:none">
+          <div style="font-size:11px;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;font-weight:600">🚨 Déficitaires</div>
+          <div style="font-size:20px;font-weight:600;color:#ef4444" id="fc-stat-deficitaires">—</div>
+          <div style="font-size:10px;color:#6b7280;margin-top:2px">marge CHF &lt; 0</div>
         </div>
         <div id="fc-matching-en-attente-wrap" style="display:none;cursor:pointer" onclick="openMatchingModal()" title="Cliquer pour valider">
           <div style="font-size:11px;color:#f59e0b;text-transform:uppercase;letter-spacing:.05em;font-weight:600">⚠ Matching en attente →</div>
           <div style="font-size:20px;font-weight:600;color:#f59e0b" id="fc-stat-matching">—</div>
         </div>
       </div>
+
+      <!-- Toggle Top / Risque -->
+      <div id="fc-toggle-view" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap"></div>
+
+      <!-- Titre tableau dynamique -->
+      <div id="fc-table-title" style="font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Top 10 plats par marge</div>
       <!-- Tableau top 10 -->
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
@@ -3096,8 +3114,83 @@ async function toggleAddon(addonId, action, addonName) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// MODULE 10 FOOD COST — Section Top 10 plats par marge
+// MODULE 10 FOOD COST — Section plats par marge + filtres
 // ═══════════════════════════════════════════════════════════
+let FOODCOST_DATA = null;   // dernier dataset chargé
+let FOODCOST_VIEW = 'top';  // 'top' | 'risque'
+
+function fcMargeColor(m) {
+  if (m >= 65) return '#10b981';      // Excellent (vert vif)
+  if (m >= 50) return '#34d399';      // Bon (vert)
+  if (m >= 30) return '#f59e0b';      // Surveillance (orange)
+  return '#ef4444';                    // Risque (rouge)
+}
+
+function fcMargeBadge(m) {
+  if (m >= 65) return { label: '⭐ Star', color: '#10b981' };
+  if (m >= 50) return { label: '🟢 Bon', color: '#34d399' };
+  if (m >= 30) return { label: '🟡 Puzzle', color: '#f59e0b' };
+  return { label: '🔴 Dog', color: '#ef4444' };
+}
+
+function fcRenderRow(rec) {
+  const marge   = parseFloat(rec.marge_pct) || 0;
+  const margeCHF = parseFloat(rec.marge_chf) || 0;
+  const prix    = parseFloat(rec.prix_vente_ttc) || 0;
+  const cout    = parseFloat(rec.cout_portion_chf) || 0;
+  const badge   = fcMargeBadge(marge);
+  const margeCol = fcMargeColor(marge);
+  const rowBg = (margeCHF < 0) ? 'background:rgba(239,68,68,0.06)' : '';
+  return `
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);${rowBg}">
+      <td style="padding:10px 4px;font-weight:500">${escapeHtml(rec.nom_plat || '—')}<div style="font-size:11px;color:#6b7280;margin-top:2px">${escapeHtml(rec.categorie || '')}</div></td>
+      <td style="text-align:right;padding:10px 4px">${prix.toFixed(2)}</td>
+      <td style="text-align:right;padding:10px 4px;color:#9ca3af">${cout.toFixed(2)}</td>
+      <td style="text-align:right;padding:10px 4px;font-weight:600;color:${margeCol}">${marge.toFixed(1)}%</td>
+      <td style="text-align:right;padding:10px 4px;color:${margeCHF<0?'#ef4444':'inherit'};font-weight:${margeCHF<0?'600':'normal'}">${margeCHF.toFixed(2)}</td>
+      <td style="text-align:center;padding:10px 4px;color:${badge.color};font-weight:500;font-size:11px">${badge.label}</td>
+    </tr>
+  `;
+}
+
+function renderFoodCostView() {
+  if (!FOODCOST_DATA) return;
+  const tbody = document.getElementById('foodcost-tbody');
+  const titleEl = document.getElementById('fc-table-title');
+  const toggleEl = document.getElementById('fc-toggle-view');
+
+  const top = FOODCOST_DATA.top10_par_marge || [];
+  const bottom = FOODCOST_DATA.bottom5_par_marge || [];
+
+  // Toggle chips
+  const chips = [
+    { id:'top', label:'Top 10 marge', count: top.length, color:'#10b981' }
+  ];
+  if (bottom.length > 0) chips.push({ id:'risque', label:'5 plus faibles marges', count: bottom.length, color:'#f59e0b' });
+
+  if (toggleEl) {
+    toggleEl.innerHTML = chips.map(ch => {
+      const active = FOODCOST_VIEW === ch.id;
+      return `<button onclick="setFoodCostView('${ch.id}')" style="padding:5px 11px;border-radius:14px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid ${active?ch.color+'66':'rgba(255,255,255,0.06)'};background:${active?ch.color+'22':'rgba(255,255,255,0.02)'};color:${active?ch.color:'#9CA3AF'}">${escapeHtml(ch.label)}<span style="opacity:.6;margin-left:5px">${ch.count}</span></button>`;
+    }).join('');
+  }
+
+  const rows = FOODCOST_VIEW === 'risque' ? bottom : top;
+  if (titleEl) titleEl.textContent = FOODCOST_VIEW === 'risque' ? 'Plats avec les marges les plus faibles' : 'Top 10 plats par marge';
+  if (tbody) tbody.innerHTML = rows.map(fcRenderRow).join('');
+}
+
+function setFoodCostView(view) {
+  FOODCOST_VIEW = view;
+  renderFoodCostView();
+}
+
+function filterFoodCostBy(filter) {
+  // Raccourci depuis stat cards : passe sur la vue qui matche
+  if (filter === 'risque') setFoodCostView('risque');
+  else if (filter === 'excellent') setFoodCostView('top');
+}
+
 async function loadFoodCost() {
   // Update lien "Gérer mes recettes" avec le token
   const linkBase = '/recettes.html?id=' + CLIENT_TOKEN;
@@ -3107,7 +3200,6 @@ async function loadFoodCost() {
   const loading = document.getElementById('foodcost-loading');
   const empty   = document.getElementById('foodcost-empty');
   const content = document.getElementById('foodcost-content');
-  const tbody   = document.getElementById('foodcost-tbody');
 
   try {
     const url = APPS_SCRIPT_URL + '?action=foodCostDashboard&id=' + encodeURIComponent(CLIENT_TOKEN);
@@ -3115,7 +3207,6 @@ async function loadFoodCost() {
     const data = await r.json();
     if (loading) loading.style.display = 'none';
     if (data.error) {
-      // Best-effort : si erreur, cache la section silencieusement
       if (empty)   empty.style.display = 'none';
       if (content) content.style.display = 'none';
       console.warn('[foodcost] Erreur API:', data.error);
@@ -3129,11 +3220,21 @@ async function loadFoodCost() {
       return;
     }
 
-    // Affichage
+    FOODCOST_DATA = data;
+
+    // Affichage stats
     if (content) content.style.display = 'block';
     document.getElementById('fc-stat-nb').textContent       = stats.nb_recettes_actives || 0;
     document.getElementById('fc-stat-marge-moy').textContent = (stats.marge_pct_moyenne || 0).toFixed(1) + ' %';
-    document.getElementById('fc-stat-marge-med').textContent = (stats.marge_pct_mediane || 0).toFixed(1) + ' %';
+    document.getElementById('fc-stat-marge-med').textContent = 'médiane ' + (stats.marge_pct_mediane || 0).toFixed(1) + ' %';
+    document.getElementById('fc-stat-excellent').textContent = stats.nb_recettes_excellentes || 0;
+    document.getElementById('fc-stat-risque').textContent    = stats.nb_recettes_risque || 0;
+
+    if (stats.nb_recettes_deficitaires > 0) {
+      const wrap = document.getElementById('fc-deficitaires-wrap');
+      if (wrap) wrap.style.display = 'block';
+      document.getElementById('fc-stat-deficitaires').textContent = stats.nb_recettes_deficitaires;
+    }
 
     if (data.matching_en_attente_count > 0) {
       const wrap = document.getElementById('fc-matching-en-attente-wrap');
@@ -3141,34 +3242,7 @@ async function loadFoodCost() {
       document.getElementById('fc-stat-matching').textContent = data.matching_en_attente_count;
     }
 
-    // Calcul médiane pour classement menu engineering (par marge seulement, V1)
-    const margesActives = top10.map(r => parseFloat(r.marge_pct) || 0).sort((a, b) => a - b);
-    const medianeMarge = margesActives.length > 0 ? margesActives[Math.floor(margesActives.length / 2)] : 0;
-
-    // Render tableau
-    if (tbody) {
-      tbody.innerHTML = top10.map(rec => {
-        const marge   = parseFloat(rec.marge_pct) || 0;
-        const margeCHF = parseFloat(rec.marge_chf) || 0;
-        const prix    = parseFloat(rec.prix_vente_ttc) || 0;
-        const cout    = parseFloat(rec.cout_portion_chf) || 0;
-        const isHaut  = marge >= medianeMarge;
-        // V1 sans ventes : Star = marge haute, Dog = marge basse
-        const classement = isHaut ? '⭐ Star' : '🐶 Dog';
-        const classementCol = isHaut ? '#10b981' : '#f59e0b';
-        const margeCol = marge >= 60 ? '#10b981' : marge >= 30 ? '#f59e0b' : '#ef4444';
-        return `
-          <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
-            <td style="padding:10px 4px;font-weight:500">${rec.nom_plat || '—'}<div style="font-size:11px;color:#6b7280;margin-top:2px">${rec.categorie || ''}</div></td>
-            <td style="text-align:right;padding:10px 4px">${prix.toFixed(2)}</td>
-            <td style="text-align:right;padding:10px 4px;color:#9ca3af">${cout.toFixed(2)}</td>
-            <td style="text-align:right;padding:10px 4px;font-weight:600;color:${margeCol}">${marge.toFixed(1)}%</td>
-            <td style="text-align:right;padding:10px 4px">${margeCHF.toFixed(2)}</td>
-            <td style="text-align:center;padding:10px 4px;color:${classementCol};font-weight:500;font-size:11px">${classement}</td>
-          </tr>
-        `;
-      }).join('');
-    }
+    renderFoodCostView();
   } catch(e) {
     if (loading) loading.style.display = 'none';
     if (empty)   empty.style.display = 'none';
