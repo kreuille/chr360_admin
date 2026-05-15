@@ -991,10 +991,32 @@ function dismissWelcomeBanner() {
 
   <!-- ═══ MODULE 11 — CFO IA (digest hebdo + feedback 👍/👎) ═══ -->
   <div id="cfoia-section" style="display:none">
-    <div class="section-label" style="margin-top:28px">
-      🧠 CFO IA — Conseils hebdomadaires
-      <button onclick="generateCfoIaAdvice()" id="cfoia-generate-btn" style="margin-left:12px;padding:4px 12px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);color:#A78BFA;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer">Générer maintenant</button>
+    <div class="section-label" style="margin-top:28px;display:flex;align-items:center;flex-wrap:wrap;gap:10px">
+      <span>🧠 CFO IA — Conseils hebdomadaires</span>
+      <button onclick="generateCfoIaAdvice()" id="cfoia-generate-btn" style="padding:4px 12px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);color:#A78BFA;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer">Générer maintenant</button>
     </div>
+
+    <!-- Stats banner -->
+    <div id="cfoia-stats" style="display:none;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+        <div class="card" style="padding:14px 16px">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Conseils ce mois</div>
+          <div id="cfoia-stat-count" style="font-size:22px;font-weight:700;color:#E5E7EB;margin-top:2px">—</div>
+        </div>
+        <div class="card" style="padding:14px 16px">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Impact total</div>
+          <div id="cfoia-stat-impact" style="font-size:22px;font-weight:700;color:#10b981;margin-top:2px">—</div>
+        </div>
+        <div class="card" style="padding:14px 16px">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Conseils marqués utiles</div>
+          <div id="cfoia-stat-feedback" style="font-size:22px;font-weight:700;color:#A78BFA;margin-top:2px">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div id="cfoia-filters" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+
     <div class="card" id="cfoia-card" style="padding:20px">
       <div id="cfoia-loading" style="text-align:center;padding:20px;color:#6b7280;font-size:13px">⏳ Chargement…</div>
       <div id="cfoia-empty" style="display:none;text-align:center;padding:30px 10px;color:#6b7280">
@@ -1003,6 +1025,9 @@ function dismissWelcomeBanner() {
         <div style="font-size:13px;margin-bottom:14px">Le CFO IA génère un digest hebdomadaire chaque lundi à 06:00.<br>Tu peux aussi forcer la génération manuellement.</div>
       </div>
       <div id="cfoia-list" style="display:none;flex-direction:column;gap:12px"></div>
+      <div id="cfoia-show-more-wrap" style="display:none;text-align:center;margin-top:14px">
+        <button id="cfoia-show-more" onclick="toggleCfoShowAll()" style="padding:6px 16px;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);color:#A78BFA;border-radius:6px;font-size:12px;cursor:pointer">Voir tous les conseils</button>
+      </div>
     </div>
   </div>
 
@@ -3138,6 +3163,26 @@ async function loadFoodCost() {
 // ═══════════════════════════════════════════════════════════
 // MODULE 11 — CFO IA (digest hebdo + feedback 👍/👎)
 // ═══════════════════════════════════════════════════════════
+const CFO_CAT_PALETTE = {
+  MIX_PRODUIT:  { bg:'rgba(167,139,250,.10)', border:'rgba(167,139,250,.30)', fg:'#C4B5FD', icon:'🍽️', label:'Mix produit' },
+  FOURNISSEUR:  { bg:'rgba(56,189,248,.10)',  border:'rgba(56,189,248,.30)',  fg:'#7DD3FC', icon:'🚚', label:'Fournisseur' },
+  PRICING:      { bg:'rgba(251,191,36,.10)',  border:'rgba(251,191,36,.30)',  fg:'#FCD34D', icon:'💰', label:'Pricing' },
+  TRESORERIE:   { bg:'rgba(16,185,129,.10)',  border:'rgba(16,185,129,.30)',  fg:'#6EE7B7', icon:'🏦', label:'Trésorerie' },
+  SAISONNALITE: { bg:'rgba(244,114,182,.10)', border:'rgba(244,114,182,.30)', fg:'#F9A8D4', icon:'🍂', label:'Saisonnalité' },
+  ONBOARDING:   { bg:'rgba(96,165,250,.10)',  border:'rgba(96,165,250,.30)',  fg:'#93C5FD', icon:'🎓', label:'Onboarding' },
+  AUTRE:        { bg:'rgba(148,163,184,.10)', border:'rgba(148,163,184,.30)', fg:'#CBD5E1', icon:'💡', label:'Autre' }
+};
+function cfoCatTheme(cat) { return CFO_CAT_PALETTE[String(cat||'AUTRE').toUpperCase()] || CFO_CAT_PALETTE.AUTRE; }
+function cfoPrioBadge(p) {
+  const n = parseInt(p,10) || 3;
+  if (n === 1) return { emoji:'🔥', label:'Priorité haute', fg:'#F87171' };
+  if (n === 2) return { emoji:'⭐', label:'Priorité moyenne', fg:'#FBBF24' };
+  return { emoji:'ℹ️', label:'Suivi', fg:'#94A3B8' };
+}
+
+// State global du module
+let CFO_STATE = { all: [], filter: 'all', showAll: false };
+
 async function loadCfoIa() {
   // Visible seulement si addon 'cfoia' actif OU bundle Suite Pro
   let isActive = false;
@@ -3157,53 +3202,205 @@ async function loadCfoIa() {
   const loading = document.getElementById('cfoia-loading');
   const empty   = document.getElementById('cfoia-empty');
   const listEl  = document.getElementById('cfoia-list');
+  const statsEl = document.getElementById('cfoia-stats');
+  const filtersEl = document.getElementById('cfoia-filters');
 
   try {
     const r = await fetch(`${APPS_SCRIPT_URL}?action=listCfoConseils&id=${encodeURIComponent(CLIENT_TOKEN)}`);
     const d = await r.json();
     if (loading) loading.style.display = 'none';
     const conseils = d.conseils || [];
+    CFO_STATE.all = conseils;
+
     if (conseils.length === 0) {
       if (empty) empty.style.display = 'block';
       if (listEl) listEl.style.display = 'none';
+      if (statsEl) statsEl.style.display = 'none';
+      if (filtersEl) filtersEl.style.display = 'none';
       return;
     }
     if (empty) empty.style.display = 'none';
-    if (listEl) {
-      listEl.style.display = 'flex';
-      // Affiche les 5 derniers conseils
-      const last5 = conseils.slice(-5).reverse();
-      listEl.innerHTML = last5.map(c => renderCfoConseil(c)).join('');
-    }
+
+    renderCfoStats(conseils);
+    renderCfoFilters(conseils);
+    renderCfoList();
   } catch(e) {
     if (loading) loading.style.display = 'none';
     console.warn('[cfoia] load failed', e);
   }
 }
 
+function renderCfoStats(conseils) {
+  const statsEl = document.getElementById('cfoia-stats');
+  if (!statsEl) return;
+  statsEl.style.display = 'block';
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthConseils = conseils.filter(c => {
+    const d = c.date_generation ? new Date(c.date_generation) : null;
+    return d && d >= monthStart;
+  });
+  const impactTotal = monthConseils.reduce((s,c) => s + (parseFloat(c.impact_estime_chf || c.impact_chf_mois) || 0), 0);
+  const utiles = conseils.filter(c => c.feedback === 'up').length;
+  const totalFb = conseils.filter(c => c.feedback === 'up' || c.feedback === 'down').length;
+  const pctUtile = totalFb > 0 ? Math.round(100 * utiles / totalFb) : null;
+
+  const countEl  = document.getElementById('cfoia-stat-count');
+  const impactEl = document.getElementById('cfoia-stat-impact');
+  const fbEl     = document.getElementById('cfoia-stat-feedback');
+  if (countEl)  countEl.textContent = monthConseils.length;
+  if (impactEl) {
+    impactEl.textContent = (impactTotal > 0 ? '+' : '') + Math.round(impactTotal).toLocaleString('fr-CH') + ' CHF/mois';
+    impactEl.style.color = impactTotal >= 0 ? '#10b981' : '#F87171';
+  }
+  if (fbEl) {
+    if (pctUtile === null) { fbEl.textContent = '—'; fbEl.style.color = '#9CA3AF'; }
+    else { fbEl.textContent = pctUtile + '%'; fbEl.style.color = '#A78BFA'; }
+  }
+}
+
+function renderCfoFilters(conseils) {
+  const filtersEl = document.getElementById('cfoia-filters');
+  if (!filtersEl) return;
+  filtersEl.style.display = 'flex';
+
+  // Liste catégories présentes
+  const catsPresent = Array.from(new Set(conseils.map(c => String(c.categorie || c.theme || 'AUTRE').toUpperCase())));
+
+  const chips = [
+    { id:'all', label:'Tous', count: conseils.length }
+  ];
+  catsPresent.forEach(cat => {
+    const t = cfoCatTheme(cat);
+    chips.push({ id:'cat:'+cat, label:t.icon+' '+t.label, count: conseils.filter(c => String(c.categorie || c.theme || 'AUTRE').toUpperCase() === cat).length });
+  });
+  // Filter "à faire" = sans feedback
+  const pending = conseils.filter(c => !c.feedback).length;
+  if (pending > 0) chips.push({ id:'pending', label:'⏳ À traiter', count: pending });
+
+  filtersEl.innerHTML = chips.map(ch => {
+    const active = CFO_STATE.filter === ch.id;
+    return `<button onclick="setCfoFilter('${ch.id}')" style="padding:5px 11px;border-radius:14px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid ${active?'rgba(167,139,250,.5)':'rgba(255,255,255,.06)'};background:${active?'rgba(167,139,250,.18)':'rgba(255,255,255,.02)'};color:${active?'#C4B5FD':'#9CA3AF'}">${escapeHtml(ch.label)}<span style="opacity:.65;margin-left:5px">${ch.count}</span></button>`;
+  }).join('');
+}
+
+function setCfoFilter(id) {
+  CFO_STATE.filter = id;
+  CFO_STATE.showAll = false;
+  renderCfoFilters(CFO_STATE.all);
+  renderCfoList();
+}
+
+function toggleCfoShowAll() {
+  CFO_STATE.showAll = !CFO_STATE.showAll;
+  renderCfoList();
+}
+
+function renderCfoList() {
+  const listEl = document.getElementById('cfoia-list');
+  const wrapMore = document.getElementById('cfoia-show-more-wrap');
+  const btnMore = document.getElementById('cfoia-show-more');
+  if (!listEl) return;
+
+  // Application filtre
+  let filtered = CFO_STATE.all.slice();
+  if (CFO_STATE.filter === 'pending') {
+    filtered = filtered.filter(c => !c.feedback);
+  } else if (CFO_STATE.filter && CFO_STATE.filter.startsWith('cat:')) {
+    const cat = CFO_STATE.filter.slice(4);
+    filtered = filtered.filter(c => String(c.categorie || c.theme || 'AUTRE').toUpperCase() === cat);
+  }
+
+  // Tri DESC date_generation puis priorité ASC
+  filtered.sort((a, b) => {
+    const da = String(a.date_generation || ''), db = String(b.date_generation || '');
+    if (da !== db) return db.localeCompare(da);
+    return (parseInt(a.priorite,10) || 3) - (parseInt(b.priorite,10) || 3);
+  });
+
+  if (filtered.length === 0) {
+    listEl.style.display = 'flex';
+    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280;font-size:13px">Aucun conseil pour ce filtre.</div>';
+    if (wrapMore) wrapMore.style.display = 'none';
+    return;
+  }
+
+  const initialLimit = 5;
+  const visible = CFO_STATE.showAll ? filtered : filtered.slice(0, initialLimit);
+  listEl.style.display = 'flex';
+  listEl.innerHTML = visible.map(c => renderCfoConseil(c)).join('');
+
+  if (filtered.length > initialLimit) {
+    if (wrapMore) wrapMore.style.display = 'block';
+    if (btnMore) btnMore.textContent = CFO_STATE.showAll ? '↑ Réduire' : `Voir tous les conseils (${filtered.length})`;
+  } else {
+    if (wrapMore) wrapMore.style.display = 'none';
+  }
+}
+
 function renderCfoConseil(c) {
   const date = c.date_generation ? new Date(c.date_generation).toLocaleDateString('fr-CH', {day:'2-digit',month:'short'}) : '—';
   const titre = c.titre || c.theme || 'Conseil';
-  const reco  = c.recommandation || '';
-  const impact = c.impact_estime_chf ? `Impact estimé : ${parseFloat(c.impact_estime_chf).toFixed(0)} CHF/mois` : '';
+  const reco  = c.recommandation || c.description || '';
+  const impact = parseFloat(c.impact_estime_chf || c.impact_chf_mois) || 0;
+  const impactColor = impact >= 0 ? '#10b981' : '#F87171';
   const conf = c.confidence ? `${Math.round(parseFloat(c.confidence) * 100)}%` : '';
   const fb = c.feedback || '';
-  const fbUp = fb === 'up' ? 'background:rgba(0,200,100,0.18);color:#00C864' : 'background:rgba(255,255,255,0.04);color:#9CA3AF';
-  const fbDown = fb === 'down' ? 'background:rgba(248,113,113,0.18);color:#F87171' : 'background:rgba(255,255,255,0.04);color:#9CA3AF';
+  const fbUp = fb === 'up' ? 'background:rgba(16,185,129,.20);color:#10b981;border-color:rgba(16,185,129,.35)' : 'background:rgba(255,255,255,.03);color:#9CA3AF;border-color:rgba(255,255,255,.08)';
+  const fbDown = fb === 'down' ? 'background:rgba(248,113,113,.18);color:#F87171;border-color:rgba(248,113,113,.35)' : 'background:rgba(255,255,255,.03);color:#9CA3AF;border-color:rgba(255,255,255,.08)';
+
+  const cat = String(c.categorie || c.theme || 'AUTRE').toUpperCase();
+  const theme = cfoCatTheme(cat);
+  const prio = cfoPrioBadge(c.priorite);
+
+  // Actions concrètes parsing
+  const actionsRaw = String(c.actions_concretes || '').trim();
+  const actionsArr = actionsRaw
+    ? actionsRaw.split(/\n+|(?:^|\s)-\s+|(?:;\s*)/).map(s => s.trim()).filter(s => s.length > 1)
+    : [];
+
+  // Status badge (si feedback "fait")
+  let statusBadge = '';
+  if (fb === 'up') statusBadge = `<span style="font-size:10px;padding:2px 8px;background:rgba(16,185,129,.18);color:#10b981;border-radius:10px;font-weight:600">✓ Marqué utile</span>`;
+  else if (fb === 'down') statusBadge = `<span style="font-size:10px;padding:2px 8px;background:rgba(248,113,113,.18);color:#F87171;border-radius:10px;font-weight:600">Ignoré</span>`;
+
   return `
-    <div style="padding:16px;background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.15);border-radius:10px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div style="flex:1">
-          <div style="font-size:11px;color:#A78BFA;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${date}${conf ? ' · ' + conf + ' confiance' : ''}</div>
-          <div style="font-size:15px;font-weight:600;margin-top:2px">${escapeHtml(titre)}</div>
+    <div style="background:${theme.bg};border:1px solid ${theme.border};border-radius:12px;overflow:hidden">
+      <div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.15);border-bottom:1px solid ${theme.border};flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;font-weight:600;color:${theme.fg};letter-spacing:.04em">${theme.icon}&nbsp; ${escapeHtml(theme.label)}</div>
+        <div style="font-size:11px;color:${prio.fg};font-weight:600">${prio.emoji}&nbsp; ${escapeHtml(prio.label)}<span style="opacity:.6;margin-left:6px;font-weight:400">${date}</span></div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:15px;font-weight:700;color:#E5E7EB;line-height:1.35">${escapeHtml(titre)}</div>
+            ${conf ? `<div style="font-size:11px;color:#9CA3AF;margin-top:2px">${escapeHtml(conf)} de confiance</div>` : ''}
+          </div>
+          ${impact !== 0 ? `
+            <div style="text-align:right;white-space:nowrap">
+              <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em">Impact</div>
+              <div style="font-size:17px;font-weight:700;color:${impactColor}">${impact > 0 ? '+' : ''}${Math.round(impact).toLocaleString('fr-CH')} CHF/mois</div>
+            </div>
+          ` : ''}
         </div>
-        <div style="display:flex;gap:6px;margin-left:14px">
-          <button onclick="setCfoFeedback('${c.conseil_id}','up')" title="Utile" style="padding:4px 8px;border:none;border-radius:6px;cursor:pointer;font-size:14px;${fbUp}">👍</button>
-          <button onclick="setCfoFeedback('${c.conseil_id}','down')" title="Pas utile" style="padding:4px 8px;border:none;border-radius:6px;cursor:pointer;font-size:14px;${fbDown}">👎</button>
+        ${reco ? `<div style="font-size:13px;color:#D1D5DB;line-height:1.6;margin-top:10px">${escapeHtml(reco)}</div>` : ''}
+        ${actionsArr.length ? `
+          <div style="margin-top:12px;padding:10px 14px;background:rgba(0,0,0,.18);border-radius:8px">
+            <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px">Actions concrètes</div>
+            <ol style="margin:0;padding-left:18px;color:#D1D5DB;font-size:12.5px;line-height:1.6">
+              ${actionsArr.map(a => `<li style="margin-bottom:3px">${escapeHtml(a)}</li>`).join('')}
+            </ol>
+          </div>
+        ` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:10px;flex-wrap:wrap">
+          <div>${statusBadge}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="setCfoFeedback('${c.conseil_id}','up')" title="Marquer utile / fait" style="padding:5px 10px;border-radius:6px;cursor:pointer;font-size:13px;border:1px solid;${fbUp}">👍 Utile</button>
+            <button onclick="setCfoFeedback('${c.conseil_id}','down')" title="Ignorer ce conseil" style="padding:5px 10px;border-radius:6px;cursor:pointer;font-size:13px;border:1px solid;${fbDown}">👎 Ignorer</button>
+          </div>
         </div>
       </div>
-      <div style="font-size:13px;color:#D1D5DB;line-height:1.5">${escapeHtml(reco)}</div>
-      ${impact ? `<div style="margin-top:8px;font-size:12px;color:#10b981;font-weight:600">${impact}</div>` : ''}
     </div>
   `;
 }
