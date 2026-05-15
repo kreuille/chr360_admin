@@ -22,4 +22,41 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://chr360.ch/inscription.html"/>
   </url>
 
+  <url>
+    <loc>https://chr360.ch/case-study-beau-bidou.html</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr-CH" href="https://chr360.ch/case-study-beau-bidou.html"/>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://chr360.fr/case-study-beau-bidou.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://chr360.ch/case-study-beau-bidou.html"/>
+  </url>
+
+  <url>
+    <loc>https://chr360.ch/cgv.html</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr-CH" href="https://chr360.ch/cgv.html"/>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://chr360.fr/cgv.html"/>
+  </url>
+
+  <url>
+    <loc>https://chr360.ch/confidentialite.html</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr-CH" href="https://chr360.ch/confidentialite.html"/>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://chr360.fr/confidentialite.html"/>
+  </url>
+
+  <url>
+    <loc>https://chr360.ch/mentions-legales.html</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr-CH" href="https://chr360.ch/mentions-legales.html"/>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://chr360.fr/mentions-legales.html"/>
+  </url>
+
 </urlset>
