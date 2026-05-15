@@ -1,0 +1,27 @@
+# robots.txt — chr360.ch / chr360.fr
+# Plateforme IA pour restaurants — CHR 360°
+
+User-agent: *
+Allow: /
+Allow: /inscription.html
+
+# Pages clients (privées par token, déjà noindex via meta)
+Disallow: /dashboard.html
+Disallow: /paywall.html
+Disallow: /success.html
+Disallow: /recettes.html
+Disallow: /personnel.html
+Disallow: /pointage.html
+Disallow: /receptionniste.html
+
+# Pages admin (privées par token admin, déjà noindex via meta)
+Disallow: /admin.html
+Disallow: /admin_abonnements.html
+Disallow: /deploiement.html
+Disallow: /setup.html
+
+# Bloque les URL avec tokens pour eviter fuite
+Disallow: /*?id=*
+
+# Sitemap
+Sitemap: https://chr360.ch/sitemap.xml
