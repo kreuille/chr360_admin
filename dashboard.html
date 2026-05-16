@@ -1086,6 +1086,32 @@ function dismissWelcomeBanner() {
         <div style="font-size:13px;margin-bottom:14px">Configure ton agent vocal pour commencer à recevoir réservations et commandes.</div>
         <a href="#" id="link-receptionniste-empty" style="display:inline-block;background:#f59e0b;color:white;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500">⚙️ Configurer l'agent</a>
       </div>
+
+      <!-- ─── NEW 2026-05-16 : Stats appels + 10 derniers appels ─── -->
+      <div id="recep-appels-stats" style="display:none;margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)">
+        <div style="font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">📊 Statistiques appels du mois</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px">
+          <div>
+            <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;font-weight:600">Appels reçus</div>
+            <div id="recep-stat-nb-appels" style="font-size:20px;font-weight:700">—</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;font-weight:600">Durée moyenne</div>
+            <div id="recep-stat-duree-moy" style="font-size:20px;font-weight:700">—</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;font-weight:600">Taux de conversion</div>
+            <div id="recep-stat-conversion" style="font-size:20px;font-weight:700;color:#10b981">—</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;font-weight:600">Coût total</div>
+            <div id="recep-stat-cost" style="font-size:20px;font-weight:700;color:#A78BFA">—</div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">📞 10 derniers appels</div>
+        <div id="recep-appels-list" style="display:flex;flex-direction:column;gap:6px;font-size:13px"></div>
+      </div>
     </div>
   </div>
 
@@ -3633,6 +3659,58 @@ async function loadReceptionniste() {
         }).join('');
       }
     }
+
+    // ─── NEW 2026-05-16 : stats + derniers appels DATA_APPELS ───
+    try {
+      const [rStats, rAppels] = await Promise.all([
+        fetch(`${APPS_SCRIPT_URL}?action=appelStats&id=${encodeURIComponent(CLIENT_TOKEN)}`).then(r => r.json()),
+        fetch(`${APPS_SCRIPT_URL}?action=listAppels&id=${encodeURIComponent(CLIENT_TOKEN)}`).then(r => r.json())
+      ]);
+
+      const statsBlock = document.getElementById('recep-appels-stats');
+      if (statsBlock && rStats.ok && !rStats.empty) {
+        statsBlock.style.display = 'block';
+        document.getElementById('recep-stat-nb-appels').textContent = rStats.nb_appels || 0;
+        const dureeSec = rStats.duree_moyenne_sec || 0;
+        const min = Math.floor(dureeSec / 60), sec = dureeSec % 60;
+        document.getElementById('recep-stat-duree-moy').textContent = min + 'm ' + (sec < 10 ? '0' + sec : sec) + 's';
+        document.getElementById('recep-stat-conversion').textContent = (rStats.taux_conversion_pct || 0) + '%';
+        document.getElementById('recep-stat-cost').textContent = (rStats.cost_total_chf || 0).toFixed(2) + ' CHF';
+
+        // Liste 10 derniers appels
+        const appelsList = document.getElementById('recep-appels-list');
+        const appels = (rAppels.appels || []).slice(0, 10);
+        if (appelsList) {
+          if (appels.length === 0) {
+            appelsList.innerHTML = '<div style="color:#6b7280;font-size:12px;padding:8px">Pas encore d\'appels enregistrés.</div>';
+          } else {
+            appelsList.innerHTML = appels.map(a => {
+              const dur = parseInt(a.duree_sec, 10) || 0;
+              const durStr = Math.floor(dur/60) + 'm ' + (dur%60 < 10 ? '0' : '') + (dur%60) + 's';
+              const outcomeMap = {
+                reservation_creee: { label: '✓ Résa créée', col: '#10b981' },
+                commande_creee:    { label: '✓ Commande créée', col: '#10b981' },
+                info_demandee:     { label: 'ℹ Info demandée', col: '#60A5FA' },
+                transfert_humain:  { label: '↗ Transféré', col: '#A78BFA' },
+                abandon:           { label: '✗ Abandon', col: '#f59e0b' },
+                unknown:           { label: '?', col: '#6b7280' }
+              };
+              const out = outcomeMap[a.outcome] || outcomeMap.unknown;
+              const sentEmoji = a.sentiment === 'positive' ? '😊' : (a.sentiment === 'negative' ? '😞' : (a.sentiment === 'neutral' ? '😐' : ''));
+              const provider = a.provider === 'retell' ? '🔵' : (a.provider === 'vapi' ? '🟢' : '⚪');
+              const tel = a.caller_number || '';
+              return `<div style="padding:8px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-weight:600;color:#e5e7eb">${provider} ${a.date} ${a.heure_debut || ''} · ${escapeHtml2(tel)} · ${durStr} ${sentEmoji}</div>
+                  <div style="font-size:11px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml2(a.summary || '').substring(0, 90)}</div>
+                </div>
+                <span style="font-size:10px;color:${out.col};font-weight:600;white-space:nowrap">${out.label}</span>
+              </div>`;
+            }).join('');
+          }
+        }
+      }
+    } catch(e) { console.warn('[receptionniste] appels load failed', e); }
   } catch(e) {
     if (loading) loading.style.display = 'none';
     console.warn('[receptionniste] load failed', e);
