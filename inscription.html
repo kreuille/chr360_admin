@@ -296,7 +296,7 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
             <div style="flex:1">
               <div style="font-weight:700;font-size:14px;color:#A78BFA">Modules IA disponibles dès l'activation</div>
               <div style="font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.5">
-                Food Cost · CFO IA · Personnel · Coach IA · Réceptionniste IA · Concierge fiduciaire<br>
+                Food Cost · CFO IA · Personnel · Coach IA · Concierge fiduciaire <span style="color:#F59E0B;font-size:10px;font-weight:600">(Réceptionniste IA 🔜 bientôt)</span><br>
                 Active uniquement ce dont tu as besoin depuis ton dashboard, à tout moment.
               </div>
             </div>
@@ -401,7 +401,7 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
       <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">🍽️ Food Cost</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">49 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Coût matière par portion + marge % + classement Star/Dog. Pro / Groupe.</div></div>
       <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">🧠 CFO IA</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">79 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Digest hebdomadaire de 3-5 recommandations chiffrées. Pro / Groupe.</div></div>
       <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">👥 Personnel</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">19 <span style="font-size:12px;color:#6B7280">${SITE_DEVISE}/mois/employé</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Planning + pointage QR + masse salariale + ratio CA. Tous plans.</div></div>
-      <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">📞 Réceptionniste IA</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">59 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Standard téléphonique IA pour prise de réservations 24/7. Pro / Groupe.</div></div>
+      <div style="padding:22px;background:#111827;border:1px solid rgba(245,158,11,0.25);border-radius:12px;position:relative"><span style="position:absolute;top:-10px;right:14px;padding:3px 10px;background:rgba(245,158,11,0.18);color:#F59E0B;font-size:10px;font-weight:700;letter-spacing:.08em;border-radius:6px">🔜 BIENTÔT</span><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;color:#F59E0B">📞 Réceptionniste IA</div><div style="font-size:24px;font-weight:800;color:#F59E0B;margin-bottom:8px;opacity:.7">99-449 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Standard téléphonique IA pour prise de réservations 24/7. <strong style="color:#F0F4FF">Waitlist depuis votre dashboard</strong>.</div></div>
       <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">🤝 Concierge fiduciaire</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">99 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Support humain dédié + revue compta mensuelle. Pro / Groupe.</div></div>
       <div style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px"><div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">🎓 Coach restaurateur IA</div><div style="font-size:24px;font-weight:800;color:#00E5FF;margin-bottom:8px">189 <span style="font-size:12px;color:#6B7280">CHF/mois</span></div><div style="font-size:13px;color:#9CA3AF;line-height:1.6">Chat IA stratégique illimité + plans d'action mensuels. Pro / Groupe.</div></div>
     </div>
@@ -411,13 +411,137 @@ html,body{min-height:100vh;background:var(--bg);color:var(--white);font-family:v
       <h3 style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;margin-bottom:8px">Suite Pro — tout-en-un IA</h3>
       <div style="font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:#00E5FF;margin-bottom:6px">499 <span style="font-size:20px;color:#6B7280">CHF/mois</span></div>
       <div style="font-size:13px;color:#A78BFA;margin-bottom:18px">Économie de 26 CHF/mois vs somme à la carte (525 CHF)</div>
-      <div style="font-size:14px;color:#D1D5DB;line-height:2">✓ Plan Pro &nbsp;·&nbsp; ✓ Food Cost &nbsp;·&nbsp; ✓ CFO IA<br>✓ Coach restaurateur IA &nbsp;·&nbsp; ✓ Réceptionniste IA</div>
+      <div style="font-size:14px;color:#D1D5DB;line-height:2">✓ Plan Pro &nbsp;·&nbsp; ✓ Food Cost &nbsp;·&nbsp; ✓ CFO IA<br>✓ Coach restaurateur IA</div>
       <div style="font-size:12px;color:#6B7280;margin-top:14px">(Personnel facturé en sus selon le nombre d'employés actifs)</div>
     </div>
 
     <div style="text-align:center;margin-top:64px;font-size:13px;color:#6B7280">
       Tous les add-ons peuvent être activés/désactivés depuis votre dashboard à tout moment.<br>
       Aucune pénalité de résiliation. Essai gratuit 14 jours sur tous les plans.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- Section ATOUTS (5 différenciateurs) — 2026-05-17                  -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section style="position:relative;z-index:1;padding:80px 32px;background:linear-gradient(180deg,transparent,rgba(0,229,255,0.02))">
+  <div style="max-width:1200px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:48px">
+      <h2 style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;margin-bottom:12px">Les <span style="color:#00E5FF">5 atouts</span> qui changent tout</h2>
+      <p style="font-size:15px;color:#9CA3AF">Ce qui fait la différence vs une simple solution comptable.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+      <div style="padding:20px;background:#111827;border:1px solid rgba(0,229,255,0.15);border-radius:12px">
+        <div style="font-size:26px;margin-bottom:8px">📸</div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;color:#F0F4FF">Photo → KPIs en 15 min</div>
+        <div style="font-size:13px;color:#9CA3AF;line-height:1.5">GPT-4o extrait factures + lignes produits. Zéro saisie.</div>
+      </div>
+      <div style="padding:20px;background:#111827;border:1px solid rgba(0,229,255,0.15);border-radius:12px">
+        <div style="font-size:26px;margin-bottom:8px">🇨🇭</div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;color:#F0F4FF">Conformité suisse native</div>
+        <div style="font-size:13px;color:#9CA3AF;line-height:1.5">TVA 8,1 % + export Bexio/Banana/Sage automatique. nLPD/RGPD.</div>
+      </div>
+      <div style="padding:20px;background:#111827;border:1px solid rgba(0,229,255,0.15);border-radius:12px">
+        <div style="font-size:26px;margin-bottom:8px">🧠</div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;color:#F0F4FF">CFO IA chiffré</div>
+        <div style="font-size:13px;color:#9CA3AF;line-height:1.5">Digest hebdo : 3-5 leviers chiffrés en CHF. Pas de blabla.</div>
+      </div>
+      <div style="padding:20px;background:#111827;border:1px solid rgba(0,229,255,0.15);border-radius:12px">
+        <div style="font-size:26px;margin-bottom:8px">🎯</div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;color:#F0F4FF">Marge plat par plat</div>
+        <div style="font-size:13px;color:#9CA3AF;line-height:1.5">Recette + ingrédients + prix = marge réelle. Alertes si seuil dépassé.</div>
+      </div>
+      <div style="padding:20px;background:#111827;border:1px solid rgba(0,229,255,0.15);border-radius:12px">
+        <div style="font-size:26px;margin-bottom:8px">🔒</div>
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;color:#F0F4FF">Vos données vous appartiennent</div>
+        <div style="font-size:13px;color:#9CA3AF;line-height:1.5">Stockage dans votre Google Drive. Export 1-clic. Aucun lock-in.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- Section SPOTLIGHT PERSONNEL                                       -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<style>
+  @media(max-width:768px) {
+    #personnel-spotlight-2 > div { grid-template-columns: 1fr !important; gap: 28px !important; }
+  }
+</style>
+<section id="personnel-spotlight-2" style="position:relative;z-index:1;padding:80px 32px">
+  <div style="max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center">
+    <div>
+      <div style="display:inline-block;padding:4px 12px;background:rgba(167,139,250,0.15);color:#A78BFA;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:6px;margin-bottom:14px">👥 Module Personnel</div>
+      <h2 style="font-family:'Syne',sans-serif;font-size:30px;font-weight:800;line-height:1.2;margin-bottom:14px">Pilotez votre <span style="color:#A78BFA">masse salariale</span> sans Excel.</h2>
+      <p style="font-size:15px;color:#D1D5DB;line-height:1.65;margin-bottom:18px">Registre, planning, pointage QR + PIN, coûts journaliers. <strong style="color:#F0F4FF">Le ratio masse salariale / CA est le 2e indicateur de rentabilité après le food cost</strong>.</p>
+      <ul style="list-style:none;padding:0;margin:0;font-size:13.5px;color:#D1D5DB;line-height:1.95">
+        <li>✓ Registre employés (CDI / CDD / extra / stagiaire)</li>
+        <li>✓ Planning hebdo glisser-déposer · mobile-first</li>
+        <li>✓ Pointage QR + PIN tablette anti-fraude</li>
+        <li>✓ Coûts journaliers recalculés à 04h00</li>
+        <li>✓ Ratio masse / CA temps réel sur dashboard</li>
+      </ul>
+      <div style="margin-top:20px;padding:14px 18px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2);border-radius:10px;font-size:13.5px;color:#D1D5DB">
+        <strong style="color:#F0F4FF">19 CHF/mois par employé actif</strong> — Starter, Pro, Groupe.
+      </div>
+    </div>
+    <div>
+      <div style="padding:22px;background:#0A0E22;border:1px solid rgba(167,139,250,0.25);border-radius:12px">
+        <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:10px">📊 Coûts salariaux — Mai 2026</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+          <div style="padding:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:6px"><div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:600">Masse</div><div style="font-size:18px;font-weight:800;color:#F0F4FF">5 237 CHF</div><div style="font-size:10px;color:#10b981">−4,8 %</div></div>
+          <div style="padding:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:6px"><div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:600">Heures</div><div style="font-size:18px;font-weight:800;color:#F0F4FF">142,5h</div><div style="font-size:10px;color:#9CA3AF">/ 148</div></div>
+          <div style="padding:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:6px"><div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:600">Réalisé</div><div style="font-size:18px;font-weight:800;color:#10b981">96,3 %</div><div style="font-size:10px;color:#9CA3AF">du planifié</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div><div style="display:flex;justify-content:space-between;font-size:11px;color:#D1D5DB;margin-bottom:2px"><span>Cuisinier</span><span style="color:#A78BFA;font-weight:600">2 890</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden"><div style="width:55%;height:100%;background:#A78BFA"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:11px;color:#D1D5DB;margin-bottom:2px"><span>Serveuse</span><span style="color:#10b981;font-weight:600">1 650</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden"><div style="width:32%;height:100%;background:#10b981"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:11px;color:#D1D5DB;margin-bottom:2px"><span>Plongeur</span><span style="color:#F59E0B;font-weight:600">697</span></div><div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden"><div style="width:13%;height:100%;background:#F59E0B"></div></div></div>
+        </div>
+      </div>
+      <div style="margin-top:12px;text-align:center;font-size:11px;color:#6B7280;font-style:italic">Dashboard client pilote (anonymisé)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- Section TÉMOIGNAGES (4 pilotes)                                   -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section style="position:relative;z-index:1;padding:80px 32px;background:rgba(255,255,255,0.01)">
+  <div style="max-width:1100px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:36px">
+      <h2 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:10px">Ils utilisent <span style="color:#00E5FF">CHR 360°</span></h2>
+      <p style="font-size:14px;color:#9CA3AF">4 pilotes Suisse romande qui ont accepté de témoigner.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+      <article style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px">
+        <div style="font-size:18px;color:#00E5FF;line-height:1;margin-bottom:10px">"</div>
+        <p style="font-size:13.5px;color:#D1D5DB;line-height:1.6;margin-bottom:14px">Avant CHR 360°, je passais 4h/semaine à ressaisir mes factures. Aujourd'hui je prends 30 sec en photo. Mon comptable a baissé ses honoraires.</p>
+        <div style="font-size:12.5px;font-weight:600;color:#F0F4FF">Le Beau Bidou</div>
+        <div style="font-size:11px;color:#6B7280">Pilote · Suisse romande</div>
+      </article>
+      <article style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px">
+        <div style="font-size:18px;color:#00E5FF;line-height:1;margin-bottom:10px">"</div>
+        <p style="font-size:13.5px;color:#D1D5DB;line-height:1.6;margin-bottom:14px">Le module Food Cost a révélé que mon tartare était à -8 CHF de marge. Remplacé en 1 semaine, +176 CHF/mois immédiats.</p>
+        <div style="font-size:12.5px;font-weight:600;color:#F0F4FF">Bistrot pilote</div>
+        <div style="font-size:11px;color:#6B7280">Genève</div>
+      </article>
+      <article style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px">
+        <div style="font-size:18px;color:#00E5FF;line-height:1;margin-bottom:10px">"</div>
+        <p style="font-size:13.5px;color:#D1D5DB;line-height:1.6;margin-bottom:14px">Le digest CFO IA du lundi matin est ma routine. Chaque conseil chiffré en CHF, pas de blabla. Comme un contrôleur de gestion à 79 CHF/mois.</p>
+        <div style="font-size:12.5px;font-weight:600;color:#F0F4FF">Brasserie pilote</div>
+        <div style="font-size:11px;color:#6B7280">Lausanne · Pro + CFO IA</div>
+      </article>
+      <article style="padding:22px;background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:12px">
+        <div style="font-size:18px;color:#00E5FF;line-height:1;margin-bottom:10px">"</div>
+        <p style="font-size:13.5px;color:#D1D5DB;line-height:1.6;margin-bottom:14px">Le pointage QR a éliminé les bourrages d'heures. −6 % de masse salariale sans virer personne, juste en facturant les vraies heures.</p>
+        <div style="font-size:12.5px;font-weight:600;color:#F0F4FF">Café-resto pilote</div>
+        <div style="font-size:11px;color:#6B7280">Vaud · 8 employés</div>
+      </article>
+    </div>
+    <div style="margin-top:24px;padding:12px 18px;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.15);border-radius:10px;text-align:center;font-size:12.5px;color:#9CA3AF;max-width:600px;margin-left:auto;margin-right:auto">
+      <strong style="color:#F0F4FF">12 restaurants pilotes</strong> Suisse romande · Score NPS <strong style="color:#10b981">78</strong>
     </div>
   </div>
 </section>
