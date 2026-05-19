@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ratio masse salariale / CA restaurant : la cible 30-35 % expliquée — CHR 360°</title>
+
+<!-- SEO -->
+<meta name="description" content="Ratio masse salariale / CA restaurant : la formule, les seuils par type d'établissement (CH/FR), les leviers d'optimisation et 5 erreurs classiques. Guide complet 2026 par CHR 360°.">
+<meta name="keywords" content="ratio masse salariale restaurant, masse salariale CA restaurant, productivité personnel restaurant, prime cost restaurant, coût personnel restauration suisse">
+<meta name="author" content="CHR 360°">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ratio masse salariale / CA restaurant : la cible 30-35 % expliquée">
+<meta property="og:description" content="Formule, seuils CH/FR par type d'établissement, leviers d'optimisation et 5 erreurs classiques. Guide complet 2026.">
+<meta property="og:url" content="https://chr360.ch/blog/ratio-masse-salariale-restaurant.html">
+<meta property="og:image" content="https://chr360.ch/og-image.png">
+<meta property="og:locale" content="fr_CH">
+<meta property="og:site_name" content="CHR 360°">
+<meta property="article:published_time" content="2026-05-19T10:00:00+02:00">
+<meta property="article:section" content="Gestion restaurant">
+<meta property="article:tag" content="masse salariale">
+<meta property="article:tag" content="rentabilité restaurant">
+<meta property="article:tag" content="restauration Suisse">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ratio masse salariale / CA restaurant — Guide 2026">
+<meta name="twitter:description" content="La cible 30-35 %, les leviers et 5 erreurs classiques.">
+<meta name="twitter:image" content="https://chr360.ch/og-image.png">
+
+<link rel="canonical" href="https://chr360.ch/blog/ratio-masse-salariale-restaurant.html">
+<link rel="alternate" hreflang="fr-CH" href="https://chr360.ch/blog/ratio-masse-salariale-restaurant.html">
+<link rel="alternate" hreflang="fr-FR" href="https://chr360.fr/blog/ratio-masse-salariale-restaurant.html">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<meta name="theme-color" content="#080C1F">
+
+<!-- Schema.org Article + HowTo -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Ratio masse salariale / CA restaurant : la cible 30-35 % expliquée",
+  "description": "Formule, seuils par type d'établissement (CH/FR), leviers d'optimisation et 5 erreurs classiques en restauration.",
+  "image": "https://chr360.ch/og-image.png",
+  "datePublished": "2026-05-19T10:00:00+02:00",
+  "dateModified": "2026-05-19T10:00:00+02:00",
+  "author": { "@type": "Organization", "name": "CHR 360°", "url": "https://chr360.ch" },
+  "publisher": {
+    "@type": "Organization",
+    "name": "CHR 360°",
+    "logo": { "@type": "ImageObject", "url": "https://chr360.ch/favicon.svg" }
+  },
+  "mainEntityOfPage": "https://chr360.ch/blog/ratio-masse-salariale-restaurant.html",
+  "keywords": ["ratio masse salariale restaurant", "productivité personnel", "prime cost restaurant"]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Calculer le ratio masse salariale / CA d'un restaurant",
+  "description": "Méthode complète pour mesurer et piloter son ratio masse salariale en restauration.",
+  "totalTime": "PT10M",
+  "step": [
+    { "@type": "HowToStep", "name": "Compter la masse salariale brute chargée", "text": "Salaires bruts + charges patronales (16 % CH / 42 % FR) sur la période." },
+    { "@type": "HowToStep", "name": "Récupérer le CA HT", "text": "CA total HT de la période (déduire TVA 8,1 % CH / 20 % FR)." },
+    { "@type": "HowToStep", "name": "Diviser", "text": "Ratio % = (Masse salariale chargée / CA HT) × 100" },
+    { "@type": "HowToStep", "name": "Comparer à la cible", "text": "30-35 % en bistronomique, 25-30 % en pizzeria, 35-40 % en gastronomique." },
+    { "@type": "HowToStep", "name": "Mesurer chaque mois", "text": "Suivre l'évolution mensuelle, détecter les pics avant qu'ils détruisent la marge." }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080C1F;--card:#111827;--border:rgba(255,255,255,0.08);
+  --cyan:#00E5FF;--mauve:#A78BFA;--green:#10b981;--amber:#F59E0B;--red:#F87171;
+  --white:#F0F4FF;--muted:#6B7280;--text:#D1D5DB;
+  --fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;
+}
+html,body{background:var(--bg);color:var(--white);font-family:var(--fb);line-height:1.7}
+.bg-mesh{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 10% 20%,rgba(167,139,250,.05) 0%,transparent 60%),
+             radial-gradient(ellipse 50% 40% at 90% 80%,rgba(0,229,255,.06) 0%,transparent 60%)}
+.container{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:48px 28px 96px}
+.back-link{display:inline-block;font-size:13px;color:#9CA3AF;text-decoration:none;margin-bottom:24px}
+.back-link:hover{color:var(--cyan)}
+.tag{display:inline-block;padding:4px 10px;background:rgba(167,139,250,0.12);color:var(--mauve);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:6px;margin-bottom:16px}
+h1{font-family:var(--fh);font-size:44px;font-weight:800;line-height:1.1;margin-bottom:18px;color:#F0F4FF;letter-spacing:-0.02em}
+.lede{font-size:19px;color:var(--text);line-height:1.6;margin-bottom:24px}
+.meta{font-size:13px;color:var(--muted);padding-bottom:32px;border-bottom:1px solid var(--border);margin-bottom:40px}
+
+h2{font-family:var(--fh);font-size:30px;font-weight:700;margin:56px 0 18px;color:var(--mauve);line-height:1.2}
+h3{font-family:var(--fh);font-size:20px;font-weight:700;margin:32px 0 12px;color:#F0F4FF}
+p{margin-bottom:16px;color:var(--text);font-size:17px}
+ul,ol{margin:8px 0 18px 24px;color:var(--text);font-size:17px}
+li{margin-bottom:8px}
+strong{color:#F0F4FF}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.toc{padding:20px 24px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;margin-bottom:40px}
+.toc-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.toc ol{list-style:decimal;margin-left:18px;margin-top:0;margin-bottom:0}
+.toc li{margin-bottom:4px;font-size:14px}
+.toc a{color:var(--text)}
+
+.formula{padding:24px 28px;background:rgba(167,139,250,0.04);border-left:4px solid var(--mauve);border-radius:8px;margin:24px 0;font-family:var(--fh);font-size:18px;color:#F0F4FF}
+.formula .label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mauve);font-family:var(--fb);margin-bottom:8px}
+.formula code{font-family:'JetBrains Mono','Courier New',monospace;font-size:16px;color:var(--mauve);font-weight:700}
+
+.example{padding:24px 28px;background:#0E1429;border:1px solid var(--border);border-radius:12px;margin:24px 0}
+.example-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px}
+.example table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14.5px}
+.example th,.example td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.example th{color:var(--cyan);font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.example td{color:var(--text)}
+.example tr.total td{background:rgba(167,139,250,0.05);font-weight:700;color:#F0F4FF}
+
+.callout{padding:20px 24px;background:rgba(245,158,11,0.04);border-left:3px solid var(--amber);border-radius:8px;margin:24px 0;font-size:15px}
+.callout strong{color:var(--amber)}
+.callout.green{background:rgba(16,185,129,0.04);border-left-color:var(--green)}
+.callout.green strong{color:var(--green)}
+.callout.red{background:rgba(248,113,113,0.04);border-left-color:var(--red)}
+.callout.red strong{color:var(--red)}
+
+.error-list{counter-reset:err;list-style:none;margin-left:0;padding-left:0}
+.error-list li{counter-increment:err;padding:18px 22px;background:#0E1429;border:1px solid var(--border);border-radius:10px;margin-bottom:14px;position:relative;padding-left:64px}
+.error-list li::before{content:counter(err);position:absolute;left:18px;top:18px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(248,113,113,0.12);color:var(--red);font-weight:700;border-radius:50%;font-family:var(--fh)}
+.error-list li strong{display:block;color:#F0F4FF;font-size:17px;margin-bottom:4px;font-family:var(--fh);font-weight:700}
+.error-list li p{font-size:15px;margin:0;color:var(--text)}
+
+table.benchmarks{width:100%;border-collapse:collapse;margin:24px 0;font-size:14.5px;background:rgba(255,255,255,0.02);border-radius:10px;overflow:hidden}
+table.benchmarks th,table.benchmarks td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border)}
+table.benchmarks th{background:rgba(167,139,250,0.06);color:var(--mauve);font-weight:600;font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+table.benchmarks td{color:var(--text)}
+table.benchmarks .cible{color:var(--green);font-weight:600}
+table.benchmarks .danger{color:var(--red);font-weight:600}
+
+.cta-block{margin-top:64px;padding:40px;background:linear-gradient(135deg,rgba(167,139,250,0.06),rgba(0,229,255,0.04));border:1px solid rgba(167,139,250,0.2);border-radius:16px;text-align:center}
+.cta-block h3{font-size:26px;color:#F0F4FF;margin-bottom:12px;font-family:var(--fh)}
+.cta-block p{margin-bottom:24px;color:var(--text)}
+.cta-btn{display:inline-block;padding:16px 32px;background:var(--mauve);color:#080C1F;font-weight:700;text-decoration:none;border-radius:10px;font-size:15px;letter-spacing:.02em}
+.cta-btn:hover{background:#C4B5FD;text-decoration:none}
+
+footer{position:relative;z-index:1;padding:32px 28px;background:#0A0E22;border-top:1px solid var(--border);font-size:13px;color:#9CA3AF;text-align:center}
+footer a{color:#9CA3AF}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<div class="container">
+  <a href="/" class="back-link">← Retour à l'accueil</a>
+  <div class="tag">Guide · 9 min de lecture</div>
+  <h1>Ratio masse salariale / CA restaurant : la cible 30-35 % expliquée</h1>
+  <p class="lede">Après le food cost, c'est l'indicateur n°2 de rentabilité d'un restaurant — et celui que la plupart des restaurateurs pilotent au feeling. Voici la méthode, les seuils par type d'établissement et les erreurs qui plombent silencieusement votre marge.</p>
+  <div class="meta">Publié le 19 mai 2026 · Par l'équipe CHR 360° · Catégorie : Gestion restaurant</div>
+
+  <div class="toc">
+    <div class="toc-title">Sommaire</div>
+    <ol>
+      <li><a href="#definition">Pourquoi ce ratio est critique</a></li>
+      <li><a href="#formule">La formule de base</a></li>
+      <li><a href="#exemple">Exemple chiffré (bistronomique Lausanne)</a></li>
+      <li><a href="#benchmarks">Seuils par type d'établissement (CH/FR)</a></li>
+      <li><a href="#prime-cost">Le concept de "Prime Cost" (food + labor)</a></li>
+      <li><a href="#leviers">7 leviers d'optimisation concrets</a></li>
+      <li><a href="#erreurs">5 erreurs qui plombent la marge</a></li>
+      <li><a href="#outils">Excel vs outil dédié</a></li>
+    </ol>
+  </div>
+
+  <h2 id="definition">1. Pourquoi ce ratio est critique</h2>
+  <p>Le <strong>ratio masse salariale / CA</strong> mesure le poids du coût du personnel dans votre chiffre d'affaires. C'est le poste de dépense n°1 de la plupart des restaurants — souvent <strong>plus important que le food cost</strong>.</p>
+
+  <p>Concrètement : si vous faites 60 000 CHF de CA mensuel et que vos salaires bruts + charges patronales représentent 22 500 CHF, votre ratio est de <strong>37,5 %</strong>. Cela signifie que pour chaque 100 CHF encaissés, 37,50 CHF vont directement au personnel. Il vous reste 62,50 CHF pour payer le food cost (typiquement 28-32 %), le loyer, l'énergie, et dégager une marge.</p>
+
+  <div class="callout">
+    <strong>Règle du pouce :</strong> au-delà de 35 % de ratio masse salariale, votre marge nette de fin d'année passe rarement les 5 %. Au-delà de 40 %, vous travaillez à perte sauf si food cost &lt; 25 % (cas rare en restauration moyenne gamme).
+  </div>
+
+  <h2 id="formule">2. La formule de base</h2>
+
+  <div class="formula">
+    <div class="label">Formule ratio masse salariale</div>
+    <code>Ratio % = (Masse salariale brute chargée / CA HT) × 100</code>
+  </div>
+
+  <p>Trois éléments à bien comprendre :</p>
+  <ul>
+    <li><strong>Masse salariale brute chargée</strong> = salaires bruts + <strong>charges patronales</strong> (~16 % en Suisse, ~42 % en France). C'est le coût RÉEL pour l'employeur, pas le net touché par l'employé.</li>
+    <li><strong>CA HT</strong> = chiffre d'affaires hors TVA. En Suisse, c'est votre CA brut divisé par 1,081 (TVA 8,1 % standard). En France, divisé par 1,10 ou 1,20 selon le service.</li>
+    <li><strong>Période</strong> = mensuelle (recommandé) ou trimestrielle. Annuelle masque les pics saisonniers.</li>
+  </ul>
+
+  <h2 id="exemple">3. Exemple chiffré : bistronomique Lausanne</h2>
+  <p>Prenons un cas concret d'un restaurant pilote en Suisse romande (chiffres réels anonymisés).</p>
+
+  <div class="example">
+    <div class="example-title">Restaurant bistronomique — Lausanne, équipe 6 pers.</div>
+    <table>
+      <tr><th>Poste</th><th>Salaire brut/mois</th></tr>
+      <tr><td>Chef de cuisine (CDI)</td><td>6 200 CHF</td></tr>
+      <tr><td>Second de cuisine (CDI)</td><td>4 800 CHF</td></tr>
+      <tr><td>Commis (CDI)</td><td>3 600 CHF</td></tr>
+      <tr><td>Maître d'hôtel (CDI)</td><td>5 200 CHF</td></tr>
+      <tr><td>Serveuse 1 (CDI 80 %)</td><td>3 200 CHF</td></tr>
+      <tr><td>Serveuse 2 (extra weekend, ~50h/mois)</td><td>1 500 CHF</td></tr>
+      <tr class="total"><td>Total brut</td><td>24 500 CHF</td></tr>
+      <tr><td>+ Charges patronales (16 % CH)</td><td>3 920 CHF</td></tr>
+      <tr class="total"><td>Masse salariale chargée</td><td><strong>28 420 CHF</strong></td></tr>
+    </table>
+  </div>
+
+  <p>Avec un CA mensuel TTC de <strong>92 000 CHF</strong> (CA HT = 92 000 / 1,081 = 85 106 CHF) :</p>
+
+  <div class="formula">
+    <code>Ratio = (28 420 / 85 106) × 100 = <strong>33,4 %</strong></code>
+  </div>
+
+  <p>Ce ratio est <strong>en zone cible bistronomique</strong> (30-35 %). Le restaurateur ne touche pas. S'il dérivait à 38-40 %, il faudrait agir avant que le résultat net ne soit grignoté.</p>
+
+  <h2 id="benchmarks">4. Seuils par type d'établissement</h2>
+
+  <table class="benchmarks">
+    <tr><th>Type d'établissement</th><th>Cible CH 🇨🇭</th><th>Cible FR 🇫🇷</th><th>Zone danger</th></tr>
+    <tr><td>Gastronomique (étoilé Michelin)</td><td class="cible">35-40 %</td><td class="cible">35-42 %</td><td class="danger">&gt; 45 %</td></tr>
+    <tr><td>Bistronomique</td><td class="cible">30-35 %</td><td class="cible">32-38 %</td><td class="danger">&gt; 38 %</td></tr>
+    <tr><td>Brasserie traditionnelle</td><td class="cible">28-33 %</td><td class="cible">30-35 %</td><td class="danger">&gt; 36 %</td></tr>
+    <tr><td>Pizzeria / Italien fast-casual</td><td class="cible">22-28 %</td><td class="cible">24-30 %</td><td class="danger">&gt; 32 %</td></tr>
+    <tr><td>Burger / Fast casual</td><td class="cible">25-30 %</td><td class="cible">26-32 %</td><td class="danger">&gt; 34 %</td></tr>
+    <tr><td>Café-restaurant (mixte)</td><td class="cible">26-32 %</td><td class="cible">28-34 %</td><td class="danger">&gt; 36 %</td></tr>
+    <tr><td>Food truck / Pop-up</td><td class="cible">20-25 %</td><td class="cible">22-28 %</td><td class="danger">&gt; 30 %</td></tr>
+  </table>
+
+  <p><strong>Pourquoi les ratios suisses sont structurellement plus bas qu'en France ?</strong> Trois raisons :</p>
+  <ul>
+    <li><strong>Charges patronales</strong> : 16 % en Suisse vs 42 % en France → un salaire brut équivalent coûte beaucoup plus à l'employeur en France.</li>
+    <li><strong>Pourboires nets</strong> : en Suisse, les pourboires restent intégralement au personnel et ne pèsent pas sur la masse salariale comptable.</li>
+    <li><strong>Ticket moyen</strong> : structurellement plus élevé en Suisse (35-65 CHF vs 22-38 EUR en France), ce qui dilue le coût personnel relatif.</li>
+  </ul>
+
+  <h2 id="prime-cost">5. Le concept de "Prime Cost" (food + labor)</h2>
+
+  <p>Le "Prime Cost" est la somme du <strong>food cost</strong> et du <strong>ratio masse salariale</strong>. C'est le KPI roi en restauration américaine et il gagne du terrain en Suisse.</p>
+
+  <div class="formula">
+    <div class="label">Prime Cost</div>
+    <code>Prime Cost % = Food cost % + Masse salariale % &lt; 60-65 % cible</code>
+  </div>
+
+  <p>Pourquoi 60-65 % ? Parce qu'au-delà, il reste moins de 35-40 % du CA pour couvrir <strong>tout le reste</strong> : loyer (8-12 %), énergie (4-6 %), assurances (1-2 %), marketing (2-3 %), maintenance/équipement (2-3 %), frais bancaires/Stripe (1-2 %), TVA résiduelle, et la <strong>marge nette</strong> du restaurateur (cible 5-10 %).</p>
+
+  <div class="callout green">
+    <strong>Insight CHR 360°</strong> : sur 12 restaurants pilotes en Suisse romande, le Prime Cost médian est de 61 %. Les 3 plus rentables sont tous entre 55 % et 58 %. Les 2 en difficulté sont à 68 % et 71 %.
+  </div>
+
+  <h3>Exemple Prime Cost Lausanne bistronomique</h3>
+  <ul>
+    <li>Food cost : 31 % (cible 28-32 % bistronomique) ✓</li>
+    <li>Masse salariale : 33,4 % (cible 30-35 %) ✓</li>
+    <li><strong>Prime Cost = 64,4 %</strong> — limite haute mais OK</li>
+    <li>Reste 35,6 % pour loyer / charges / marge → tenable si loyer &lt; 12 %</li>
+  </ul>
+
+  <h2 id="leviers">6. 7 leviers d'optimisation concrets</h2>
+
+  <h3>Levier 1 — Mix CDI / extras</h3>
+  <p>Les extras coûtent plus cher à l'heure mais ne créent pas d'engagement permanent. <strong>Cible</strong> : 70-80 % CDI sur les services centraux + 20-30 % extras pour les pics weekend.</p>
+
+  <h3>Levier 2 — Optimiser les plannings sur l'historique</h3>
+  <p>Si vos lundis font 800 CHF de CA mais vous mettez 3 personnes en cuisine + 2 en salle (1 200 CHF de masse salariale jour), votre ratio jour est de 150 %. <strong>Fermer le lundi midi</strong> récupère 2 000-3 000 CHF/mois.</p>
+
+  <h3>Levier 3 — Productivité couvert / heure</h3>
+  <p>Cible : 5-8 couverts par heure-employé en salle, 12-18 couverts/h en cuisine. <strong>Mesurer</strong> chaque semaine. Si vous êtes à 3 couverts/h en salle, c'est un problème d'organisation, pas de motivation.</p>
+
+  <h3>Levier 4 — Pointage QR / PIN anti-fraude</h3>
+  <p>L'écart entre heures planifiées et heures réellement payées est de <strong>4 à 8 %</strong> en moyenne sans pointage strict. Sur une masse de 25 000 CHF/mois, c'est 1 000-2 000 CHF récupérables par mois.</p>
+
+  <h3>Levier 5 — Tâches polyvalentes</h3>
+  <p>Le maître d'hôtel qui prépare aussi les boissons. Le commis qui plonge sur les heures creuses. La polyvalence augmente la productivité par employé sans embauche.</p>
+
+  <h3>Levier 6 — Automatisation back-office</h3>
+  <p>Saisie comptable manuelle : 4-8 h/semaine pour le restaurateur. À 30 CHF/h équivalent, c'est 480-960 CHF/mois "cachés". Les outils d'automatisation (CHR 360° et autres) éliminent ce coût.</p>
+
+  <h3>Levier 7 — Renégocier les contrats fournisseurs RH</h3>
+  <p>Cantine du staff (food cost employés), assurances accidents, formation continue — sur 5 ans, 5-15 % d'économies possibles en re-mettant en concurrence.</p>
+
+  <h2 id="erreurs">7. 5 erreurs qui plombent la marge</h2>
+
+  <ol class="error-list">
+    <li><strong>Calculer en salaire net</strong><p>Pour l'employeur, le coût est <em>brut + charges patronales</em>. Un employé net 4 000 CHF/mois coûte ~5 800 CHF chargé. Le ratio basé sur le net sous-estime de 30-40 %.</p></li>
+    <li><strong>Ne pas inclure les extras et le service supp</strong><p>Heures supplémentaires + pourboires soumis à charges + indemnités congés payés (à provisionner) : si on les oublie, la masse salariale "officielle" est sous-estimée de 8-15 %.</p></li>
+    <li><strong>Mesurer une fois par an</strong><p>L'été (touristes) vous masque la saisonnalité de l'hiver. Mesure mensuelle obligatoire pour détecter les dérives.</p></li>
+    <li><strong>Comparer son ratio à celui d'un autre type d'établissement</strong><p>Un bistrot ne se compare pas à un étoilé. Cf. tableau §4 par type d'établissement.</p></li>
+    <li><strong>Réduire la masse sans regarder la qualité de service</strong><p>Couper 1 serveur = -2 800 CHF/mois mais aussi -8 couverts/jour mal servis = -1 200 CHF de CA perdu + clients perdus à terme. La <em>productivité par employé</em> doit primer sur la <em>réduction des effectifs</em>.</p></li>
+  </ol>
+
+  <h2 id="outils">8. Excel vs outil dédié</h2>
+
+  <h3>Option 1 — Excel + bulletin de paie fiduciaire</h3>
+  <p><strong>Pour qui :</strong> restaurant avec ≤ 5 employés et fiduciaire qui produit les bulletins.</p>
+  <ul>
+    <li>✅ Coût zéro</li>
+    <li>❌ Pas de temps réel (mesure mensuelle décalée)</li>
+    <li>❌ Pas de pointage anti-fraude</li>
+    <li>❌ Pas d'alerte si le ratio dérape</li>
+  </ul>
+
+  <h3>Option 2 — Logiciel dédié avec pointage QR</h3>
+  <p><strong>Pour qui :</strong> restaurant avec ≥ 5 employés et fluctuations hebdomadaires.</p>
+  <ul>
+    <li>✅ Pointage QR + PIN sur tablette (anti-bourrage)</li>
+    <li>✅ Coût horaire chargé recalculé chaque jour</li>
+    <li>✅ Ratio masse salariale / CA en temps réel sur dashboard</li>
+    <li>✅ Alertes si le ratio dépasse le seuil que vous définissez</li>
+    <li>✅ Coûts par poste (cuisinier / serveur / plonge) + KPIs mensuels</li>
+    <li>💰 19 CHF/mois par employé actif (add-on Personnel CHR 360°)</li>
+  </ul>
+
+  <div class="callout green">
+    <strong>Notre conseil :</strong> commencer Excel sur 3 mois pour comprendre votre structure. Basculer sur un outil dédié dès que vous dépassez 5 employés ou si vous suspectez un bourrage d'heures.
+  </div>
+
+  <div class="cta-block">
+    <h3>Pilotez votre masse salariale en temps réel</h3>
+    <p>Le module Personnel de CHR 360° calcule votre ratio masse salariale / CA en continu, avec pointage QR anti-fraude et alertes Telegram. Essai gratuit 14 jours sans carte requise.</p>
+    <a href="/inscription.html" class="cta-btn">Démarrer l'essai gratuit →</a>
+  </div>
+
+  <h2 style="margin-top:64px">Pour aller plus loin</h2>
+  <ul>
+    <li><a href="/blog/food-cost-restaurant-guide.html">Le guide complet du food cost (formule, ratios, 7 erreurs)</a></li>
+    <li><a href="/case-study-beau-bidou.html">Étude de cas Beau Bidou : 4h économisées / semaine + 176 CHF/mois récupérés</a></li>
+    <li><a href="/#pricing">Tarification CHR 360°</a> (Personnel à 19 CHF/mois/employé)</li>
+  </ul>
+</div>
+
+<footer>
+  © 2026 CHR 360° · <a href="/">Accueil</a> · <a href="/cgv.html">CGV</a> · <a href="/confidentialite.html">Confidentialité</a> · <a href="/mentions-legales.html">Mentions légales</a>
+</footer>
+</body>
+</html>
